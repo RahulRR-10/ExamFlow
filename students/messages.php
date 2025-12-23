@@ -7,7 +7,9 @@ include '../config.php';
 require_once '../utils/message_utils.php';
 error_reporting(0);
 
-$sql = "SELECT * FROM message";
+// Get messages only for the student's school
+$school_id = $_SESSION['school_id'] ?? 0;
+$sql = "SELECT * FROM message WHERE school_id = $school_id OR school_id IS NULL ORDER BY date DESC";
 $result = mysqli_query($conn, $sql);
 
 // Mark all messages as read for this user
