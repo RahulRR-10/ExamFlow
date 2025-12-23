@@ -1,0 +1,46 @@
+# OS files
+.DS_Store
+Thumbs.db
+
+# Debug and test files
+debug_*.php
+test_*.php
+reset_*.php
+fix_*.php
+**/debug_*.php
+
+# Log files
+*.log
+**/*.log
+
+# Cache files
+**/analytics_cache_*.json
+
+# Environment files
+.env
+*.local
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Uploads (user content)
+uploads/*
+!uploads/.gitkeep
+certificates/*
+!certificates/.gitkeep
+
+# Dependencies (if using composer)
+# vendor/
+
+# Node modules
+node_modules/
+cert-verifier/node_modules/
+
+# Build outputs
+cert-verifier/build/
+
+# PHP session files
+sess_*

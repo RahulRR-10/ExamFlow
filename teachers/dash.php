@@ -57,6 +57,48 @@ $result_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
 $message_count_sql = "SELECT COUNT(1) as cnt FROM message";
 $message_count = mysqli_fetch_assoc(mysqli_query($conn, $message_count_sql))['cnt'];
 
+// Objective exam stats
+$obj_stats = [
+    'total_exams' => 0,
+    'pending_grading' => 0,
+    'graded' => 0,
+    'processing' => 0
+];
+
+// Total objective exams
+$obj_total_sql = "SELECT COUNT(*) as cnt FROM objective_exm_list WHERE teacher_id = ?";
+$stmt = mysqli_prepare($conn, $obj_total_sql);
+mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+mysqli_stmt_execute($stmt);
+$obj_stats['total_exams'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+// Pending grading (ocr_complete)
+$obj_pending_sql = "SELECT COUNT(*) as cnt FROM objective_submissions os
+                    JOIN objective_exm_list oe ON os.exam_id = oe.exam_id
+                    WHERE oe.teacher_id = ? AND os.submission_status = 'ocr_complete'";
+$stmt = mysqli_prepare($conn, $obj_pending_sql);
+mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+mysqli_stmt_execute($stmt);
+$obj_stats['pending_grading'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+// Graded
+$obj_graded_sql = "SELECT COUNT(*) as cnt FROM objective_submissions os
+                   JOIN objective_exm_list oe ON os.exam_id = oe.exam_id
+                   WHERE oe.teacher_id = ? AND os.submission_status = 'graded'";
+$stmt = mysqli_prepare($conn, $obj_graded_sql);
+mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+mysqli_stmt_execute($stmt);
+$obj_stats['graded'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+// Processing (pending, ocr_processing)
+$obj_proc_sql = "SELECT COUNT(*) as cnt FROM objective_submissions os
+                 JOIN objective_exm_list oe ON os.exam_id = oe.exam_id
+                 WHERE oe.teacher_id = ? AND os.submission_status IN ('pending', 'ocr_processing', 'grading')";
+$stmt = mysqli_prepare($conn, $obj_proc_sql);
+mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+mysqli_stmt_execute($stmt);
+$obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -85,7 +127,13 @@ $message_count = mysqli_fetch_assoc(mysqli_query($conn, $message_count_sql))['cn
       <li>
         <a href="exams.php">
           <i class='bx bx-book-content'></i>
-          <span class="links_name">Exams</span>
+          <span class="links_name">MCQ Exams</span>
+        </a>
+      </li>
+      <li>
+        <a href="objective_exams.php">
+          <i class='bx bx-edit'></i>
+          <span class="links_name">Objective Exams</span>
         </a>
       </li>
       <li>
@@ -156,7 +204,7 @@ $message_count = mysqli_fetch_assoc(mysqli_query($conn, $message_count_sql))['cn
       <div class="overview-boxes">
         <div class="box">
           <div class="right-side">
-            <div class="box-topic">Records</div>
+            <div class="box-topic">Students</div>
             <div class="number"><?php echo $student_count; ?></div>
             <div class="brief">
               <span class="text">Students in your schools</span>
@@ -166,39 +214,83 @@ $message_count = mysqli_fetch_assoc(mysqli_query($conn, $message_count_sql))['cn
         </div>
         <div class="box">
           <div class="right-side">
-            <div class="box-topic">Exams</div>
+            <div class="box-topic">MCQ Exams</div>
             <div class="number"><?php echo $exam_count; ?></div>
             <div class="brief">
-              <span class="text">Exams in your schools</span>
+              <span class="text">MCQ exams created</span>
             </div>
           </div>
-          <i class='bx bx-book ico two'></i>
+          <i class='bx bx-book-content ico two'></i>
         </div>
         <div class="box">
           <div class="right-side">
-            <div class="box-topic">Results</div>
+            <div class="box-topic">Objective Exams</div>
+            <div class="number"><?php echo $obj_stats['total_exams']; ?></div>
+            <div class="brief">
+              <span class="text">Objective exams created</span>
+            </div>
+          </div>
+          <i class='bx bx-edit ico three'></i>
+        </div>
+        <div class="box">
+          <div class="right-side">
+            <div class="box-topic">MCQ Results</div>
             <div class="number"><?php echo $result_count; ?></div>
             <div class="brief">
-              <span class="text">Results from your schools</span>
+              <span class="text">MCQ submissions</span>
             </div>
           </div>
-          <i class='bx bx-line-chart ico three'></i>
-        </div>
-        <div class="box">
-          <div class="right-side">
-            <div class="box-topic">Announcements</div>
-            <div class="number"><?php echo $message_count; ?></div>
-            <div class="brief">
-              <span class="text">Total messages sent</span>
-            </div>
-          </div>
-          <i class='bx bx-paper-plane ico four'></i>
+          <i class='bx bx-bar-chart-alt-2 ico four'></i>
         </div>
       </div>
 
+      <!-- Objective Exam Grading Status -->
+      <?php if ($obj_stats['pending_grading'] > 0 || $obj_stats['processing'] > 0 || $obj_stats['graded'] > 0): ?>
+      <div class="overview-boxes" style="margin-top: 15px;">
+        <?php if ($obj_stats['pending_grading'] > 0): ?>
+        <div class="box" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff9800; cursor: pointer;" onclick="window.location.href='grade_objective.php'">
+          <div class="right-side">
+            <div class="box-topic" style="color: #e65100;">Pending Grading</div>
+            <div class="number" style="color: #ff9800;"><?php echo $obj_stats['pending_grading']; ?></div>
+            <div class="brief">
+              <span class="text" style="color: #e65100;">Objective exams need grading</span>
+            </div>
+          </div>
+          <i class='bx bx-time-five' style="color: #ff9800; font-size: 48px;"></i>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($obj_stats['processing'] > 0): ?>
+        <div class="box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left: 4px solid #2196F3;">
+          <div class="right-side">
+            <div class="box-topic" style="color: #1565c0;">Processing</div>
+            <div class="number" style="color: #2196F3;"><?php echo $obj_stats['processing']; ?></div>
+            <div class="brief">
+              <span class="text" style="color: #1565c0;">Submissions being processed</span>
+            </div>
+          </div>
+          <i class='bx bx-loader-alt bx-spin' style="color: #2196F3; font-size: 48px;"></i>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($obj_stats['graded'] > 0): ?>
+        <div class="box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #17684f; cursor: pointer;" onclick="window.location.href='view_objective_results.php'">
+          <div class="right-side">
+            <div class="box-topic" style="color: #17684f;">Graded</div>
+            <div class="number" style="color: #17684f;"><?php echo $obj_stats['graded']; ?></div>
+            <div class="brief">
+              <span class="text" style="color: #17684f;">Completed objective exams</span>
+            </div>
+          </div>
+          <i class='bx bx-check-double' style="color: #17684f; font-size: 48px;"></i>
+        </div>
+        <?php endif; ?>
+      </div>
+      <?php endif; ?>
+
       <div class="stat-boxes">
         <div class="recent-stat box">
-          <div class="title">Recent results</div>
+          <div class="title">Recent MCQ Results</div>
           <table id="res">
             <thead>
               <tr>

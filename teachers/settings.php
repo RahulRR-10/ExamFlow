@@ -42,7 +42,13 @@ if (mysqli_num_rows($result) > 0) {
       <li>
         <a href="exams.php">
           <i class='bx bx-book-content'></i>
-          <span class="links_name">Exams</span>
+          <span class="links_name">MCQ Exams</span>
+        </a>
+      </li>
+      <li>
+        <a href="objective_exams.php">
+          <i class='bx bx-edit'></i>
+          <span class="links_name">Objective Exams</span>
         </a>
       </li>
       <li>

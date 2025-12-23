@@ -82,7 +82,13 @@ if ($filter_school > 0) {
       <li>
         <a href="#" class="active">
           <i class='bx bx-book-content'></i>
-          <span class="links_name">Exams</span>
+          <span class="links_name">MCQ Exams</span>
+        </a>
+      </li>
+      <li>
+        <a href="objective_exams.php">
+          <i class='bx bx-edit'></i>
+          <span class="links_name">Objective Exams</span>
         </a>
       </li>
       <li>

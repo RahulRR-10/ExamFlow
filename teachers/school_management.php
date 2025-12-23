@@ -237,7 +237,13 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
             <li>
                 <a href="exams.php">
                     <i class='bx bx-book-content'></i>
-                    <span class="links_name">Exams</span>
+                    <span class="links_name">MCQ Exams</span>
+                </a>
+            </li>
+            <li>
+                <a href="objective_exams.php">
+                    <i class='bx bx-edit'></i>
+                    <span class="links_name">Objective Exams</span>
                 </a>
             </li>
             <li>
@@ -299,105 +305,105 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
 
         <div class="home-content">
             <div class="school-section">
-            <?php if ($success_msg): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars($success_msg); ?></div>
-            <?php endif; ?>
+                <?php if ($success_msg): ?>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($success_msg); ?></div>
+                <?php endif; ?>
 
-            <?php if ($error_msg): ?>
-                <div class="alert alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
-            <?php endif; ?>
+                <?php if ($error_msg): ?>
+                    <div class="alert alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
+                <?php endif; ?>
 
-            <!-- Enrolled Schools Section -->
-            <h2 class="section-title"><i class='bx bx-check-circle'></i> My Schools</h2>
+                <!-- Enrolled Schools Section -->
+                <h2 class="section-title"><i class='bx bx-check-circle'></i> My Schools</h2>
 
-            <?php if (mysqli_num_rows($enrolled_result) > 0): ?>
-                <div class="school-grid">
-                    <?php while ($school = mysqli_fetch_assoc($enrolled_result)): ?>
-                        <div class="school-card <?php echo $school['is_primary'] ? 'primary' : 'enrolled'; ?>">
-                            <?php if ($school['is_primary']): ?>
-                                <span class="primary-badge"><i class='bx bx-star'></i> Primary School</span>
-                            <?php endif; ?>
-                            <div class="school-name"><?php echo htmlspecialchars($school['school_name']); ?></div>
-                            <span class="school-code"><?php echo htmlspecialchars($school['school_code']); ?></span>
-
-                            <?php if ($school['address']): ?>
-                                <div class="school-info">
-                                    <i class='bx bx-map'></i> <?php echo htmlspecialchars($school['address']); ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <?php if ($school['contact_email']): ?>
-                                <div class="school-info">
-                                    <i class='bx bx-envelope'></i> <?php echo htmlspecialchars($school['contact_email']); ?>
-                                </div>
-                            <?php endif; ?>
-
-                            <div class="school-info">
-                                <i class='bx bx-calendar'></i> Enrolled: <?php echo date('M d, Y', strtotime($school['enrolled_at'])); ?>
-                            </div>
-
-                            <div class="card-actions">
-                                <?php if (!$school['is_primary']): ?>
-                                    <a href="enroll_school.php?action=set_primary&school_id=<?php echo $school['school_id']; ?>"
-                                        class="btn btn-primary-action"
-                                        onclick="return confirm('Set this as your primary school?');">
-                                        <i class='bx bx-star'></i> Set Primary
-                                    </a>
+                <?php if (mysqli_num_rows($enrolled_result) > 0): ?>
+                    <div class="school-grid">
+                        <?php while ($school = mysqli_fetch_assoc($enrolled_result)): ?>
+                            <div class="school-card <?php echo $school['is_primary'] ? 'primary' : 'enrolled'; ?>">
+                                <?php if ($school['is_primary']): ?>
+                                    <span class="primary-badge"><i class='bx bx-star'></i> Primary School</span>
                                 <?php endif; ?>
-                                <a href="enroll_school.php?action=leave&school_id=<?php echo $school['school_id']; ?>"
-                                    class="btn btn-leave"
-                                    onclick="return confirm('Are you sure you want to leave this school?');">
-                                    <i class='bx bx-exit'></i> Leave
-                                </a>
-                            </div>
-                        </div>
-                    <?php endwhile; ?>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">
-                    <i class='bx bx-building-house'></i>
-                    <p>You are not enrolled in any schools yet.</p>
-                    <p>Enroll in a school below or create a new one.</p>
-                </div>
-            <?php endif; ?>
+                                <div class="school-name"><?php echo htmlspecialchars($school['school_name']); ?></div>
+                                <span class="school-code"><?php echo htmlspecialchars($school['school_code']); ?></span>
 
-            <!-- Available Schools Section -->
-            <h2 class="section-title"><i class='bx bx-search'></i> Available Schools</h2>
+                                <?php if ($school['address']): ?>
+                                    <div class="school-info">
+                                        <i class='bx bx-map'></i> <?php echo htmlspecialchars($school['address']); ?>
+                                    </div>
+                                <?php endif; ?>
 
-            <?php if (mysqli_num_rows($available_result) > 0): ?>
-                <div class="school-grid">
-                    <?php while ($school = mysqli_fetch_assoc($available_result)): ?>
-                        <div class="school-card available">
-                            <div class="school-name"><?php echo htmlspecialchars($school['school_name']); ?></div>
-                            <span class="school-code"><?php echo htmlspecialchars($school['school_code']); ?></span>
+                                <?php if ($school['contact_email']): ?>
+                                    <div class="school-info">
+                                        <i class='bx bx-envelope'></i> <?php echo htmlspecialchars($school['contact_email']); ?>
+                                    </div>
+                                <?php endif; ?>
 
-                            <?php if ($school['address']): ?>
                                 <div class="school-info">
-                                    <i class='bx bx-map'></i> <?php echo htmlspecialchars($school['address']); ?>
+                                    <i class='bx bx-calendar'></i> Enrolled: <?php echo date('M d, Y', strtotime($school['enrolled_at'])); ?>
                                 </div>
-                            <?php endif; ?>
 
-                            <?php if ($school['contact_email']): ?>
-                                <div class="school-info">
-                                    <i class='bx bx-envelope'></i> <?php echo htmlspecialchars($school['contact_email']); ?>
+                                <div class="card-actions">
+                                    <?php if (!$school['is_primary']): ?>
+                                        <a href="enroll_school.php?action=set_primary&school_id=<?php echo $school['school_id']; ?>"
+                                            class="btn btn-primary-action"
+                                            onclick="return confirm('Set this as your primary school?');">
+                                            <i class='bx bx-star'></i> Set Primary
+                                        </a>
+                                    <?php endif; ?>
+                                    <a href="enroll_school.php?action=leave&school_id=<?php echo $school['school_id']; ?>"
+                                        class="btn btn-leave"
+                                        onclick="return confirm('Are you sure you want to leave this school?');">
+                                        <i class='bx bx-exit'></i> Leave
+                                    </a>
                                 </div>
-                            <?php endif; ?>
-
-                            <div class="card-actions">
-                                <a href="enroll_school.php?action=enroll&school_id=<?php echo $school['school_id']; ?>"
-                                    class="btn btn-enroll">
-                                    <i class='bx bx-plus'></i> Enroll
-                                </a>
                             </div>
-                        </div>
-                    <?php endwhile; ?>
-                </div>
-            <?php else: ?>
-                <div class="empty-state">
-                    <i class='bx bx-check-double'></i>
-                    <p>You are enrolled in all available schools.</p>
-                </div>
-            <?php endif; ?>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class='bx bx-building-house'></i>
+                        <p>You are not enrolled in any schools yet.</p>
+                        <p>Enroll in a school below or create a new one.</p>
+                    </div>
+                <?php endif; ?>
+
+                <!-- Available Schools Section -->
+                <h2 class="section-title"><i class='bx bx-search'></i> Available Schools</h2>
+
+                <?php if (mysqli_num_rows($available_result) > 0): ?>
+                    <div class="school-grid">
+                        <?php while ($school = mysqli_fetch_assoc($available_result)): ?>
+                            <div class="school-card available">
+                                <div class="school-name"><?php echo htmlspecialchars($school['school_name']); ?></div>
+                                <span class="school-code"><?php echo htmlspecialchars($school['school_code']); ?></span>
+
+                                <?php if ($school['address']): ?>
+                                    <div class="school-info">
+                                        <i class='bx bx-map'></i> <?php echo htmlspecialchars($school['address']); ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <?php if ($school['contact_email']): ?>
+                                    <div class="school-info">
+                                        <i class='bx bx-envelope'></i> <?php echo htmlspecialchars($school['contact_email']); ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="card-actions">
+                                    <a href="enroll_school.php?action=enroll&school_id=<?php echo $school['school_id']; ?>"
+                                        class="btn btn-enroll">
+                                        <i class='bx bx-plus'></i> Enroll
+                                    </a>
+                                </div>
+                            </div>
+                        <?php endwhile; ?>
+                    </div>
+                <?php else: ?>
+                    <div class="empty-state">
+                        <i class='bx bx-check-double'></i>
+                        <p>You are enrolled in all available schools.</p>
+                    </div>
+                <?php endif; ?>
             </div>
         </div>
     </section>

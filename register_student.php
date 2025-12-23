@@ -145,14 +145,18 @@ if (isset($_POST["register"])) {
         margin: 8px 0;
         width: 100%;
     }
+
     .form-row {
         display: flex;
         gap: 10px;
         width: 100%;
     }
-    .form-row input, .form-row select {
+
+    .form-row input,
+    .form-row select {
         flex: 1;
     }
+
     .success-msg {
         background: #d4edda;
         color: #155724;
@@ -161,6 +165,7 @@ if (isset($_POST["register"])) {
         margin-bottom: 10px;
         font-size: 13px;
     }
+
     .error-msg {
         background: #f8d7da;
         color: #721c24;

@@ -56,12 +56,18 @@ $unread_count = getUnreadMessageCount($uname, $conn);
       <li>
         <a href="exams.php">
           <i class='bx bx-book-content'></i>
-          <span class="links_name">Exams</span>
+          <span class="links_name">MCQ Exams</span>
+        </a>
+      </li>
+      <li>
+        <a href="objective_exams.php">
+          <i class='bx bx-edit-alt'></i>
+          <span class="links_name">Objective Exams</span>
         </a>
       </li>
       <li>
         <a href="mock_exams.php">
-          <i class='bx bx-edit'></i>
+          <i class='bx bx-test-tube'></i>
           <span class="links_name">Mock Exams</span>
         </a>
       </li>
@@ -76,7 +82,7 @@ $unread_count = getUnreadMessageCount($uname, $conn);
           <i class='bx bx-message'></i>
           <span class="links_name">Announcements</span>
           <?php if ($unread_count > 0): ?>
-          <span class="notification-badge"><?php echo $unread_count; ?></span>
+            <span class="notification-badge"><?php echo $unread_count; ?></span>
           <?php endif; ?>
         </a>
       </li>

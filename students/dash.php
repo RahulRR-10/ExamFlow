@@ -6,9 +6,45 @@ if (!isset($_SESSION["uname"])) {
 include '../config.php';
 require_once '../utils/message_utils.php';
 $uname = $_SESSION['uname'];
+$student_id = $_SESSION['user_id'] ?? 0;
+$school_id = $_SESSION['school_id'] ?? 1;
 
 // Get the count of unread messages
 $unread_count = getUnreadMessageCount($uname, $conn);
+
+// Get objective exam stats
+$objective_stats = [
+    'available' => 0,
+    'submitted' => 0,
+    'graded' => 0,
+    'pending_results' => 0
+];
+
+// Available objective exams
+$obj_avail_sql = "SELECT COUNT(*) as cnt FROM objective_exm_list 
+                  WHERE school_id = ? AND status = 'active' 
+                  AND exam_id NOT IN (SELECT exam_id FROM objective_submissions WHERE student_id = ?)";
+$stmt = mysqli_prepare($conn, $obj_avail_sql);
+mysqli_stmt_bind_param($stmt, "ii", $school_id, $student_id);
+mysqli_stmt_execute($stmt);
+$objective_stats['available'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+// Submitted objective exams
+$obj_sub_sql = "SELECT COUNT(*) as cnt FROM objective_submissions WHERE student_id = ?";
+$stmt = mysqli_prepare($conn, $obj_sub_sql);
+mysqli_stmt_bind_param($stmt, "i", $student_id);
+mysqli_stmt_execute($stmt);
+$objective_stats['submitted'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+// Graded objective exams
+$obj_graded_sql = "SELECT COUNT(*) as cnt FROM objective_submissions WHERE student_id = ? AND submission_status = 'graded'";
+$stmt = mysqli_prepare($conn, $obj_graded_sql);
+mysqli_stmt_bind_param($stmt, "i", $student_id);
+mysqli_stmt_execute($stmt);
+$objective_stats['graded'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+// Pending results (submitted but not graded)
+$objective_stats['pending_results'] = $objective_stats['submitted'] - $objective_stats['graded'];
 
 ?>
 <!DOCTYPE html>
@@ -57,12 +93,18 @@ $unread_count = getUnreadMessageCount($uname, $conn);
       <li>
         <a href="exams.php">
           <i class='bx bx-book-content'></i>
-          <span class="links_name">Exams</span>
+          <span class="links_name">MCQ Exams</span>
+        </a>
+      </li>
+      <li>
+        <a href="objective_exams.php">
+          <i class='bx bx-edit-alt'></i>
+          <span class="links_name">Objective Exams</span>
         </a>
       </li>
       <li>
         <a href="mock_exams.php">
-          <i class='bx bx-edit'></i>
+          <i class='bx bx-test-tube'></i>
           <span class="links_name">Mock Exams</span>
         </a>
       </li>
@@ -122,18 +164,27 @@ $unread_count = getUnreadMessageCount($uname, $conn);
       <div class="overview-boxes">
         <div class="box">
           <div class="right-side">
-            <div class="box-topic">Exams</div>
+            <div class="box-topic">MCQ Exams</div>
             <div class="number"><?php
-                                $school_id = $_SESSION['school_id'] ?? 1;
                                 $sql = "SELECT COUNT(1) FROM exm_list WHERE school_id = $school_id";
                                 $result = mysqli_query($conn, $sql);
                                 $row = mysqli_fetch_array($result);
                                 echo $row['0'] ?></div>
             <div class="brief">
-              <span class="text">Total number of exams</span>
+              <span class="text">Total MCQ exams available</span>
             </div>
           </div>
-          <i class='bx bx-user ico'></i>
+          <i class='bx bx-book-content ico'></i>
+        </div>
+        <div class="box">
+          <div class="right-side">
+            <div class="box-topic">Objective Exams</div>
+            <div class="number"><?php echo $objective_stats['available']; ?></div>
+            <div class="brief">
+              <span class="text">Pending objective exams</span>
+            </div>
+          </div>
+          <i class='bx bx-edit-alt ico two'></i>
         </div>
         <div class="box">
           <div class="right-side">
@@ -143,24 +194,11 @@ $unread_count = getUnreadMessageCount($uname, $conn);
                                 $row = mysqli_fetch_array($result);
                                 echo $row['0'] ?></div>
             <div class="brief">
-              <span class="text">Total number of attempted exams</span>
+              <span class="text">MCQ exams attempted</span>
             </div>
           </div>
-          <i class='bx bx-book ico two'></i>
+          <i class='bx bx-check-circle ico three'></i>
         </div>
-        <!-- <div class="box">
-          <div class="right-side">
-            <div class="box-topic">Results</div>
-            <div class="number"><?php $sql = "SELECT COUNT(1) FROM atmpt_list";
-                                $result = mysqli_query($conn, $sql);
-                                $row = mysqli_fetch_array($result);
-                                echo $row['0'] ?></div>
-            <div class="brief">
-              <span class="text">Number of available results</span>
-            </div>
-          </div>
-          <i class='bx bx-line-chart ico three' ></i>
-        </div> -->
         <div class="box">
           <div class="right-side">
             <div class="box-topic">Announcements</div>
@@ -169,12 +207,43 @@ $unread_count = getUnreadMessageCount($uname, $conn);
                                 $row = mysqli_fetch_array($result);
                                 echo $row['0'] ?></div>
             <div class="brief">
-              <span class="text">Total number of announcements received</span>
+              <span class="text">Total announcements</span>
             </div>
           </div>
           <i class='bx bx-paper-plane ico four'></i>
         </div>
       </div>
+
+      <!-- Objective Exam Quick Status -->
+      <?php if ($objective_stats['pending_results'] > 0 || $objective_stats['graded'] > 0): ?>
+      <div class="overview-boxes" style="margin-top: 15px;">
+        <?php if ($objective_stats['pending_results'] > 0): ?>
+        <div class="box" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff9800;">
+          <div class="right-side">
+            <div class="box-topic" style="color: #e65100;">Pending Results</div>
+            <div class="number" style="color: #ff9800;"><?php echo $objective_stats['pending_results']; ?></div>
+            <div class="brief">
+              <a href="objective_exams.php" style="color: #e65100; text-decoration: underline;">Objective exams being graded</a>
+            </div>
+          </div>
+          <i class='bx bx-time-five' style="color: #ff9800;"></i>
+        </div>
+        <?php endif; ?>
+        
+        <?php if ($objective_stats['graded'] > 0): ?>
+        <div class="box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #17684f;">
+          <div class="right-side">
+            <div class="box-topic" style="color: #17684f;">Graded Results</div>
+            <div class="number" style="color: #17684f;"><?php echo $objective_stats['graded']; ?></div>
+            <div class="brief">
+              <a href="objective_exams.php" style="color: #17684f; text-decoration: underline;">View your objective exam results</a>
+            </div>
+          </div>
+          <i class='bx bx-check-double' style="color: #17684f;"></i>
+        </div>
+        <?php endif; ?>
+      </div>
+      <?php endif; ?>
 
       <div class="stat-boxes">
         <div class="recent-stat box" style="width:100%;">

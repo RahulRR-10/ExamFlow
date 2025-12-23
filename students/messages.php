@@ -44,12 +44,18 @@ markAllMessagesAsRead($uname, $conn);
       <li>
         <a href="exams.php">
           <i class='bx bx-book-content'></i>
-          <span class="links_name">Exams</span>
+          <span class="links_name">MCQ Exams</span>
+        </a>
+      </li>
+      <li>
+        <a href="objective_exams.php">
+          <i class='bx bx-edit-alt'></i>
+          <span class="links_name">Objective Exams</span>
         </a>
       </li>
       <li>
         <a href="mock_exams.php">
-          <i class='bx bx-edit'></i>
+          <i class='bx bx-test-tube'></i>
           <span class="links_name">Mock Exams</span>
         </a>
       </li>
