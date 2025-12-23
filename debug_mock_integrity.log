@@ -1175,3 +1175,328 @@
 {"timestamp":"2025-04-20 02:51:23","type":"info","message":"Integrity score: 97"}
 {"timestamp":"2025-04-20 02:51:23","type":"info","message":"Integrity category: Excellent"}
 {"timestamp":"2025-04-20 02:51:23","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"3\",\"integrity_score\":97,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Raw input: {\"mock_exam_id\":\"63\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Parsed data: {\"mock_exam_id\":\"63\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Processing violation for user: student2, exam: 63, type: tab_switch"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Total penalty: 3"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Integrity score: 97"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 19:51:28","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"3\",\"integrity_score\":97,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Raw input: {\"mock_exam_id\":\"65\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Parsed data: {\"mock_exam_id\":\"65\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Processing violation for user: student2, exam: 65, type: tab_switch"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Total penalty: 3"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Integrity score: 97"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 19:52:00","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"3\",\"integrity_score\":97,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Raw input: {\"mock_exam_id\":\"67\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Parsed data: {\"mock_exam_id\":\"67\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Processing violation for user: student2, exam: 67, type: tab_switch"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Total penalty: 3"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Integrity score: 97"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 19:55:55","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"3\",\"integrity_score\":97,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Raw input: {\"mock_exam_id\":\"69\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Parsed data: {\"mock_exam_id\":\"69\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Processing violation for user: student2, exam: 69, type: window_blur"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Penalty assigned: 2"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Total penalty: 2"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Integrity score: 98"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 20:06:00","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":2,\"total_penalty\":\"2\",\"integrity_score\":98,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -2 points.\"}"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Raw input: {\"mock_exam_id\":\"69\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Parsed data: {\"mock_exam_id\":\"69\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Processing violation for user: student2, exam: 69, type: tab_switch"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Total penalty: 5"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Integrity score: 95"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 20:06:57","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"5\",\"integrity_score\":95,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"exit_fullscreen\"}"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"exit_fullscreen\"}"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Processing violation for user: student2, exam: 70, type: exit_fullscreen"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Penalty assigned: 5"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Total penalty: 5"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Integrity score: 95"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 20:07:09","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":5,\"total_penalty\":\"5\",\"integrity_score\":95,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -5 points.\"}"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"exit_fullscreen\"}"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"exit_fullscreen\"}"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Processing violation for user: student2, exam: 70, type: exit_fullscreen"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Occurrence: 2"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Penalty assigned: 10"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Total penalty: 15"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Integrity score: 85"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Integrity category: Good"}
+{"timestamp":"2025-12-22 20:07:14","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":2,\"penalty\":10,\"total_penalty\":\"15\",\"integrity_score\":85,\"integrity_category\":\"Good\",\"message\":\"Violation recorded. Current penalty: -10 points.\"}"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Penalty assigned: 2"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Total penalty: 17"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Integrity score: 83"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Integrity category: Good"}
+{"timestamp":"2025-12-22 20:07:15","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":2,\"total_penalty\":\"17\",\"integrity_score\":83,\"integrity_category\":\"Good\",\"message\":\"Violation recorded. Current penalty: -2 points.\"}"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Occurrence: 2"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Penalty assigned: 4"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Total penalty: 21"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Integrity score: 79"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Integrity category: Fair"}
+{"timestamp":"2025-12-22 20:07:16","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":2,\"penalty\":4,\"total_penalty\":\"21\",\"integrity_score\":79,\"integrity_category\":\"Fair\",\"message\":\"Violation recorded. Current penalty: -4 points.\"}"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Occurrence: 3"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Penalty assigned: 6"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Total penalty: 27"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Integrity score: 73"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Integrity category: Fair"}
+{"timestamp":"2025-12-22 20:07:17","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":3,\"penalty\":6,\"total_penalty\":\"27\",\"integrity_score\":73,\"integrity_category\":\"Fair\",\"message\":\"Violation recorded. Current penalty: -6 points.\"}"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Occurrence: 4"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Total penalty: 35"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Integrity score: 65"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Integrity category: Poor"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":4,\"penalty\":8,\"total_penalty\":\"35\",\"integrity_score\":65,\"integrity_category\":\"Poor\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Occurrence: 5"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Total penalty: 43"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Integrity score: 57"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Integrity category: Very Poor"}
+{"timestamp":"2025-12-22 20:07:18","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":5,\"penalty\":8,\"total_penalty\":\"43\",\"integrity_score\":57,\"integrity_category\":\"Very Poor\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Occurrence: 6"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Total penalty: 51"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Integrity score: 49"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Integrity category: Very Poor"}
+{"timestamp":"2025-12-22 20:07:19","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":6,\"penalty\":8,\"total_penalty\":\"51\",\"integrity_score\":49,\"integrity_category\":\"Very Poor\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Occurrence: 7"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Total penalty: 59"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Integrity score: 41"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Integrity category: Very Poor"}
+{"timestamp":"2025-12-22 20:07:20","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":7,\"penalty\":8,\"total_penalty\":\"59\",\"integrity_score\":41,\"integrity_category\":\"Very Poor\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Processing violation for user: student2, exam: 70, type: window_blur"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Occurrence: 8"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Total penalty: 67"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Integrity score: 33"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Integrity category: Very Poor"}
+{"timestamp":"2025-12-22 20:07:21","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":8,\"penalty\":8,\"total_penalty\":\"67\",\"integrity_score\":33,\"integrity_category\":\"Very Poor\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"combined\"}"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"combined\"}"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Processing violation for user: student2, exam: 70, type: combined"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Penalty assigned: 10"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Total penalty: 77"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Integrity score: 23"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Integrity category: Very Poor"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":10,\"total_penalty\":\"77\",\"integrity_score\":23,\"integrity_category\":\"Very Poor\",\"message\":\"Violation recorded. Current penalty: -10 points.\"}"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Raw input: {\"mock_exam_id\":\"70\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Parsed data: {\"mock_exam_id\":\"70\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Processing violation for user: student2, exam: 70, type: tab_switch"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Total penalty: 80"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Integrity score: 20"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Integrity category: Very Poor"}
+{"timestamp":"2025-12-22 20:07:23","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"80\",\"integrity_score\":20,\"integrity_category\":\"Very Poor\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Raw input: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Parsed data: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Processing violation for user: student2, exam: 71, type: window_blur"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Penalty assigned: 2"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Total penalty: 2"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Integrity score: 98"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 20:37:19","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":2,\"total_penalty\":\"2\",\"integrity_score\":98,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -2 points.\"}"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Raw input: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Parsed data: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Processing violation for user: student2, exam: 71, type: window_blur"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Occurrence: 2"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Penalty assigned: 4"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Total penalty: 6"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Integrity score: 94"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 20:37:23","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":2,\"penalty\":4,\"total_penalty\":\"6\",\"integrity_score\":94,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -4 points.\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Raw input: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Parsed data: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Processing violation for user: student2, exam: 71, type: window_blur"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Occurrence: 3"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Penalty assigned: 6"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Total penalty: 12"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Integrity score: 88"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Integrity category: Good"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":3,\"penalty\":6,\"total_penalty\":\"12\",\"integrity_score\":88,\"integrity_category\":\"Good\",\"message\":\"Violation recorded. Current penalty: -6 points.\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Raw input: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Parsed data: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Processing violation for user: student2, exam: 71, type: window_blur"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Occurrence: 4"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Total penalty: 20"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Integrity score: 80"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Integrity category: Good"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":4,\"penalty\":8,\"total_penalty\":\"20\",\"integrity_score\":80,\"integrity_category\":\"Good\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Raw input: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Parsed data: {\"mock_exam_id\":\"71\",\"violation_type\":\"window_blur\"}"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Processing violation for user: student2, exam: 71, type: window_blur"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Occurrence: 5"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Penalty assigned: 8"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Total penalty: 28"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Integrity score: 72"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Integrity category: Fair"}
+{"timestamp":"2025-12-22 20:37:24","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":5,\"penalty\":8,\"total_penalty\":\"28\",\"integrity_score\":72,\"integrity_category\":\"Fair\",\"message\":\"Violation recorded. Current penalty: -8 points.\"}"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Raw input: {\"mock_exam_id\":\"71\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Parsed data: {\"mock_exam_id\":\"71\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Processing violation for user: student2, exam: 71, type: tab_switch"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Total penalty: 31"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Integrity score: 69"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Integrity category: Poor"}
+{"timestamp":"2025-12-22 20:37:35","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"31\",\"integrity_score\":69,\"integrity_category\":\"Poor\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Raw input: {\"mock_exam_id\":\"72\",\"violation_type\":\"exit_fullscreen\"}"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Parsed data: {\"mock_exam_id\":\"72\",\"violation_type\":\"exit_fullscreen\"}"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Processing violation for user: student2, exam: 72, type: exit_fullscreen"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Penalty assigned: 5"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Total penalty: 5"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Integrity score: 95"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 21:52:04","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":5,\"total_penalty\":\"5\",\"integrity_score\":95,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -5 points.\"}"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Script started"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"User authenticated: student2"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Raw input: {\"mock_exam_id\":\"72\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Parsed data: {\"mock_exam_id\":\"72\",\"violation_type\":\"tab_switch\"}"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Processing violation for user: student2, exam: 72, type: tab_switch"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Occurrence: 1"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Penalty assigned: 3"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Table mock_cheat_violations exists or was created successfully"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Violation record inserted successfully"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Total penalty: 8"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Integrity score: 92"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Integrity category: Excellent"}
+{"timestamp":"2025-12-22 21:52:07","type":"info","message":"Sending response: {\"status\":\"success\",\"occurrence\":1,\"penalty\":3,\"total_penalty\":\"8\",\"integrity_score\":92,\"integrity_category\":\"Excellent\",\"message\":\"Violation recorded. Current penalty: -3 points.\"}"}

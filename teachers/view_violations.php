@@ -307,6 +307,12 @@ $violations_result = $stmt->get_result();
                 </a>
             </li>
             <li>
+                <a href="school_management.php">
+                    <i class='bx bx-building-house'></i>
+                    <span class="links_name">Schools</span>
+                </a>
+            </li>
+            <li>
                 <a href="settings.php">
                     <i class='bx bx-cog'></i>
                     <span class="links_name">Settings</span>

@@ -3,18 +3,28 @@ date_default_timezone_set('Asia/Kolkata');
 session_start();
 if (!isset($_SESSION["uname"])) {
   header("Location: ../login_student.php");
+  exit;
 }
 
 include '../config.php';
+require_once '../utils/school_access_control.php';
 error_reporting(0);
-$exid = $_POST['exid'];
+$exid = mysqli_real_escape_string($conn, $_POST['exid']);
+$school_id = $_SESSION['school_id'] ?? 0;
+$uname = $_SESSION['uname'];
 
 if (!isset($_POST["edit_btn"])) {
   header("Location: exams.php");
+  exit;
+}
+
+// Validate student has access to this exam's school
+if (!validateStudentExamAccess($conn, $uname, $exid)) {
+  denyAccess("Access denied: This exam does not belong to your school.", "exams.php");
 }
 
 if (isset($_POST["edit_btn"])) {
-  $sql = "SELECT * FROM exm_list WHERE exid='$exid'";
+  $sql = "SELECT * FROM exm_list WHERE exid='$exid' AND school_id='$school_id'";
   $result = mysqli_query($conn, $sql);
   $row = mysqli_fetch_assoc($result);
   $ogtime = $row['extime'];

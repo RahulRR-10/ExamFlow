@@ -2,16 +2,26 @@
 session_start();
 if (!isset($_SESSION["uname"])) {
   header("Location: ../login_student.php");
+  exit;
 }
 include '../config.php';
 require_once '../utils/message_utils.php';
 $uname = $_SESSION['uname'];
+$school_id = $_SESSION['school_id'] ?? 0;
 
 // Get the count of unread messages
 $unread_count = getUnreadMessageCount($uname, $conn);
 
-$sql = "SELECT * FROM atmpt_list WHERE uname='$uname'";
-$result = mysqli_query($conn, $sql);
+// Filter results by student's school - only show results for exams from their school
+$sql = "SELECT a.*, e.exname 
+        FROM atmpt_list a 
+        INNER JOIN exm_list e ON a.exid = e.exid 
+        WHERE a.uname = ? AND e.school_id = ?
+        ORDER BY a.id DESC";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "si", $uname, $school_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -42,7 +52,7 @@ $result = mysqli_query($conn, $sql);
     .cert-btn i {
       margin-right: 5px;
     }
-    
+
     /* Notification badge style */
     .notification-badge {
       display: inline-flex;
@@ -99,7 +109,7 @@ $result = mysqli_query($conn, $sql);
           <i class='bx bx-message'></i>
           <span class="links_name">Announcements</span>
           <?php if ($unread_count > 0): ?>
-          <span class="notification-badge"><?php echo $unread_count; ?></span>
+            <span class="notification-badge"><?php echo $unread_count; ?></span>
           <?php endif; ?>
         </a>
       </li>
@@ -155,12 +165,7 @@ $result = mysqli_query($conn, $sql);
                 while ($row = mysqli_fetch_assoc($result)) {
               ?>
                   <tr>
-                    <td><?php
-                        $exid = $row['exid'];
-                        $ex = "SELECT * FROM exm_list WHERE exid='$exid'";
-                        $name = mysqli_query($conn, $ex);
-                        $exname = mysqli_fetch_assoc($name);
-                        echo $exname['exname']; ?></td>
+                    <td><?php echo htmlspecialchars($row['exname']); ?></td>
                     <td><?php echo $row['nq']; ?></td>
                     <td><?php echo $row['cnq']; ?></td>
                     <td><?php echo $row['ptg']; ?>%</td>

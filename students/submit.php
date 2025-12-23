@@ -1,15 +1,25 @@
 <?php
 session_start();
-if (!isset($_POST["exid"])) {
+if (!isset($_POST["exid"]) || !isset($_SESSION["uname"])) {
     header("Location: dash.php");
+    exit;
 }
 
 include '../config.php';
+require_once '../utils/school_access_control.php';
+
+$exid = mysqli_real_escape_string($conn, $_POST["exid"]);
+$uname = mysqli_real_escape_string($conn, $_SESSION["uname"]);
+$school_id = $_SESSION['school_id'] ?? 0;
+
+// Validate student has access to this exam's school before processing submission
+if (!validateStudentExamAccess($conn, $uname, $exid)) {
+    die("Unauthorized submission attempt: This exam does not belong to your school.");
+}
+
 $j = 0;
 if (isset($_POST["exid"])) {
     $nq = mysqli_real_escape_string($conn, $_POST["nq"]);
-    $exid = mysqli_real_escape_string($conn, $_POST["exid"]);
-    $uname = mysqli_real_escape_string($conn, $_SESSION["uname"]);
 
 
     for ($i = 1; $i <= $nq; $i++) {
@@ -69,20 +79,20 @@ if (isset($_POST["exid"])) {
 
     // Get the newly created attempt ID
     $attempt_id = $conn->insert_id;
-    
+
     // Store student answers for analytics
     for ($i = 1; $i <= $nq; $i++) {
         $qid = mysqli_real_escape_string($conn, $_POST['qid' . $i]);
         $op = mysqli_real_escape_string($conn, $_POST['o' . $i]);
-        
+
         $sql = "SELECT qstn_ans FROM qstn_list WHERE exid='$exid' AND qid='$qid'";
         $result = mysqli_query($conn, $sql);
-        
+
         if (mysqli_num_rows($result) > 0) {
             $row = mysqli_fetch_assoc($result);
             $correct_answer = $row['qstn_ans'];
             $is_correct = ($op == $correct_answer) ? 1 : 0;
-            
+
             // Insert into student_answers table
             $insert_answer_sql = "INSERT INTO student_answers (attempt_id, exid, qid, uname, selected_option, is_correct) 
                                   VALUES (?, ?, ?, ?, ?, ?)";

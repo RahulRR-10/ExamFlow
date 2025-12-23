@@ -2,18 +2,26 @@
 session_start();
 if (!isset($_SESSION["uname"])) {
     header("Location: ../login_student.php");
+    exit;
 }
 
 include '../config.php';
+require_once '../utils/school_access_control.php';
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
 // Check if form was submitted
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $mock_exid = $_POST['mock_exid'];
+    $mock_exid = mysqli_real_escape_string($conn, $_POST['mock_exid']);
     $nq = $_POST['nq'];
     $uname = $_SESSION['uname'];
+    $school_id = $_SESSION['school_id'] ?? 0;
     $integrity_score = isset($_POST['integrity_score']) ? intval($_POST['integrity_score']) : 100;
+
+    // Validate student has access to this mock exam's school before processing submission
+    if (!validateStudentMockExamAccess($conn, $uname, $mock_exid)) {
+        die("Unauthorized submission attempt: This mock exam does not belong to your school.");
+    }
 
     // Create the mock_cheat_violations table if it doesn't exist
     $create_table_sql = "CREATE TABLE IF NOT EXISTS mock_cheat_violations (

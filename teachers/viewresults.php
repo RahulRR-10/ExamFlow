@@ -2,10 +2,27 @@
 session_start();
 if (!isset($_SESSION["user_id"])) {
   header("Location: ../login_teacher.php");
+  exit;
 }
 include '../config.php';
 error_reporting(0);
-$exid = $_POST['exid'];
+$exid = mysqli_real_escape_string($conn, $_POST['exid']);
+$teacher_id = $_SESSION['user_id'];
+
+// Verify teacher has access to this exam's school
+$verify_sql = "SELECT e.exid FROM exm_list e 
+               INNER JOIN teacher_schools ts ON e.school_id = ts.school_id 
+               WHERE e.exid = ? AND ts.teacher_id = ?";
+$verify_stmt = mysqli_prepare($conn, $verify_sql);
+mysqli_stmt_bind_param($verify_stmt, "ii", $exid, $teacher_id);
+mysqli_stmt_execute($verify_stmt);
+$verify_result = mysqli_stmt_get_result($verify_stmt);
+
+if (mysqli_num_rows($verify_result) == 0) {
+  echo "<script>alert('You do not have access to view these results.');</script>";
+  header("Location: results.php");
+  exit;
+}
 
 $sql = "SELECT * FROM atmpt_list WHERE exid='$exid' ORDER BY ptg ASC";
 $result = mysqli_query($conn, $sql);
@@ -57,6 +74,12 @@ $result = mysqli_query($conn, $sql);
         <a href="messages.php">
           <i class='bx bx-message'></i>
           <span class="links_name">Messages</span>
+        </a>
+      </li>
+      <li>
+        <a href="school_management.php">
+          <i class='bx bx-building-house'></i>
+          <span class="links_name">Schools</span>
         </a>
       </li>
       <li>

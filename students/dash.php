@@ -77,7 +77,7 @@ $unread_count = getUnreadMessageCount($uname, $conn);
           <i class='bx bx-message'></i>
           <span class="links_name">Announcements</span>
           <?php if ($unread_count > 0): ?>
-          <span class="notification-badge"><?php echo $unread_count; ?></span>
+            <span class="notification-badge"><?php echo $unread_count; ?></span>
           <?php endif; ?>
         </a>
       </li>
@@ -106,6 +106,11 @@ $unread_count = getUnreadMessageCount($uname, $conn);
       <div class="sidebar-button">
         <i class='bx bx-menu sidebarBtn'></i>
         <span class="dashboard">Student Dashboard</span>
+        <?php if (isset($_SESSION['school_name'])): ?>
+          <span style="font-size: 12px; color: #666; margin-left: 15px; padding: 4px 10px; background: #e8f5e9; border-radius: 12px;">
+            <i class='bx bx-building-house' style="margin-right: 4px;"></i><?php echo htmlspecialchars($_SESSION['school_name']); ?>
+          </span>
+        <?php endif; ?>
       </div>
       <div class="profile-details">
         <img src="<?php echo $_SESSION['img']; ?>" alt="pro">
@@ -118,7 +123,9 @@ $unread_count = getUnreadMessageCount($uname, $conn);
         <div class="box">
           <div class="right-side">
             <div class="box-topic">Exams</div>
-            <div class="number"><?php $sql = "SELECT COUNT(1) FROM exm_list";
+            <div class="number"><?php
+                                $school_id = $_SESSION['school_id'] ?? 1;
+                                $sql = "SELECT COUNT(1) FROM exm_list WHERE school_id = $school_id";
                                 $result = mysqli_query($conn, $sql);
                                 $row = mysqli_fetch_array($result);
                                 echo $row['0'] ?></div>

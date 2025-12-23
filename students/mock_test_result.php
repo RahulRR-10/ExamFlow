@@ -2,9 +2,11 @@
 session_start();
 if (!isset($_SESSION["uname"])) {
     header("Location: ../login_student.php");
+    exit;
 }
 
 include '../config.php';
+require_once '../utils/school_access_control.php';
 error_reporting(0);
 
 // Check if we have the required parameters
@@ -13,16 +15,25 @@ if (!isset($_GET['mock_exid']) || !isset($_GET['attempt_id'])) {
     exit;
 }
 
-$mock_exid = $_GET['mock_exid'];
-$attempt_id = $_GET['attempt_id'];
+$mock_exid = mysqli_real_escape_string($conn, $_GET['mock_exid']);
+$attempt_id = mysqli_real_escape_string($conn, $_GET['attempt_id']);
 $uname = $_SESSION['uname'];
+$school_id = $_SESSION['school_id'] ?? 0;
+
+// Validate student has access to this mock exam's school
+if (!validateStudentMockExamAccess($conn, $uname, $mock_exid)) {
+    denyAccess("Access denied: This mock exam does not belong to your school.", "mock_exams.php");
+}
 
 // Get the exam attempt details
 $sql = "SELECT ma.*, me.exname, me.subject 
         FROM mock_atmpt_list ma 
         JOIN mock_exm_list me ON ma.mock_exid = me.mock_exid 
-        WHERE ma.id = '$attempt_id' AND ma.uname = '$uname'";
-$result = mysqli_query($conn, $sql);
+        WHERE ma.id = ? AND ma.uname = ? AND me.school_id = ?";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "isi", $attempt_id, $uname, $school_id);
+mysqli_stmt_execute($stmt);
+$result = mysqli_stmt_get_result($stmt);
 
 if (mysqli_num_rows($result) == 0) {
     // No such attempt found for this user

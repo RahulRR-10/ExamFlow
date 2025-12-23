@@ -8,7 +8,9 @@ include '../config.php';
 require_once '../utils/message_utils.php';
 error_reporting(0);
 
-$sql = "SELECT * FROM exm_list";
+// Filter exams by student's school
+$school_id = $_SESSION['school_id'] ?? 1;
+$sql = "SELECT * FROM exm_list WHERE school_id = $school_id";
 $result = mysqli_query($conn, $sql);
 
 // Get the count of unread messages
@@ -63,7 +65,7 @@ $unread_count = getUnreadMessageCount($uname, $conn);
           <i class='bx bx-message'></i>
           <span class="links_name">Announcements</span>
           <?php if ($unread_count > 0): ?>
-          <span class="notification-badge"><?php echo $unread_count; ?></span>
+            <span class="notification-badge"><?php echo $unread_count; ?></span>
           <?php endif; ?>
         </a>
       </li>

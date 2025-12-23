@@ -3,18 +3,28 @@ date_default_timezone_set('Asia/Kolkata');
 session_start();
 if (!isset($_SESSION["uname"])) {
     header("Location: ../login_student.php");
+    exit;
 }
 
 include '../config.php';
+require_once '../utils/school_access_control.php';
 error_reporting(0);
-$mock_exid = $_POST['mock_exid'];
+$mock_exid = mysqli_real_escape_string($conn, $_POST['mock_exid']);
+$school_id = $_SESSION['school_id'] ?? 0;
+$uname = $_SESSION['uname'];
 
 if (!isset($_POST["edit_btn"])) {
     header("Location: mock_exams.php");
+    exit;
+}
+
+// Validate student has access to this mock exam's school
+if (!validateStudentMockExamAccess($conn, $uname, $mock_exid)) {
+    denyAccess("Access denied: This mock exam does not belong to your school.", "mock_exams.php");
 }
 
 if (isset($_POST["edit_btn"])) {
-    $sql = "SELECT * FROM mock_exm_list WHERE mock_exid='$mock_exid'";
+    $sql = "SELECT * FROM mock_exm_list WHERE mock_exid='$mock_exid' AND school_id='$school_id'";
     $result = mysqli_query($conn, $sql);
     $row = mysqli_fetch_assoc($result);
     $ogtime = $row['extime'];

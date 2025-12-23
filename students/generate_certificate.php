@@ -7,6 +7,7 @@ if (!isset($_SESSION["uname"])) {
 
 // Include database connection
 include '../config.php';
+require_once '../utils/school_access_control.php';
 
 // Load environment variables for blockchain integration
 $env_file = __DIR__ . '/.env';
@@ -30,14 +31,20 @@ if (file_exists($env_file)) {
 // Get parameters
 $attempt_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
 $uname = $_SESSION['uname'];
+$school_id = $_SESSION['school_id'] ?? 0;
 
 if (!$attempt_id) {
     die("Certificate ID not provided");
 }
 
-// Verify this attempt belongs to the logged-in user
-$verify_sql = "SELECT * FROM atmpt_list WHERE id = $attempt_id AND uname = '$uname'";
-$verify_result = mysqli_query($conn, $verify_sql);
+// Verify this attempt belongs to the logged-in user AND is from their school
+$verify_sql = "SELECT a.*, e.school_id FROM atmpt_list a 
+               INNER JOIN exm_list e ON a.exid = e.exid 
+               WHERE a.id = ? AND a.uname = ? AND e.school_id = ?";
+$stmt = mysqli_prepare($conn, $verify_sql);
+mysqli_stmt_bind_param($stmt, "isi", $attempt_id, $uname, $school_id);
+mysqli_stmt_execute($stmt);
+$verify_result = mysqli_stmt_get_result($stmt);
 
 if (mysqli_num_rows($verify_result) == 0) {
     die("Unauthorized access");
@@ -878,12 +885,12 @@ if (mysqli_num_rows($table_check) > 0) {
 
 <body>
     <?php if ($nft_minted): ?>
-    <a href="results.php" class="back-btn">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-            <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
-        </svg>
-        Back to Results
-    </a>
+        <a href="results.php" class="back-btn">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M15 8a.5.5 0 0 0-.5-.5H2.707l3.147-3.146a.5.5 0 1 0-.708-.708l-4 4a.5.5 0 0 0 0 .708l4 4a.5.5 0 0 0 .708-.708L2.707 8.5H14.5A.5.5 0 0 0 15 8z" />
+            </svg>
+            Back to Results
+        </a>
     <?php endif; ?>
 
     <div class="page-title">

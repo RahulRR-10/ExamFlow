@@ -1,13 +1,9 @@
 <?php
 include('../config.php');
 
-// Azure OpenAI API endpoint and key
-$openai_base_url = "https://ai-graphitestorm8466ai385706727975.openai.azure.com";
-$openai_api_key = "Ax80ppCsRf3baI69t4Ww7WdIgE2ywqwmoxVQk8WXiX5rN2Q6bYv0JQQJ99BCACHYHv6XJ3w3AAAAACOGTC2b";
-$openai_deployment = "gpt-4o"; // This is the deployment name in Azure
-$openai_api_version = "2023-07-01-preview"; // Updated to the correct API version
-// Alternative deployment names to try if the first one fails
-$alternative_deployments = ["gpt4o", "gpt4", "gpt-4"];
+// Groq API configuration
+$grok_api_key = "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";
+$grok_model = "llama-3.3-70b-versatile";
 
 // Rate limiting settings
 $max_retries = 3;
@@ -16,12 +12,18 @@ $retry_delay = 5; // seconds to wait between retries
 // Function to generate mock exams for a given exam
 function generateMockExamsHelper($exid, $exname, $description, $subject)
 {
-    global $conn, $openai_base_url, $openai_api_key, $openai_deployment, $openai_api_version, $max_retries, $retry_delay;
+    global $conn, $grok_api_key, $grok_model, $max_retries, $retry_delay;
 
     // Get current date and time for exam scheduling
     $current_date = date('Y-m-d H:i:s');
     // Set submission time to 7 days from now
     $submission_time = date('Y-m-d H:i:s', strtotime('+7 days'));
+
+    // Get the school_id from the original exam
+    $exam_sql = "SELECT school_id FROM exm_list WHERE exid = '$exid'";
+    $exam_result = mysqli_query($conn, $exam_sql);
+    $exam_data = mysqli_fetch_assoc($exam_result);
+    $school_id = isset($exam_data['school_id']) ? intval($exam_data['school_id']) : 1; // Default to 1 if not set
 
     // Check if this exam already has mock exams
     $check_sql = "SELECT COUNT(*) as count FROM mock_exm_list WHERE original_exid = '$exid'";
@@ -39,15 +41,15 @@ function generateMockExamsHelper($exid, $exname, $description, $subject)
         $mock_exam_name = "Mock Test $i: $exname";
         $mock_exam_desc = "Practice test $i for $exname. $description";
 
-        $sql = "INSERT INTO mock_exm_list (original_exid, mock_number, exname, nq, desp, subt, extime, subject, status) 
-                VALUES ('$exid', '$i', '$mock_exam_name', '5', '$mock_exam_desc', '$submission_time', '$current_date', '$subject', 'pending')";
+        $sql = "INSERT INTO mock_exm_list (original_exid, mock_number, exname, nq, desp, subt, extime, subject, status, school_id) 
+                VALUES ('$exid', '$i', '$mock_exam_name', '5', '$mock_exam_desc', '$submission_time', '$current_date', '$subject', 'pending', '$school_id')";
 
         if (mysqli_query($conn, $sql)) {
             $mock_exid = mysqli_insert_id($conn);
-            error_log("Created mock exam #$i with ID: $mock_exid for exam ID: $exid");
+            error_log("Created mock exam #$i with ID: $mock_exid for exam ID: $exid with school_id: $school_id");
 
-            // Generate questions using Azure OpenAI
-            $prompt = "Create 5 multiple choice questions for a $subject exam on '$exname'. The exam is described as: '$description'. For each question, provide 4 options and indicate the correct answer. Format the response as a JSON array with each question having the following structure: {\"question\": \"...\", \"option1\": \"...\", \"option2\": \"...\", \"option3\": \"...\", \"option4\": \"...\", \"correct_answer\": \"option1/option2/option3/option4\"}";
+            // Generate questions using Groq AI
+            $prompt = "You are an AI assistant that creates high-quality multiple choice questions for educational exams. Create 5 multiple choice questions for a $subject exam on '$exname'. The exam is described as: '$description'. For each question, provide 4 options and indicate the correct answer. Format the response as a JSON array with each question having the following structure: {\"question\": \"...\", \"option1\": \"...\", \"option2\": \"...\", \"option3\": \"...\", \"option4\": \"...\", \"correct_answer\": \"option1/option2/option3/option4\"}";
 
             // Add rate limiting - track API calls
             $retry_count = 0;
@@ -58,8 +60,8 @@ function generateMockExamsHelper($exid, $exname, $description, $subject)
 
             while (!$success && $retry_count < $max_retries) {
                 try {
-                    // Create Azure OpenAI API request - Make sure URL is correctly formatted
-                    $request_url = rtrim($openai_base_url, '/') . "/openai/deployments/" . $openai_deployment . "/chat/completions?api-version=" . $openai_api_version;
+                    // Create Groq API request
+                    $request_url = "https://api.groq.com/openai/v1/chat/completions";
 
                     if ($debug_enabled) {
                         error_log("DEBUG: Full request URL: $request_url");
@@ -67,12 +69,12 @@ function generateMockExamsHelper($exid, $exname, $description, $subject)
 
                     $headers = [
                         'Content-Type: application/json',
-                        'api-key: ' . $openai_api_key
+                        'Authorization: Bearer ' . $grok_api_key
                     ];
 
                     if ($debug_enabled) {
                         // Mask most of the API key for security while still showing format
-                        $masked_key = substr($openai_api_key, 0, 5) . '...' . substr($openai_api_key, -5);
+                        $masked_key = substr($grok_api_key, 0, 5) . '...' . substr($grok_api_key, -5);
                         error_log("DEBUG: Using API key (masked): " . $masked_key);
                         error_log("DEBUG: Headers: " . json_encode($headers));
                     }
@@ -88,15 +90,16 @@ function generateMockExamsHelper($exid, $exname, $description, $subject)
                                 'content' => $prompt
                             ]
                         ],
-                        'temperature' => 0.7,
-                        'max_tokens' => 2000
+                        'model' => $grok_model,
+                        'stream' => false,
+                        'temperature' => 0.7
                     ];
 
                     if ($debug_enabled) {
                         error_log("DEBUG: API Request data: " . json_encode($data));
                     }
 
-                    error_log("Sending request to OpenAI API (attempt " . ($retry_count + 1) . "): $request_url");
+                    error_log("Sending request to Groq API (attempt " . ($retry_count + 1) . "): $request_url");
 
                     $ch = curl_init($request_url);
                     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -160,25 +163,12 @@ function generateMockExamsHelper($exid, $exname, $description, $subject)
                         }
                     }
 
-                    // Handle 404 errors - deployment name might be incorrect, try alternative format
+                    // Handle 404 errors or bad requests
                     if ($http_code === 404 || $http_code === 400) {
-                        error_log("Error $http_code - deployment '$openai_deployment' not found or incorrect format.");
-
-                        // Access the global array of alternative deployments
-                        global $alternative_deployments;
-
-                        if (isset($alternative_deployments) && count($alternative_deployments) > 0) {
-                            // Get and remove the first alternative deployment
-                            $next_deployment = array_shift($alternative_deployments);
-                            error_log("Trying alternative deployment name: $next_deployment");
-                            $openai_deployment = $next_deployment;
-                            $retry_count++;
-                            continue;
-                        } else {
-                            error_log("All deployment name alternatives tried. Falling back to sample questions.");
-                            useFallbackQuestions($mock_exid, $exname, $subject, $description, $conn);
-                            break;
-                        }
+                        error_log("Error $http_code - Groq API request failed.");
+                        error_log("Falling back to sample questions.");
+                        useFallbackQuestions($mock_exid, $exname, $subject, $description, $conn);
+                        break;
                     }
 
                     if ($err) {

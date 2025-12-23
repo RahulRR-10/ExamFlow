@@ -1,16 +1,16 @@
 <?php
 include('config.php');
 
-// Azure OpenAI API endpoint and key
-$openai_endpoint = "https://ai-graphitestorm8466ai385706727975.openai.azure";
-$openai_api_key = "Ax80ppCsRf3baI69t4Ww7WdIgE2ywqwmoxVQk8WXiX5rN2Q6bYv0JQQJ99BCACHYHv6XJ3w3AAAAACOGTC2b";
-$openai_version = "2024-11-20";
-$openai_model = "gpt-4o";
+// Groq API configuration
+$grok_api_key = "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";
+$grok_model = "llama-3.3-70b-versatile";
 
-// Function to create mock exams using Azure OpenAI
+
+
+// Function to create mock exams using Groq AI
 function generateMockExams($original_exid, $exname, $description, $subject, $conn)
 {
-    global $openai_endpoint, $openai_api_key, $openai_version, $openai_model;
+    global $grok_api_key, $grok_model;
 
     // Get current date and time for exam scheduling
     $current_date = date('Y-m-d H:i:s');
@@ -29,16 +29,16 @@ function generateMockExams($original_exid, $exname, $description, $subject, $con
         if (mysqli_query($conn, $sql)) {
             $mock_exid = mysqli_insert_id($conn);
 
-            // Generate questions using Azure OpenAI
-            $prompt = "Create 5 multiple choice questions for a $subject exam on '$exname'. The exam is described as: '$description'. For each question, provide 4 options and indicate the correct answer. Format the response as a JSON array with each question having the following structure: {\"question\": \"...\", \"option1\": \"...\", \"option2\": \"...\", \"option3\": \"...\", \"option4\": \"...\", \"correct_answer\": \"option1/option2/option3/option4\"}";
+            // Generate questions using Groq AI
+            $prompt = "You are an AI assistant that creates high-quality multiple choice questions for educational exams. Create 5 multiple choice questions for a $subject exam on '$exname'. The exam is described as: '$description'. For each question, provide 4 options and indicate the correct answer. Format the response as a JSON array with each question having the following structure: {\"question\": \"...\", \"option1\": \"...\", \"option2\": \"...\", \"option3\": \"...\", \"option4\": \"...\", \"correct_answer\": \"option1/option2/option3/option4\"}";
 
             try {
-                // Create Azure OpenAI API request
-                $request_url = "$openai_endpoint/openai/deployments/$openai_model/chat/completions?api-version=$openai_version";
+                // Create Groq API request
+                $request_url = "https://api.groq.com/openai/v1/chat/completions";
 
                 $headers = [
                     'Content-Type: application/json',
-                    'api-key: ' . $openai_api_key
+                    'Authorization: Bearer ' . $grok_api_key
                 ];
 
                 $data = [
@@ -52,11 +52,12 @@ function generateMockExams($original_exid, $exname, $description, $subject, $con
                             'content' => $prompt
                         ]
                     ],
-                    'temperature' => 0.7,
-                    'max_tokens' => 2000
+                    'model' => $grok_model,
+                    'stream' => false,
+                    'temperature' => 0.7
                 ];
 
-                error_log("Sending request to OpenAI API: $request_url");
+                error_log("Sending request to Groq API: $request_url");
 
                 $ch = curl_init($request_url);
                 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

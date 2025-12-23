@@ -9,25 +9,26 @@ require_once '../utils/message_utils.php';
 error_reporting(0);
 
 $uname = $_SESSION['uname'];
+$school_id = $_SESSION['school_id'] ?? 1;
 
 // Get the count of unread messages
 $unread_count = getUnreadMessageCount($uname, $conn);
 
-// This query gets all mock exams that are ready and not attempted by the current user
+// This query gets all mock exams that are ready and not attempted by the current user (filtered by school)
 $sql = "SELECT me.* FROM mock_exm_list me 
         LEFT JOIN mock_atmpt_list ma 
         ON me.mock_exid = ma.mock_exid AND ma.uname = '$uname' AND ma.status = 1
-        WHERE me.status = 'ready' AND (ma.id IS NULL)";
+        WHERE me.status = 'ready' AND me.school_id = $school_id AND (ma.id IS NULL)";
 $result = mysqli_query($conn, $sql);
 
 // For debugging
 error_log("Mock exams query for user $uname found " . mysqli_num_rows($result) . " results");
 
-// Get completed mock exams
+// Get completed mock exams (filtered by school)
 $completed_sql = "SELECT ma.*, me.exname 
                  FROM mock_atmpt_list ma 
                  JOIN mock_exm_list me ON ma.mock_exid = me.mock_exid 
-                 WHERE ma.uname = '$uname' AND ma.status = 1 
+                 WHERE ma.uname = '$uname' AND ma.status = 1 AND me.school_id = $school_id
                  ORDER BY ma.subtime DESC";
 $completed_result = mysqli_query($conn, $completed_sql);
 
@@ -62,8 +63,13 @@ $completed_result = mysqli_query($conn, $completed_sql);
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .pending-message {
@@ -71,7 +77,7 @@ $completed_result = mysqli_query($conn, $completed_sql);
             color: #555;
             margin-bottom: 15px;
         }
-        
+
         .exmbtn {
             background-color: #0A2558;
             color: white;
@@ -81,11 +87,11 @@ $completed_result = mysqli_query($conn, $completed_sql);
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        
+
         .exmbtn:hover {
             background-color: #153d8a;
         }
-        
+
         /* Notification badge style */
         .notification-badge {
             display: inline-flex;
@@ -142,7 +148,7 @@ $completed_result = mysqli_query($conn, $completed_sql);
                     <i class='bx bx-message'></i>
                     <span class="links_name">Announcements</span>
                     <?php if ($unread_count > 0): ?>
-                    <span class="notification-badge"><?php echo $unread_count; ?></span>
+                        <span class="notification-badge"><?php echo $unread_count; ?></span>
                     <?php endif; ?>
                 </a>
             </li>
@@ -260,24 +266,24 @@ $completed_result = mysqli_query($conn, $completed_sql);
 
             <!-- Completed Mock Exams Section -->
             <?php if (mysqli_num_rows($completed_result) > 0) { ?>
-            <div class="stat-boxes" style="margin-top: 30px;">
-                <div class="recent-stat box" style="padding: 0px 0px; width:90%">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Sl.no</th>
-                                <th>Mock Exam Name</th>
-                                <th>Score</th>
-                                <th>Percentage</th>
-                                <th>Integrity Score</th>
-                                <th>Submission Time</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php
-                            $i = 1;
-                            while ($row = mysqli_fetch_assoc($completed_result)) {
-                                echo '<tr>
+                <div class="stat-boxes" style="margin-top: 30px;">
+                    <div class="recent-stat box" style="padding: 0px 0px; width:90%">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Sl.no</th>
+                                    <th>Mock Exam Name</th>
+                                    <th>Score</th>
+                                    <th>Percentage</th>
+                                    <th>Integrity Score</th>
+                                    <th>Submission Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $i = 1;
+                                while ($row = mysqli_fetch_assoc($completed_result)) {
+                                    echo '<tr>
                                 <td>' . $i . '</td>
                                 <td>' . $row['exname'] . '</td>
                                 <td>' . $row['cnq'] . '/' . $row['nq'] . '</td>
@@ -285,13 +291,13 @@ $completed_result = mysqli_query($conn, $completed_sql);
                                 <td>' . $row['integrity_score'] . '/100</td>
                                 <td>' . $row['subtime'] . '</td>
                             </tr>';
-                                $i++;
-                            }
-                            ?>
-                        </tbody>
-                    </table>
+                                    $i++;
+                                }
+                                ?>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
             <?php } ?>
         </div>
     </section>

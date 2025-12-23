@@ -3,12 +3,56 @@ date_default_timezone_set('Asia/Kolkata');
 session_start();
 if (!isset($_SESSION["fname"])) {
   header("Location: ../login_teacher.php");
+  exit;
 }
 include '../config.php';
 error_reporting(0);
 
-$sql = "SELECT * FROM exm_list";
-$result = mysqli_query($conn, $sql);
+$teacher_id = $_SESSION['user_id'];
+
+// Get schools the teacher is enrolled in for the dropdown
+$enrolled_schools_sql = "SELECT s.school_id, s.school_name 
+                         FROM schools s 
+                         INNER JOIN teacher_schools ts ON s.school_id = ts.school_id 
+                         WHERE ts.teacher_id = ? AND s.status = 'active'
+                         ORDER BY ts.is_primary DESC, s.school_name ASC";
+$stmt_schools = mysqli_prepare($conn, $enrolled_schools_sql);
+mysqli_stmt_bind_param($stmt_schools, "i", $teacher_id);
+mysqli_stmt_execute($stmt_schools);
+$enrolled_schools = mysqli_stmt_get_result($stmt_schools);
+
+// Get selected school filter (default to 'all')
+$filter_school = isset($_GET['school_filter']) ? intval($_GET['school_filter']) : 0;
+
+// Filter exams by teacher's enrolled schools
+if ($filter_school > 0) {
+  // Filter by specific school
+  $sql = "SELECT e.*, s.school_name 
+            FROM exm_list e 
+            LEFT JOIN schools s ON e.school_id = s.school_id 
+            WHERE e.school_id = ? 
+            AND e.school_id IN (
+                SELECT school_id FROM teacher_schools WHERE teacher_id = ?
+            )
+            ORDER BY e.extime DESC";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, "ii", $filter_school, $teacher_id);
+  mysqli_stmt_execute($stmt);
+  $result = mysqli_stmt_get_result($stmt);
+} else {
+  // Show all exams from enrolled schools
+  $sql = "SELECT e.*, s.school_name 
+            FROM exm_list e 
+            LEFT JOIN schools s ON e.school_id = s.school_id 
+            WHERE e.school_id IN (
+                SELECT school_id FROM teacher_schools WHERE teacher_id = ?
+            )
+            ORDER BY e.extime DESC";
+  $stmt = mysqli_prepare($conn, $sql);
+  mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+  mysqli_stmt_execute($stmt);
+  $result = mysqli_stmt_get_result($stmt);
+}
 
 ?>
 <!DOCTYPE html>
@@ -60,6 +104,12 @@ $result = mysqli_query($conn, $sql);
         </a>
       </li>
       <li>
+        <a href="school_management.php">
+          <i class='bx bx-building-house'></i>
+          <span class="links_name">Schools</span>
+        </a>
+      </li>
+      <li>
         <a href="settings.php">
           <i class='bx bx-cog'></i>
           <span class="links_name">Settings</span>
@@ -92,6 +142,24 @@ $result = mysqli_query($conn, $sql);
     </nav>
 
     <div class="home-content">
+      <!-- School Filter Dropdown -->
+      <div style="margin-bottom: 20px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+        <form method="GET" action="exams.php" style="display: flex; align-items: center; gap: 15px;">
+          <label for="school_filter" style="font-weight: 600; color: #17684f;">Filter by School:</label>
+          <select name="school_filter" id="school_filter" style="padding: 8px 15px; border-radius: 6px; border: 1px solid #ddd; min-width: 200px;" onchange="this.form.submit()">
+            <option value="0">All Schools</option>
+            <?php
+            // Reset the result pointer to reuse
+            mysqli_data_seek($enrolled_schools, 0);
+            while ($school = mysqli_fetch_assoc($enrolled_schools)) {
+              $selected = ($filter_school == $school['school_id']) ? 'selected' : '';
+              echo "<option value='{$school['school_id']}' $selected>{$school['school_name']}</option>";
+            }
+            ?>
+          </select>
+        </form>
+      </div>
+
       <div class="stat-boxes">
         <div class="recent-stat box" style="padding: 0px 0px;width:75%;">
           <table>
@@ -99,6 +167,7 @@ $result = mysqli_query($conn, $sql);
               <tr>
                 <th>Exam no.</th>
                 <th>Exam name</th>
+                <th>School</th>
                 <th>No. of questions</th>
                 <th>Exam time</th>
                 <th>Submission time</th>
@@ -112,10 +181,12 @@ $result = mysqli_query($conn, $sql);
               $i = 1;
               if (mysqli_num_rows($result) > 0) {
                 while ($row = mysqli_fetch_assoc($result)) {
+                  $school_name = isset($row['school_name']) ? $row['school_name'] : 'N/A';
               ?>
                   <tr>
                     <td><?php echo $i; ?></td>
-                    <td><?php echo $row['exname']; ?></td>
+                    <td><?php echo htmlspecialchars($row['exname']); ?></td>
+                    <td><span style="background: #e8f5e9; color: #2e7d32; padding: 4px 10px; border-radius: 12px; font-size: 12px;"><?php echo htmlspecialchars($school_name); ?></span></td>
                     <td><?php echo $row['nq']; ?></td>
                     <td><?php echo $row['extime']; ?></td>
                     <td><?php echo $row['subt']; ?></td>
@@ -150,10 +221,21 @@ $result = mysqli_query($conn, $sql);
           <br><br>
           <form action="addexam.php" method="post">
             <input type="hidden" name="subject" value="<?php echo $_SESSION['subject']; ?>">
+            <label for="school_id">School *</label><br>
+            <select class="inputbox" id="school_id" name="school_id" required style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 6px; border: 1px solid #ddd;">
+              <option value="">-- Select School --</option>
+              <?php
+              // Reset the result pointer to reuse
+              mysqli_data_seek($enrolled_schools, 0);
+              while ($school = mysqli_fetch_assoc($enrolled_schools)) {
+                echo "<option value='{$school['school_id']}'>{$school['school_name']}</option>";
+              }
+              ?>
+            </select>
             <label for="exname">Exam name</label><br>
             <input class="inputbox" type="text" id="exname" name="exname" placeholder="Enter exam name" minlength="3" maxlength="30" required /></br>
             <label for="desp">Description</label><br>
-            <input class="inputbox" type="text" id="desp" name="desp" placeholder="Enter exam description" minlength="5" maxlength="30" required /></br>
+            <input class="inputbox" type="text" id="desp" name="desp" placeholder="Enter exam description" minlength="5" maxlength="100" required /></br>
             <label for="extime">Exam time</label><br>
             <input class="inputbox" type="datetime-local" id="extime" name="extime" required /></br>
             <label for="subt">Submission time</label><br>

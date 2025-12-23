@@ -1,4 +1,5 @@
 <?php
+session_start();
 include('../config.php');
 
 //Below code to add exam details
@@ -11,14 +12,33 @@ if (isset($_POST["addexm"])) {
     $extime = mysqli_real_escape_string($conn, $_POST["extime"]);
     $subject = mysqli_real_escape_string($conn, $_POST["subject"]);
     $duration = mysqli_real_escape_string($conn, $_POST["duration"]);
-    $sql = "INSERT INTO exm_list (exname, nq, desp, subt, extime, subject, duration) VALUES ('$exname', '$nq', '$desp', '$subt', '$extime', '$subject', '$duration')";
+    $school_id = mysqli_real_escape_string($conn, $_POST["school_id"]);
+    $teacher_id = $_SESSION['user_id'];
+
+    // Verify teacher is enrolled in this school
+    $verify_sql = "SELECT * FROM teacher_schools 
+                   WHERE teacher_id = ? 
+                   AND school_id = ? 
+                   AND enrollment_status = 'active'";
+    $verify_stmt = mysqli_prepare($conn, $verify_sql);
+    mysqli_stmt_bind_param($verify_stmt, "ii", $teacher_id, $school_id);
+    mysqli_stmt_execute($verify_stmt);
+    $verify_result = mysqli_stmt_get_result($verify_stmt);
+
+    if (mysqli_num_rows($verify_result) == 0) {
+        echo "<script>alert('You are not enrolled in this school.');</script>";
+        header("Location: exams.php");
+        exit;
+    }
+
+    $sql = "INSERT INTO exm_list (exname, nq, desp, subt, extime, subject, duration, school_id) VALUES ('$exname', '$nq', '$desp', '$subt', '$extime', '$subject', '$duration', '$school_id')";
     $result = mysqli_query($conn, $sql);
     if ($result) {
         // Get the ID of the newly created exam
         $exam_id = mysqli_insert_id($conn);
 
         // Log the action
-        error_log("Created exam ID $exam_id");
+        error_log("Created exam ID $exam_id for school ID $school_id");
 
         // Instead of redirecting, output a form that auto-submits to addqp.php
         echo "
