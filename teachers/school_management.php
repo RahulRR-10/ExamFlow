@@ -47,9 +47,8 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
     <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        .school-container {
-            padding: 20px;
-            margin-top: 80px;
+        .school-section {
+            padding: 0 20px;
         }
 
         .section-title {
@@ -298,7 +297,8 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
             </div>
         </nav>
 
-        <div class="school-container">
+        <div class="home-content">
+            <div class="school-section">
             <?php if ($success_msg): ?>
                 <div class="alert alert-success"><?php echo htmlspecialchars($success_msg); ?></div>
             <?php endif; ?>
@@ -306,10 +306,6 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
             <?php if ($error_msg): ?>
                 <div class="alert alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
             <?php endif; ?>
-
-            <a href="create_school.php" class="btn btn-create">
-                <i class='bx bx-plus'></i> Create New School
-            </a>
 
             <!-- Enrolled Schools Section -->
             <h2 class="section-title"><i class='bx bx-check-circle'></i> My Schools</h2>
@@ -402,6 +398,7 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
                     <p>You are enrolled in all available schools.</p>
                 </div>
             <?php endif; ?>
+            </div>
         </div>
     </section>
 
