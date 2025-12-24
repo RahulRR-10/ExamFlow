@@ -11,11 +11,13 @@ Your NFT certificate system stores data in **three locations**: IPFS, Blockchain
 IPFS stores the **actual certificate content** in a decentralized manner.
 
 ### A. Certificate Image (PNG file)
+
 **Stored as**: Binary PNG file  
 **Location**: `ipfs://{IpfsHash}`  
 **Gateway URL**: `https://gateway.pinata.cloud/ipfs/{IpfsHash}`
 
 **Pinata Metadata for Image**:
+
 ```json
 {
   "name": "{studentID}-{examName}-{randomNumber}",
@@ -32,11 +34,13 @@ IPFS stores the **actual certificate content** in a decentralized manner.
 ```
 
 ### B. NFT Metadata (JSON file)
+
 **Stored as**: JSON document  
 **Location**: `ipfs://{MetadataHash}`  
 **Gateway URL**: `https://gateway.pinata.cloud/ipfs/{MetadataHash}`
 
 **Complete NFT Metadata Structure**:
+
 ```json
 {
   "name": "{studentID}-{examName}-{randomNumber}",
@@ -109,6 +113,7 @@ IPFS stores the **actual certificate content** in a decentralized manner.
 ### Data Stored On-Chain:
 
 #### Per NFT Token:
+
 ```solidity
 // ERC721 Standard Data
 - tokenId: uint256           // Unique token number (1, 2, 3, ...)
@@ -121,6 +126,7 @@ IPFS stores the **actual certificate content** in a decentralized manner.
 ```
 
 #### What's NOT stored on blockchain:
+
 - ❌ Student names
 - ❌ Exam scores
 - ❌ Certificate images
@@ -151,6 +157,7 @@ CREATE TABLE certificate_nfts (
 ```
 
 **Data Stored**:
+
 - `attempt_id` - Links to the exam attempt
 - `uname` - Student username
 - `transaction_hash` - Ethereum transaction hash (0x1d4f5...)
@@ -193,15 +200,18 @@ CREATE TABLE certificate_nfts (
 ## 🔍 How to View Your NFT Data
 
 ### View IPFS Data:
+
 1. **Image**: `https://gateway.pinata.cloud/ipfs/{ImageHash}`
 2. **Metadata**: `https://gateway.pinata.cloud/ipfs/{MetadataHash}`
 
 ### View Blockchain Data:
+
 1. **Etherscan**: `https://sepolia.etherscan.io/address/0xdBF37882c5a1198ffDc16D7E36272Abf867b2162`
 2. **Transaction**: `https://sepolia.etherscan.io/tx/{transaction_hash}`
 3. **Token**: `https://sepolia.etherscan.io/nft/0xdBF37882c5a1198ffDc16D7E36272Abf867b2162/{tokenId}`
 
 ### View on NFT Marketplaces:
+
 1. **Etherscan NFT Page**: `https://sepolia.etherscan.io/nft/0xdBF37882c5a1198ffDc16D7E36272Abf867b2162/{tokenId}`
 2. **NFTScan Testnet**: `https://testnets.nftscan.com/0xdBF37882c5a1198ffDc16D7E36272Abf867b2162?module=NFTs&tokenId={tokenId}&chainId=11155111`
 3. **Note**: OpenSea has discontinued testnet support as of 2024
@@ -211,18 +221,21 @@ CREATE TABLE certificate_nfts (
 ## 🔒 Data Permanence
 
 ### IPFS (Pinata):
+
 - ✅ **Permanent** as long as pinned
 - Your Pinata account keeps files pinned
 - Files are distributed across IPFS network
 - Can be accessed via any IPFS gateway
 
 ### Blockchain:
+
 - ✅ **Permanently immutable**
 - Cannot be changed or deleted
 - Exists as long as Ethereum exists
 - Verified by thousands of nodes
 
 ### Database:
+
 - ⚠️ **Application-specific**
 - Can be backed up/restored
 - Helps with quick lookups
@@ -232,10 +245,10 @@ CREATE TABLE certificate_nfts (
 
 ## 📋 Summary
 
-| Location | What's Stored | Why |
-|----------|---------------|-----|
-| **IPFS** | Certificate image + metadata JSON | Decentralized storage, permanent, accessible to anyone |
-| **Blockchain** | Token ID + Owner + IPFS URI | Proof of ownership, immutable, trustless verification |
-| **Database** | Transaction details + references | Fast queries, user dashboard, linking to exams |
+| Location       | What's Stored                     | Why                                                    |
+| -------------- | --------------------------------- | ------------------------------------------------------ |
+| **IPFS**       | Certificate image + metadata JSON | Decentralized storage, permanent, accessible to anyone |
+| **Blockchain** | Token ID + Owner + IPFS URI       | Proof of ownership, immutable, trustless verification  |
+| **Database**   | Transaction details + references  | Fast queries, user dashboard, linking to exams         |
 
 **Your deployed contract**: [`0xdBF37882c5a1198ffDc16D7E36272Abf867b2162`](https://sepolia.etherscan.io/address/0xdBF37882c5a1198ffDc16D7E36272Abf867b2162)
