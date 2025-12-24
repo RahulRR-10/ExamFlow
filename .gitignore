@@ -41,6 +41,13 @@ cert-verifier/node_modules/
 
 # Build outputs
 cert-verifier/build/
+artifacts/
+cache/
+typechain/
+typechain-types/
+
+# Hardhat files
+.openzeppelin/
 
 # PHP session files
 sess_*

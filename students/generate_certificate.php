@@ -1049,23 +1049,8 @@ if (mysqli_num_rows($table_check) > 0) {
 
                         <p><strong>Token ID:</strong> <?php echo $nft_data['token_id']; ?></p>
 
-                        <p><strong>View on OpenSea:</strong></p>
-                        <a href="https://testnets.opensea.io/assets/sepolia/<?php echo $nft_data['contract_address']; ?>/<?php echo $nft_data['token_id']; ?>" target="_blank" class="nft-link">
-                            <span style="display: flex; align-items: center; gap: 8px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="10"></circle>
-                                    <line x1="2" y1="12" x2="22" y2="12"></line>
-                                    <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                </svg>
-                                View your NFT on OpenSea
-                            </span>
-                            <?php if (isset($nft_data['is_demo']) && $nft_data['is_demo'] == 1): ?>
-                                <br><span class="status-note"><i>(Demo NFT - may not be found on OpenSea)</i></span>
-                            <?php endif; ?>
-                        </a>
-
                         <p><strong>IPFS Metadata:</strong></p>
-                        <a href="<?php echo $nft_data['metadata_url']; ?>" target="_blank" class="nft-link">
+                        <a href="<?php echo str_replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/', $nft_data['metadata_url']); ?>" target="_blank" class="nft-link">
                             <span style="display: flex; align-items: center; gap: 8px;">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -1074,7 +1059,19 @@ if (mysqli_num_rows($table_check) > 0) {
                                     <line x1="16" y1="17" x2="8" y2="17"></line>
                                     <polyline points="10 9 9 9 8 9"></polyline>
                                 </svg>
-                                View metadata
+                                <?php echo str_replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/', $nft_data['metadata_url']); ?>
+                            </span>
+                        </a>
+
+                        <p><strong>Certificate Image:</strong></p>
+                        <a href="<?php echo str_replace('ipfs://', 'https://gateway.pinata.cloud/ipfs/', $nft_data['image_url']); ?>" target="_blank" class="nft-link">
+                            <span style="display: flex; align-items: center; gap: 8px;">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                View Certificate Image
                             </span>
                         </a>
 

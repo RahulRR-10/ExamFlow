@@ -97,6 +97,10 @@ class Web3Helper {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
             curl_setopt($ch, CURLOPT_POST, true);
+            // SSL options for development (disable SSL verification)
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30); // 30 second timeout
             
             // Get nonce
             $nonceData = json_encode([
@@ -117,10 +121,31 @@ class Web3Helper {
                 throw new Exception('cURL Error: ' . $curlError);
             }
             
+            // Check if response is empty
+            if (empty($nonceResponse)) {
+                error_log("Web3Helper: Empty response from RPC endpoint");
+                throw new Exception('Empty response from RPC endpoint. Please check your SEPOLIA_RPC_URL.');
+            }
+            
+            error_log("Web3Helper: Nonce response: " . $nonceResponse);
+            
             $nonceResult = json_decode($nonceResponse, true);
+            
+            // Check if json_decode failed
+            if ($nonceResult === null) {
+                error_log("Web3Helper: Failed to decode JSON response: " . $nonceResponse);
+                throw new Exception('Invalid JSON response from RPC endpoint');
+            }
+            
             if (isset($nonceResult['error'])) {
                 error_log("Web3Helper: JSON-RPC Error in nonce request: " . json_encode($nonceResult['error']));
                 throw new Exception('JSON-RPC Error: ' . $nonceResult['error']['message']);
+            }
+            
+            // Check if result exists
+            if (!isset($nonceResult['result'])) {
+                error_log("Web3Helper: No result field in response: " . json_encode($nonceResult));
+                throw new Exception('Invalid response format from RPC endpoint');
             }
             
             $nonce = $nonceResult['result'];
@@ -138,8 +163,20 @@ class Web3Helper {
             
             curl_setopt($ch, CURLOPT_POSTFIELDS, $gasPriceData);
             $gasPriceResponse = curl_exec($ch);
-            $gasPriceResult = json_decode($gasPriceResponse, true);
-            $gasPrice = isset($gasPriceResult['result']) ? $gasPriceResult['result'] : '0x3b9aca00';
+            
+            // Validate gas price response
+            if (empty($gasPriceResponse)) {
+                error_log("Web3Helper: Empty gas price response, using default");
+                $gasPrice = '0x3b9aca00'; // Default 1 gwei
+            } else {
+                $gasPriceResult = json_decode($gasPriceResponse, true);
+                if ($gasPriceResult === null || !isset($gasPriceResult['result'])) {
+                    error_log("Web3Helper: Invalid gas price response, using default");
+                    $gasPrice = '0x3b9aca00'; // Default 1 gwei
+                } else {
+                    $gasPrice = $gasPriceResult['result'];
+                }
+            }
             
             error_log("Web3Helper: Got gas price: " . $gasPrice);
             

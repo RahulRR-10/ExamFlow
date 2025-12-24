@@ -41,6 +41,7 @@ try {
     include '../config.php';
     require_once 'Web3Helper.php';
     require_once '../utils/mailer.php';
+    require_once '../utils/env_loader.php';
 } catch (Exception $e) {
     header('Content-Type: application/json');
     echo json_encode([
@@ -50,16 +51,19 @@ try {
     exit();
 }
 
-// Direct blockchain configuration values (hardcoded)
-// The nft/.env file is no longer required with this approach
+// Load environment variables from .env file
+$env = loadEnv(__DIR__ . '/../.env');
+
+// Get blockchain configuration from .env
 $env_vars = [
-    'REACT_APP_PRIVATE_KEY' => '9d534e074ad4794147941c272511656e5dbbe9044cc69ef3420dc077a347ce57',
-    'REACT_APP_SEPOLIA_RPC_URL' => 'https://eth-sepolia.g.alchemy.com/v2/MGXla7xn3bEXIthLSYDJSw24tWE_EWl_',
-    'REACT_APP_INFURA_PROJECT_ID' => '932d4a93ba314e2d924642fc81f98a05'
+    'WALLET_PRIVATE_KEY' => env('WALLET_PRIVATE_KEY', ''),
+    'SEPOLIA_RPC_URL' => env('SEPOLIA_RPC_URL', ''),
+    'INFURA_PROJECT_ID' => env('INFURA_PROJECT_ID', ''),
+    'NFT_CONTRACT_ADDRESS' => env('NFT_CONTRACT_ADDRESS', '0xfE9c584F6360966B949a8804414B07C546a6F69F')
 ];
 
 // Log the configuration 
-error_log("mint_nft.php: Using hardcoded blockchain configuration values");
+error_log("mint_nft.php: Loaded blockchain configuration from .env file");
 
 // Get JSON data from POST request
 try {
@@ -114,13 +118,13 @@ if (mysqli_num_rows($nft_result) > 0) {
 }
 
 // Set up blockchain configuration
-$privateKey = $env_vars['REACT_APP_PRIVATE_KEY'] ?? '';
-$rpcUrl = $env_vars['REACT_APP_SEPOLIA_RPC_URL'] ?? '';
-$contractAddress = '0xfE9c584F6360966B949a8804414B07C546a6F69F'; // From blockchain.md
+$privateKey = $env_vars['WALLET_PRIVATE_KEY'] ?? '';
+$rpcUrl = $env_vars['SEPOLIA_RPC_URL'] ?? '';
+$contractAddress = $env_vars['NFT_CONTRACT_ADDRESS'] ?? '0xfE9c584F6360966B949a8804414B07C546a6F69F';
 
 if (empty($privateKey) || empty($rpcUrl)) {
     header('Content-Type: application/json');
-    echo json_encode(['success' => false, 'error' => 'Missing blockchain configuration']);
+    echo json_encode(['success' => false, 'error' => 'Missing blockchain configuration. Please check your .env file.']);
     exit();
 }
 

@@ -1,8 +1,12 @@
 <?php
 include('config.php');
 
+// Load environment variables
+require_once __DIR__ . '/utils/env_loader.php';
+loadEnv(__DIR__ . '/.env');
+
 // Groq API configuration
-$grok_api_key = "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";
+$grok_api_key = env('GROQ_API_KEY', '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');
 $grok_model = "llama-3.3-70b-versatile";
 
 

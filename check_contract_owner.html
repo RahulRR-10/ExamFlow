@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Check NFT Contract Owner</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+</head>
+<body>
+    <h1>Check Contract Owner</h1>
+    <button onclick="checkOwner()">Check Owner</button>
+    <div id="result"></div>
+
+    <script>
+        async function checkOwner() {
+            const contractAddress = '0xfE9c584F6360966B949a8804414B07C546a6F69F';
+            const rpcUrl = 'https://sepolia.infura.io/v3/e3c8c679d881470c806ac54e9a362558';
+            
+            const provider = new ethers.providers.JsonRpcProvider(rpcUrl);
+            
+            const abi = ["function owner() public view returns (address)"];
+            const contract = new ethers.Contract(contractAddress, abi, provider);
+            
+            try {
+                const owner = await contract.owner();
+                document.getElementById('result').innerHTML = `
+                    <p><strong>Contract Owner:</strong> ${owner}</p>
+                    <p><strong>Your Wallet:</strong> 0xB75A3ff17A9c8b730B0942F405454B0738e6eCFe</p>
+                    <p><strong>Match:</strong> ${owner.toLowerCase() === '0xB75A3ff17A9c8b730B0942F405454B0738e6eCFe'.toLowerCase() ? '✅ YES - You can mint!' : '❌ NO - You cannot mint with this wallet'}</p>
+                `;
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
