@@ -271,6 +271,12 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
                 </a>
             </li>
             <li>
+                <a href="teaching_activity.php">
+                    <i class='bx bx-map-pin'></i>
+                    <span class="links_name">Teaching Activity</span>
+                </a>
+            </li>
+            <li>
                 <a href="settings.php">
                     <i class='bx bx-cog'></i>
                     <span class="links_name">Settings</span>

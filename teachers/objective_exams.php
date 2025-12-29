@@ -255,6 +255,7 @@ $error_msg = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
             <li><a href="records.php"><i class='bx bxs-user-circle'></i><span class="links_name">Records</span></a></li>
             <li><a href="messages.php"><i class='bx bx-message'></i><span class="links_name">Messages</span></a></li>
             <li><a href="school_management.php"><i class='bx bx-building-house'></i><span class="links_name">Schools</span></a></li>
+            <li><a href="teaching_activity.php"><i class='bx bx-map-pin'></i><span class="links_name">Teaching Activity</span></a></li>
             <li><a href="settings.php"><i class='bx bx-cog'></i><span class="links_name">Settings</span></a></li>
             <li><a href="help.php"><i class='bx bx-help-circle'></i><span class="links_name">Help</span></a></li>
             <li class="log_out"><a href="../logout.php"><i class='bx bx-log-out-circle'></i><span class="links_name">Log out</span></a></li>

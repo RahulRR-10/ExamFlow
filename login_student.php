@@ -83,6 +83,8 @@ if (isset($_POST["signin"])) {
 				<div class="overlay-panel overlay-right">
 					<p>Login as teacher</p>
 					<button style="background-color:#ffffff;border-color:black;"><a href="login_teacher.php">Continue</a></button>
+					<p style="margin-top:15px;">Login as admin</p>
+					<button style="background-color:#ffffff;border-color:black;"><a href="login_admin.php" style="color:#667eea;">Admin Portal</a></button>
 				</div>
 			</div>
 		</div>
