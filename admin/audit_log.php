@@ -106,7 +106,7 @@ $action_types = mysqli_query($conn, $actions_sql);
             <div class="card-body">
                 <?php if (mysqli_num_rows($logs) === 0): ?>
                     <div class="empty-state">
-                        <span class="empty-icon">📋</span>
+                        <span class="empty-icon"><i class='bx bx-clipboard'></i></span>
                         <h3>No log entries found</h3>
                         <p>Admin activities will appear here.</p>
                     </div>

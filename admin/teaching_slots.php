@@ -302,7 +302,7 @@ $slots = mysqli_query($conn, $slots_sql);
     
     <div class="main-content">
         <div class="dashboard-header">
-            <h1>📅 Teaching Slots</h1>
+            <h1><i class='bx bx-calendar-event'></i> Teaching Slots</h1>
             <p class="subtitle">Create and manage teaching time slots for schools</p>
         </div>
         
@@ -351,7 +351,7 @@ $slots = mysqli_query($conn, $slots_sql);
         <!-- Slots Table -->
         <div class="card">
             <div class="card-header">
-                <h2>📋 All Slots</h2>
+                <h2><i class='bx bx-list-ul'></i> All Slots</h2>
             </div>
             <div class="card-body">
                 <?php if (mysqli_num_rows($slots) > 0): ?>
@@ -386,7 +386,7 @@ $slots = mysqli_query($conn, $slots_sql);
                                     <div class="enrollment-fill" style="width: <?= min(100, $fill_pct) ?>%"></div>
                                 </div>
                                 <?php if ($slot['enrolled_teachers']): ?>
-                                <div class="enrolled-list">👤 <?= htmlspecialchars($slot['enrolled_teachers']) ?></div>
+                                <div class="enrolled-list"><i class='bx bx-user'></i> <?= htmlspecialchars($slot['enrolled_teachers']) ?></div>
                                 <?php endif; ?>
                             </td>
                             <td>
@@ -483,7 +483,7 @@ $slots = mysqli_query($conn, $slots_sql);
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>✏️ Edit Teaching Slot</h2>
+                <h2><i class='bx bx-edit'></i> Edit Teaching Slot</h2>
                 <button class="close-btn" onclick="closeEditModal()">&times;</button>
             </div>
             <form method="post">
@@ -586,7 +586,7 @@ $slots = mysqli_query($conn, $slots_sql);
             // Show enrollment info
             const infoDiv = document.getElementById('edit_enrollment_info');
             if (slot.teachers_enrolled > 0) {
-                infoDiv.textContent = `⚠️ This slot has ${slot.teachers_enrolled} enrolled teacher(s): ${slot.enrolled_teachers || 'N/A'}`;
+                infoDiv.textContent = `⚠ This slot has ${slot.teachers_enrolled} enrolled teacher(s): ${slot.enrolled_teachers || 'N/A'}`;
                 infoDiv.style.display = 'block';
             } else {
                 infoDiv.style.display = 'none';

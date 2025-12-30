@@ -246,7 +246,7 @@ if (isset($_GET['edit'])) {
     
     <div class="main-content">
         <div class="dashboard-header">
-            <h1>🏫 School Management</h1>
+            <h1><i class='bx bx-building'></i> School Management</h1>
             <p class="subtitle">Add, edit, and manage schools for teaching slots</p>
         </div>
         
@@ -260,7 +260,7 @@ if (isset($_GET['edit'])) {
         
         <div class="card">
             <div class="card-header">
-                <h2>📋 All Schools</h2>
+                <h2><i class='bx bx-list-ul'></i> All Schools</h2>
                 <button class="btn btn-primary" onclick="openAddModal()">+ Add New School</button>
             </div>
             <div class="card-body">
@@ -273,16 +273,16 @@ if (isset($_GET['edit'])) {
                                 <span class="school-type-badge"><?= ucfirst($school['school_type'] ?? 'secondary') ?></span>
                             </h3>
                             <p class="text-muted">
-                                📍 <?= htmlspecialchars($school['full_address'] ?: 'No address provided') ?>
+                                <i class='bx bx-map-pin'></i> <?= htmlspecialchars($school['full_address'] ?: 'No address provided') ?>
                             </p>
                             <p class="text-muted">
-                                🎯 GPS: <?= number_format($school['gps_latitude'], 6) ?>, <?= number_format($school['gps_longitude'], 6) ?>
+                                <i class='bx bx-target-lock'></i> GPS: <?= number_format($school['gps_latitude'], 6) ?>, <?= number_format($school['gps_longitude'], 6) ?>
                                 | Radius: <?= $school['allowed_radius'] ?>m
                             </p>
                             <?php if ($school['contact_person']): ?>
                             <p class="text-muted">
-                                👤 <?= htmlspecialchars($school['contact_person']) ?>
-                                <?= $school['contact_phone'] ? '| 📞 ' . htmlspecialchars($school['contact_phone']) : '' ?>
+                                <i class='bx bx-user'></i> <?= htmlspecialchars($school['contact_person']) ?>
+                                <?= $school['contact_phone'] ? '| <i class="bx bx-phone"></i> ' . htmlspecialchars($school['contact_phone']) : '' ?>
                             </p>
                             <?php endif; ?>
                             <div class="school-stats">
@@ -353,7 +353,7 @@ if (isset($_GET['edit'])) {
                     </div>
                     
                     <div class="form-group full-width">
-                        <label>📍 Click on map to set location</label>
+                        <label><i class='bx bx-map-pin'></i> Click on map to set location</label>
                         <div id="add-map"></div>
                     </div>
                     
@@ -395,7 +395,7 @@ if (isset($_GET['edit'])) {
     <div id="editModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>✏️ Edit School</h2>
+                <h2><i class='bx bx-edit'></i> Edit School</h2>
                 <button class="close-btn" onclick="closeEditModal()">&times;</button>
             </div>
             <form method="post">
@@ -430,7 +430,7 @@ if (isset($_GET['edit'])) {
                     </div>
                     
                     <div class="form-group full-width">
-                        <label>📍 Click on map to update location</label>
+                        <label><i class='bx bx-map-pin'></i> Click on map to update location</label>
                         <div id="edit-map"></div>
                     </div>
                     

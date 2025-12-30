@@ -271,7 +271,7 @@ $status = verifyTeachingSlotsDatabase($conn);
                             <span class="check-name"><?= htmlspecialchars($table) ?></span>
                             <span class="check-status">
                                 <?php if ($info['exists']): ?>
-                                    <?= $info['columns_ok'] ? '✓ Complete' : '⚠ Missing columns' ?>
+                                    <?= $info['columns_ok'] ? '✓ Complete' : '<i class="bx bx-error"></i> Missing columns' ?>
                                 <?php else: ?>
                                     ✗ Not found
                                 <?php endif; ?>

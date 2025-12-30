@@ -300,7 +300,7 @@ $recent_enrollments = mysqli_query($conn, $recent_sql);
     
     <div class="main-content">
         <div class="dashboard-header">
-            <h1>📊 Slot Dashboard</h1>
+            <h1><i class='bx bx-bar-chart-alt-2'></i> Slot Dashboard</h1>
             <p class="subtitle">Monitor teaching slots and teacher enrollments</p>
         </div>
         
@@ -358,7 +358,7 @@ $recent_enrollments = mysqli_query($conn, $recent_sql);
             <!-- Upcoming Slots -->
             <div class="card">
                 <div class="card-header">
-                    <h2>📅 Upcoming Slots</h2>
+                    <h2><i class='bx bx-calendar'></i> Upcoming Slots</h2>
                     <a href="teaching_slots.php" class="btn btn-primary btn-sm">View All</a>
                 </div>
                 <div class="card-body">
@@ -411,7 +411,7 @@ $recent_enrollments = mysqli_query($conn, $recent_sql);
             <!-- Recent Enrollments -->
             <div class="card">
                 <div class="card-header">
-                    <h2>👥 Recent Enrollments</h2>
+                    <h2><i class='bx bx-group'></i> Recent Enrollments</h2>
                 </div>
                 <div class="card-body">
                     <?php if (mysqli_num_rows($recent_enrollments) > 0): ?>
@@ -455,7 +455,7 @@ $recent_enrollments = mysqli_query($conn, $recent_sql);
         <!-- School-wise Breakdown -->
         <div class="card" style="margin-top: 25px;">
             <div class="card-header">
-                <h2>🏫 School-wise Breakdown</h2>
+                <h2><i class='bx bx-building'></i> School-wise Breakdown</h2>
             </div>
             <div class="card-body">
                 <?php if (mysqli_num_rows($school_stats) > 0): ?>

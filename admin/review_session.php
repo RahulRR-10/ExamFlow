@@ -250,7 +250,7 @@ if ($session['photo_taken_at']) {
         }
         .panel-header {
             padding: 16px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+            background: #7C0A02;
             color: white;
         }
         .panel-header h2 {
@@ -398,11 +398,11 @@ if ($session['photo_taken_at']) {
                             <div class="quick-badges">
                                 <?php if ($session['gps_latitude'] && $session['gps_longitude']): ?>
                                 <span class="quick-badge <?= $distance_ok ? 'ok' : 'bad' ?>">
-                                    📍 <?= number_format($distance) ?>m <?= $distance_ok ? '✓' : '✗' ?>
+                                    <i class='bx bx-map-pin'></i> <?= number_format($distance) ?>m <?= $distance_ok ? '✓' : '✗' ?>
                                 </span>
                                 <?php endif; ?>
                                 <span class="quick-badge <?= $date_match ? 'ok' : 'warn' ?>">
-                                    📅 <?= $date_match ? 'Date ✓' : 'Date ≠' ?>
+                                    <i class='bx bx-calendar'></i> <?= $date_match ? 'Date ✓' : 'Date ≠' ?>
                                 </span>
                             </div>
                         </div>
@@ -411,14 +411,14 @@ if ($session['photo_taken_at']) {
                 
                 <?php if ($session['gps_latitude'] && $session['gps_longitude'] && $session['school_lat'] && $session['school_lng']): ?>
                 <div class="map-card">
-                    <h4>📍 Location Verification</h4>
+                    <h4><i class='bx bx-map'></i> Location Verification</h4>
                     <div id="map"></div>
                 </div>
                 <?php endif; ?>
                 
                 <?php else: ?>
                 <div class="no-photo">
-                    <div style="font-size: 48px; margin-bottom: 15px;">📷</div>
+                    <div style="font-size: 48px; margin-bottom: 15px;"><i class='bx bx-camera'></i></div>
                     <h3>No Photo Uploaded</h3>
                     <p style="color: var(--text-muted);">Teacher has not submitted a photo yet.</p>
                 </div>
@@ -430,7 +430,7 @@ if ($session['photo_taken_at']) {
                 <!-- School Info -->
                 <div class="panel-card">
                     <div class="panel-header">
-                        <h2>🏫 <?= htmlspecialchars($session['school_name']) ?></h2>
+                        <h2><i class='bx bx-building'></i> <?= htmlspecialchars($session['school_name']) ?></h2>
                         <p><?= htmlspecialchars($session['full_address'] ?: 'No address provided') ?></p>
                     </div>
                     <div class="panel-body">
@@ -468,7 +468,7 @@ if ($session['photo_taken_at']) {
                         
                         <!-- Verification Checklist -->
                         <div class="checklist">
-                            <div class="checklist-title">✅ Verification Checklist</div>
+                            <div class="checklist-title"><i class='bx bx-check-circle'></i> Verification Checklist</div>
                             <div class="check-row">
                                 <span class="check-icon <?= $session['photo_path'] ? 'pass' : 'fail' ?>">
                                     <?= $session['photo_path'] ? '✓' : '✗' ?>
@@ -496,7 +496,7 @@ if ($session['photo_taken_at']) {
                     <div class="panel-body">
                         <?php if ($session['verified_at']): ?>
                         <div class="prev-decision">
-                            <strong><?= $session['session_status'] === 'approved' ? '✅ Approved' : '❌ Rejected' ?></strong>
+                            <strong><?= $session['session_status'] === 'approved' ? '<i class="bx bx-check-circle"></i> Approved' : '<i class="bx bx-x-circle"></i> Rejected' ?></strong>
                             by <?= htmlspecialchars($session['verified_by_name']) ?><br>
                             <small><?= date('M j, Y h:i A', strtotime($session['verified_at'])) ?></small>
                             <?php if ($session['admin_remarks']): ?>
@@ -519,7 +519,7 @@ if ($session['photo_taken_at']) {
                             </div>
                         </form>
                         <?php elseif ($session['session_status'] === 'approved'): ?>
-                        <div class="alert alert-success" style="margin: 0;">✅ This session has been approved.</div>
+                        <div class="alert alert-success" style="margin: 0;"><i class='bx bx-check-circle'></i> This session has been approved.</div>
                         <?php elseif ($session['session_status'] === 'rejected'): ?>
                         <form method="POST" class="action-form">
                             <input type="hidden" name="session_id" value="<?= $session_id ?>">
@@ -558,7 +558,7 @@ if ($session['photo_taken_at']) {
         L.marker([schoolLat, schoolLng], {
             icon: L.divIcon({
                 className: 'school-marker',
-                html: '<div style="background:#667eea;color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);">🏫</div>'
+                html: '<div style="background:#7C0A02;color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);"><i class=\'bx bx-building-house\'></i></div>'
             })
         }).addTo(map).bindPopup('<b>School Location</b>');
         
@@ -574,7 +574,7 @@ if ($session['photo_taken_at']) {
         L.marker([photoLat, photoLng], {
             icon: L.divIcon({
                 className: 'photo-marker',
-                html: '<div style="background:' + (distanceOk ? '#10b981' : '#ef4444') + ';color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);">📷</div>'
+                html: '<div style="background:' + (distanceOk ? '#10b981' : '#ef4444') + ';color:white;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;border:2px solid white;box-shadow:0 2px 5px rgba(0,0,0,0.3);"><i class="bx bx-camera"></i></div>'
             })
         }).addTo(map).bindPopup('<b>Photo Location</b><br>Distance: <?= number_format($distance) ?>m');
         

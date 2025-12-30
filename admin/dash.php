@@ -90,13 +90,13 @@ if (function_exists('getAdminAuditLog')) {
     
     <div class="main-content">
         <div class="dashboard-header">
-            <h1>Welcome, <?= htmlspecialchars($admin_name) ?> 👋</h1>
+            <h1>Welcome, <?= htmlspecialchars($admin_name) ?></h1>
             <p class="subtitle">Teaching Slots & Session Verification Dashboard</p>
         </div>
         
         <?php if (!$table_exists): ?>
         <div class="alert alert-warning">
-            <h3>⚠️ Setup Required</h3>
+            <h3>Setup Required</h3>
             <p>The teaching slots tables have not been created yet.</p>
             <p>Please run <code>db/migrate_teaching_slots.sql</code> to set up the required tables.</p>
             <p style="margin-top: 10px;">
@@ -107,7 +107,7 @@ if (function_exists('getAdminAuditLog')) {
         
         <div class="stats-grid">
             <div class="stat-card pending">
-                <div class="stat-icon">📋</div>
+                <div class="stat-icon"><i class='bx bx-clipboard'></i></div>
                 <div class="stat-info">
                     <h3><?= $stats['pending'] ?></h3>
                     <p>Pending Reviews</p>
@@ -118,7 +118,7 @@ if (function_exists('getAdminAuditLog')) {
             </div>
             
             <div class="stat-card warning">
-                <div class="stat-icon">⚠️</div>
+                <div class="stat-icon"><i class='bx bx-error'></i></div>
                 <div class="stat-info">
                     <h3><?= $stats['distance_issues'] ?></h3>
                     <p>Distance Issues</p>
@@ -129,7 +129,7 @@ if (function_exists('getAdminAuditLog')) {
             </div>
             
             <div class="stat-card info">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon"><i class='bx bx-calendar'></i></div>
                 <div class="stat-info">
                     <h3><?= $stats['today'] ?></h3>
                     <p>Submitted Today</p>
@@ -137,7 +137,7 @@ if (function_exists('getAdminAuditLog')) {
             </div>
             
             <div class="stat-card success">
-                <div class="stat-icon">✅</div>
+                <div class="stat-icon"><i class='bx bx-check-circle'></i></div>
                 <div class="stat-info">
                     <h3><?= $stats['my_today'] ?></h3>
                     <p>Verified by Me Today</p>
@@ -148,7 +148,7 @@ if (function_exists('getAdminAuditLog')) {
         <!-- Slot Stats Row -->
         <div class="stats-grid" style="margin-top: 20px;">
             <div class="stat-card">
-                <div class="stat-icon">📅</div>
+                <div class="stat-icon"><i class='bx bx-calendar-check'></i></div>
                 <div class="stat-info">
                     <h3><?= $stats['total_slots'] ?></h3>
                     <p>Total Slots</p>
@@ -157,7 +157,7 @@ if (function_exists('getAdminAuditLog')) {
             </div>
             
             <div class="stat-card">
-                <div class="stat-icon">⏰</div>
+                <div class="stat-icon"><i class='bx bx-time'></i></div>
                 <div class="stat-info">
                     <h3><?= $stats['upcoming_slots'] ?></h3>
                     <p>Upcoming Slots</p>
@@ -186,7 +186,7 @@ if (function_exists('getAdminAuditLog')) {
             <!-- Summary Card -->
             <div class="card">
                 <div class="card-header">
-                    <h2>📊 Verification Summary</h2>
+                    <h2>Verification Summary</h2>
                 </div>
                 <div class="card-body">
                     <div class="summary-stats">
@@ -209,7 +209,7 @@ if (function_exists('getAdminAuditLog')) {
             <!-- Recent Activity -->
             <div class="card">
                 <div class="card-header">
-                    <h2>🕐 My Recent Activity</h2>
+                    <h2>My Recent Activity</h2>
                 </div>
                 <div class="card-body">
                     <?php if (empty($audit_logs)): ?>
@@ -232,7 +232,7 @@ if (function_exists('getAdminAuditLog')) {
         <!-- Recent Pending Sessions -->
         <div class="card full-width">
             <div class="card-header">
-                <h2>📷 Recent Pending Sessions</h2>
+                <h2>Recent Pending Sessions</h2>
                 <a href="pending_sessions.php" class="btn btn-primary btn-sm">View All</a>
             </div>
             <div class="card-body">
@@ -269,7 +269,7 @@ if (function_exists('getAdminAuditLog')) {
                             <td>
                                 <?php if ($row['distance_from_school'] !== null): ?>
                                     <?php if ($row['distance_from_school'] > 500): ?>
-                                        <span class="badge badge-warning">⚠️ <?= number_format($row['distance_from_school']) ?>m</span>
+                                        <span class="badge badge-warning"><i class='bx bx-error'></i> <?= number_format($row['distance_from_school']) ?>m</span>
                                     <?php else: ?>
                                         <span class="badge badge-success">✓ <?= number_format($row['distance_from_school']) ?>m</span>
                                     <?php endif; ?>
@@ -288,7 +288,7 @@ if (function_exists('getAdminAuditLog')) {
                     </tbody>
                 </table>
                 <?php else: ?>
-                    <p class="text-muted text-center">No pending sessions to review. 🎉</p>
+                    <p class="text-muted text-center">No pending sessions to review. <i class='bx bx-party'></i></p>
                 <?php endif; ?>
             </div>
         </div>

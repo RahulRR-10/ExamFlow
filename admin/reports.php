@@ -338,11 +338,11 @@ foreach ($hourlyDist as $h) {
     <div class="main-content">
         <div class="page-header">
             <div>
-                <h1>📊 Reports & Analytics</h1>
+                <h1><i class='bx bx-bar-chart-alt-2'></i> Reports & Analytics</h1>
                 <p class="subtitle">Teaching Activity Verification Statistics</p>
             </div>
             <a href="export_report.php?start_date=<?= $startDate ?>&end_date=<?= $endDate ?>&school_id=<?= $schoolFilter ?>" class="export-btn">
-                📥 Export CSV
+                <i class='bx bx-download'></i> Export CSV
             </a>
         </div>
 
@@ -403,13 +403,13 @@ foreach ($hourlyDist as $h) {
         <!-- Charts -->
         <div class="charts-grid">
             <div class="chart-card">
-                <h3>📈 Submission Trend</h3>
+                <h3><i class='bx bx-trending-up'></i> Submission Trend</h3>
                 <div class="chart-container">
                     <canvas id="trendChart"></canvas>
                 </div>
             </div>
             <div class="chart-card">
-                <h3>🕐 Upload Time Distribution</h3>
+                <h3><i class='bx bx-time'></i> Upload Time Distribution</h3>
                 <div class="chart-container">
                     <canvas id="hourlyChart"></canvas>
                 </div>
@@ -418,13 +418,13 @@ foreach ($hourlyDist as $h) {
 
         <div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
             <div class="chart-card">
-                <h3>📊 Verification Status</h3>
+                <h3><i class='bx bx-pie-chart-alt-2'></i> Verification Status</h3>
                 <div class="chart-container" style="height: 250px;">
                     <canvas id="statusChart"></canvas>
                 </div>
             </div>
             <div class="chart-card">
-                <h3>📍 Location Match Status</h3>
+                <h3><i class='bx bx-map-pin'></i> Location Match Status</h3>
                 <div class="chart-container" style="height: 250px;">
                     <canvas id="locationChart"></canvas>
                 </div>
@@ -435,7 +435,7 @@ foreach ($hourlyDist as $h) {
         <div class="tables-grid">
             <!-- Top Teachers -->
             <div class="table-card">
-                <h3>👨‍🏫 Top Teachers by Submissions</h3>
+                <h3><i class='bx bx-user'></i> Top Teachers by Submissions</h3>
                 <?php if (empty($topTeachers)): ?>
                 <p style="color: #666; text-align: center; padding: 20px;">No data available</p>
                 <?php else: ?>
@@ -476,7 +476,7 @@ foreach ($hourlyDist as $h) {
 
             <!-- School Stats -->
             <div class="table-card">
-                <h3>🏫 Submissions by School</h3>
+                <h3><i class='bx bx-building'></i> Submissions by School</h3>
                 <?php if (empty($schoolStats)): ?>
                 <p style="color: #666; text-align: center; padding: 20px;">No data available</p>
                 <?php else: ?>
@@ -505,7 +505,7 @@ foreach ($hourlyDist as $h) {
 
             <!-- Admin Stats -->
             <div class="table-card">
-                <h3>👤 Admin Verification Activity</h3>
+                <h3><i class='bx bx-user'></i> Admin Verification Activity</h3>
                 <?php if (empty($adminStats)): ?>
                 <p style="color: #666; text-align: center; padding: 20px;">No verifications in this period</p>
                 <?php else: ?>

@@ -262,7 +262,7 @@ $activeTab = $_GET['tab'] ?? 'general';
     <div class="main-content">
         <div class="page-header">
             <div>
-                <h1>⚙️ Verification Settings</h1>
+                <h1><i class='bx bx-cog'></i> Verification Settings</h1>
                 <p class="subtitle">Configure location validation and upload policies</p>
             </div>
         </div>
@@ -302,13 +302,13 @@ $activeTab = $_GET['tab'] ?? 'general';
         <!-- Tabs -->
         <div class="tabs">
             <button class="tab-btn <?= $activeTab === 'general' ? 'active' : '' ?>" onclick="showTab('general')">
-                📋 General Settings
+                <i class='bx bx-cog'></i> General Settings
             </button>
             <button class="tab-btn <?= $activeTab === 'schools' ? 'active' : '' ?>" onclick="showTab('schools')">
-                🏫 School Locations
+                <i class='bx bx-building'></i> School Locations
             </button>
             <button class="tab-btn <?= $activeTab === 'limits' ? 'active' : '' ?>" onclick="showTab('limits')">
-                ⏱️ Rate Limits
+                <i class='bx bx-stopwatch'></i> Rate Limits
             </button>
         </div>
 
@@ -320,7 +320,7 @@ $activeTab = $_GET['tab'] ?? 'general';
                 <div class="settings-grid">
                     <!-- Location Settings -->
                     <div class="setting-card">
-                        <h3>📍 Location Validation</h3>
+                        <h3><i class='bx bx-map-pin'></i> Location Validation</h3>
 
                         <div class="setting-group">
                             <label>Default Validation Radius (meters)</label>
@@ -357,7 +357,7 @@ $activeTab = $_GET['tab'] ?? 'general';
 
                     <!-- Date Validation -->
                     <div class="setting-card">
-                        <h3>📅 Date Validation</h3>
+                        <h3><i class='bx bx-calendar'></i> Date Validation</h3>
 
                         <div class="setting-group">
                             <label>
@@ -394,7 +394,7 @@ $activeTab = $_GET['tab'] ?? 'general';
 
                     <!-- Upload Settings -->
                     <div class="setting-card">
-                        <h3>📤 Upload Settings</h3>
+                        <h3><i class='bx bx-upload'></i> Upload Settings</h3>
 
                         <div class="setting-group">
                             <label>Maximum File Size (MB)</label>
@@ -432,7 +432,7 @@ $activeTab = $_GET['tab'] ?? 'general';
 
                 <div style="margin-top: 25px;">
                     <button type="submit" class="btn btn-primary" style="padding: 12px 30px;">
-                        💾 Save Settings
+                        <i class='bx bx-save'></i> Save Settings
                     </button>
                 </div>
             </form>
@@ -475,7 +475,7 @@ $activeTab = $_GET['tab'] ?? 'general';
                                 <td><?= htmlspecialchars($school['address'] ?? '—') ?></td>
                                 <td>
                                     <button class="btn btn-sm" onclick="openLocationModal(<?= htmlspecialchars(json_encode($school)) ?>)">
-                                        ✏️ Edit
+                                        <i class='bx bx-edit'></i> Edit
                                     </button>
                                 </td>
                             </tr>
@@ -501,7 +501,7 @@ $activeTab = $_GET['tab'] ?? 'general';
 
                 <?php if (empty($teachersAtLimit)): ?>
                 <div class="empty-state" style="padding: 40px;">
-                    <span class="empty-icon">✅</span>
+                    <span class="empty-icon"><i class='bx bx-check-circle'></i></span>
                     <h3>No Rate Limits Reached</h3>
                     <p>No teachers have reached their daily upload limit today.</p>
                 </div>
@@ -545,7 +545,7 @@ $activeTab = $_GET['tab'] ?? 'general';
     <div id="locationModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h2>📍 Edit School Location</h2>
+                <h2><i class='bx bx-map-pin'></i> Edit School Location</h2>
                 <button class="modal-close" onclick="closeLocationModal()">&times;</button>
             </div>
 
@@ -583,12 +583,12 @@ $activeTab = $_GET['tab'] ?? 'general';
                 </div>
 
                 <p class="setting-description" style="margin: 15px 0;">
-                    💡 Tip: Use Google Maps to find coordinates. Right-click on the school location and select "What's here?" to see coordinates.
+                    <i class='bx bx-bulb'></i> Tip: Use Google Maps to find coordinates. Right-click on the school location and select "What's here?" to see coordinates.
                 </p>
 
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="submit" class="btn btn-primary" style="flex: 1;">
-                        💾 Save Location
+                        <i class='bx bx-save'></i> Save Location
                     </button>
                     <button type="button" class="btn" onclick="closeLocationModal()" style="flex: 1;">
                         Cancel

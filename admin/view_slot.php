@@ -280,7 +280,7 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
         <div class="slot-header-card">
             <div style="display: flex; justify-content: space-between; align-items: flex-start;">
                 <div>
-                    <h1>🏫 <?= htmlspecialchars($slot['school_name']) ?></h1>
+                    <h1><i class='bx bx-building'></i> <?= htmlspecialchars($slot['school_name']) ?></h1>
                     <p style="opacity: 0.9;"><?= htmlspecialchars($slot['full_address'] ?: 'No address provided') ?></p>
                 </div>
                 <div style="text-align: right;">
@@ -295,15 +295,15 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
             
             <div class="slot-meta">
                 <div class="slot-meta-item">
-                    📅 <?= date('l, F j, Y', strtotime($slot['slot_date'])) ?>
+                    <i class='bx bx-calendar'></i> <?= date('l, F j, Y', strtotime($slot['slot_date'])) ?>
                 </div>
                 <div class="slot-meta-item">
-                    🕐 <?= date('h:i A', strtotime($slot['start_time'])) ?> - <?= date('h:i A', strtotime($slot['end_time'])) ?>
+                    <i class='bx bx-time'></i> <?= date('h:i A', strtotime($slot['start_time'])) ?> - <?= date('h:i A', strtotime($slot['end_time'])) ?>
                 </div>
                 <?php if ($slot['contact_person']): ?>
                 <div class="slot-meta-item">
-                    👤 <?= htmlspecialchars($slot['contact_person']) ?>
-                    <?= $slot['contact_phone'] ? ' | 📞 ' . htmlspecialchars($slot['contact_phone']) : '' ?>
+                    <i class='bx bx-user'></i> <?= htmlspecialchars($slot['contact_person']) ?>
+                    <?= $slot['contact_phone'] ? ' | <i class="bx bx-phone"></i> ' . htmlspecialchars($slot['contact_phone']) : '' ?>
                 </div>
                 <?php endif; ?>
             </div>
@@ -318,9 +318,9 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
                 </div>
                 <div class="capacity-text">
                     <?php if ($slot['teachers_enrolled'] >= $slot['teachers_required']): ?>
-                    ✅ Slot is fully staffed
+                    <i class='bx bx-check-circle'></i> Slot is fully staffed
                     <?php else: ?>
-                    ⚠️ <?= $slot['teachers_required'] - $slot['teachers_enrolled'] ?> more teacher(s) needed
+                    <i class='bx bx-error'></i> <?= $slot['teachers_required'] - $slot['teachers_enrolled'] ?> more teacher(s) needed
                     <?php endif; ?>
                 </div>
             </div>
@@ -330,7 +330,7 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
             <!-- Enrolled Teachers -->
             <div class="card">
                 <div class="card-header">
-                    <h2>👥 Enrolled Teachers (<?= $slot['teachers_enrolled'] ?>)</h2>
+                    <h2><i class='bx bx-group'></i> Enrolled Teachers (<?= $slot['teachers_enrolled'] ?>)</h2>
                 </div>
                 <div class="card-body">
                     <?php if (mysqli_num_rows($teachers) > 0): ?>
@@ -344,15 +344,15 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
                                     </span>
                                 </h4>
                                 <div class="teacher-details">
-                                    📧 <?= htmlspecialchars($teacher['teacher_email']) ?>
+                                    <i class='bx bx-envelope'></i> <?= htmlspecialchars($teacher['teacher_email']) ?>
                                     <?php if ($teacher['subject']): ?>
-                                    | 📚 <?= htmlspecialchars($teacher['subject']) ?>
+                                    | <i class='bx bx-book'></i> <?= htmlspecialchars($teacher['subject']) ?>
                                     <?php endif; ?>
                                 </div>
                                 <div class="teacher-details">
-                                    📅 Booked: <?= date('M j, Y h:i A', strtotime($teacher['booked_at'])) ?>
+                                    <i class='bx bx-calendar'></i> Booked: <?= date('M j, Y h:i A', strtotime($teacher['booked_at'])) ?>
                                     <?php if ($teacher['cancelled_at']): ?>
-                                    <br>❌ Cancelled: <?= date('M j, Y h:i A', strtotime($teacher['cancelled_at'])) ?>
+                                    <br><i class='bx bx-x-circle'></i> Cancelled: <?= date('M j, Y h:i A', strtotime($teacher['cancelled_at'])) ?>
                                     <?php if ($teacher['cancellation_reason']): ?>
                                     <br>Reason: <?= htmlspecialchars($teacher['cancellation_reason']) ?>
                                     <?php endif; ?>
@@ -361,7 +361,7 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
                                 
                                 <?php if ($teacher['session_id']): ?>
                                 <div class="session-info">
-                                    <h5>📷 Session Status</h5>
+                                    <h5><i class='bx bx-camera'></i> Session Status</h5>
                                     <span class="status-badge <?= $teacher['session_status'] ?>">
                                         <?= ucfirst(str_replace('_', ' ', $teacher['session_status'])) ?>
                                     </span>
@@ -380,13 +380,13 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
                                     </div>
                                     <?php elseif ($is_past || $is_today): ?>
                                     <div style="margin-top: 10px; color: var(--warning-color);">
-                                        ⚠️ No photo uploaded
+                                        <i class='bx bx-error'></i> No photo uploaded
                                     </div>
                                     <?php endif; ?>
                                     
                                     <?php if ($teacher['admin_remarks']): ?>
                                     <div style="margin-top: 10px; padding: 8px; background: #fff3cd; border-radius: 5px; font-size: 12px;">
-                                        💬 <?= htmlspecialchars($teacher['admin_remarks']) ?>
+                                        <i class='bx bx-message-square-detail'></i> <?= htmlspecialchars($teacher['admin_remarks']) ?>
                                     </div>
                                     <?php endif; ?>
                                 </div>
@@ -419,7 +419,7 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
             <div>
                 <div class="card">
                     <div class="card-header">
-                        <h2>📍 Location</h2>
+                        <h2><i class='bx bx-map-pin'></i> Location</h2>
                     </div>
                     <div class="card-body">
                         <?php if ($slot['gps_latitude'] && $slot['gps_longitude']): ?>
@@ -435,7 +435,7 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
                 
                 <div class="card" style="margin-top: 20px;">
                     <div class="card-header">
-                        <h2>ℹ️ Slot Info</h2>
+                        <h2><i class='bx bx-info-circle'></i> Slot Info</h2>
                     </div>
                     <div class="card-body">
                         <table style="width: 100%; font-size: 14px;">
@@ -464,7 +464,7 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
                         <?php if ($slot['slot_status'] !== 'completed' && $slot['slot_status'] !== 'cancelled'): ?>
                         <div style="margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;">
                             <a href="teaching_slots.php?edit=<?= $slot['slot_id'] ?>" class="btn btn-secondary btn-sm" style="width: 100%;">
-                                ✏️ Edit Slot
+                                <i class='bx bx-edit'></i> Edit Slot
                             </a>
                         </div>
                         <?php endif; ?>
@@ -490,8 +490,8 @@ $is_today = $slot['slot_date'] === date('Y-m-d');
         
         // Add circle for allowed radius if available
         L.circle([lat, lng], {
-            color: '#667eea',
-            fillColor: '#667eea',
+            color: '#7C0A02',
+            fillColor: '#7C0A02',
             fillOpacity: 0.1,
             radius: 200 // default radius
         }).addTo(map);

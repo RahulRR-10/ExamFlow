@@ -377,7 +377,7 @@ $teachers = mysqli_query($conn, "SELECT id, fname, email FROM teacher ORDER BY f
     
     <div class="main-content">
         <div class="page-header">
-            <h1>📋 Session Reviews</h1>
+            <h1><i class='bx bx-list-check'></i> Session Reviews</h1>
         </div>
         
         <?php if ($message): ?>
@@ -485,23 +485,23 @@ $teachers = mysqli_query($conn, "SELECT id, fname, email FROM teacher ORDER BY f
                              onclick="window.open('../<?= htmlspecialchars($session['photo_path']) ?>', '_blank')">
                         <span class="distance-badge <?= $distance_class ?>">
                             <?php if ($distance !== null): ?>
-                            📍 <?= number_format($distance) ?>m
+                            <i class='bx bx-map-pin'></i> <?= number_format($distance) ?>m
                             <?php else: ?>
-                            📍 No GPS
+                            <i class='bx bx-map-pin'></i> No GPS
                             <?php endif; ?>
                         </span>
                         <?php else: ?>
-                        <div class="no-photo">📷 No photo uploaded</div>
+                        <div class="no-photo"><i class='bx bx-camera'></i> No photo uploaded</div>
                         <?php endif; ?>
                     </div>
                     <div class="session-body">
                         <h4><?= htmlspecialchars($session['teacher_name']) ?></h4>
                         <div class="session-meta">
-                            <p>🏫 <?= htmlspecialchars($session['school_name']) ?></p>
-                            <p>📅 <?= date('M j, Y', strtotime($session['slot_date'])) ?> 
-                               | 🕐 <?= date('h:i A', strtotime($session['start_time'])) ?></p>
+                            <p><i class='bx bx-building'></i> <?= htmlspecialchars($session['school_name']) ?></p>
+                            <p><i class='bx bx-calendar'></i> <?= date('M j, Y', strtotime($session['slot_date'])) ?> 
+                               | <i class='bx bx-time'></i> <?= date('h:i A', strtotime($session['start_time'])) ?></p>
                             <?php if ($session['photo_uploaded_at']): ?>
-                            <p>📤 Uploaded: <?= date('M j, h:i A', strtotime($session['photo_uploaded_at'])) ?></p>
+                            <p><i class='bx bx-upload'></i> Uploaded: <?= date('M j, h:i A', strtotime($session['photo_uploaded_at'])) ?></p>
                             <?php endif; ?>
                         </div>
                         <span class="status-badge <?= $session['session_status'] ?>">
@@ -510,7 +510,7 @@ $teachers = mysqli_query($conn, "SELECT id, fname, email FROM teacher ORDER BY f
                     </div>
                     <div class="session-actions">
                         <a href="review_session.php?id=<?= $session['session_id'] ?>" class="btn btn-primary btn-sm">
-                            👁️ Review
+                            <i class='bx bx-show'></i> Review
                         </a>
                         <?php if ($session['session_status'] === 'photo_submitted'): ?>
                         <button type="button" class="btn btn-success btn-sm" 
@@ -524,7 +524,7 @@ $teachers = mysqli_query($conn, "SELECT id, fname, email FROM teacher ORDER BY f
             </div>
             <?php else: ?>
             <div class="empty-state">
-                <div style="font-size: 64px; margin-bottom: 20px;">📭</div>
+                <div style="font-size: 64px; margin-bottom: 20px;"><i class='bx bx-inbox'></i></div>
                 <h3>No Sessions Found</h3>
                 <p style="color: var(--text-muted);">
                     <?php if ($filter_status === 'photo_submitted'): ?>
@@ -541,7 +541,7 @@ $teachers = mysqli_query($conn, "SELECT id, fname, email FROM teacher ORDER BY f
     <!-- Reject Modal -->
     <div id="rejectModal" class="modal">
         <div class="modal-content">
-            <h3>❌ Reject Sessions</h3>
+            <h3><i class='bx bx-x-circle'></i> Reject Sessions</h3>
             <p style="color: #666; margin-bottom: 15px;">Enter a reason for rejection:</p>
             <form method="POST" id="rejectForm">
                 <input type="hidden" name="action" value="bulk_reject">
