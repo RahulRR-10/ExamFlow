@@ -31,8 +31,8 @@ $admin_query = mysqli_query($conn, "SELECT * FROM admin WHERE id = $admin_id");
 if ($admin_query && mysqli_num_rows($admin_query) > 0) {
     $admin = mysqli_fetch_assoc($admin_query);
 } else {
-    // Fallback to teachers table
-    $admin_query = mysqli_query($conn, "SELECT * FROM teachers WHERE id = $admin_id AND is_admin = 1");
+    // Fallback to teacher table
+    $admin_query = mysqli_query($conn, "SELECT * FROM teacher WHERE id = $admin_id AND is_admin = 1");
     if ($admin_query && mysqli_num_rows($admin_query) > 0) {
         $admin = mysqli_fetch_assoc($admin_query);
     }
@@ -115,7 +115,7 @@ if (isTeachingSlotsEnabled($conn)) {
              AND tse2.photo_path IS NOT NULL
              AND tse2.session_status = 'photo_submitted') as pending_reviews
         FROM teacher_schools ts
-        JOIN teachers t ON ts.teacher_id = t.id
+        JOIN teacher t ON ts.teacher_id = t.id
         JOIN schools s ON ts.school_id = s.school_id
         ORDER BY s.school_name, t.fname
     ");
@@ -140,7 +140,7 @@ if ($audit_table === 'admin_audit_log') {
             s.school_name as school_name,
             adm.fname as admin_name
         FROM admin_audit_log al
-        LEFT JOIN teachers t ON JSON_UNQUOTE(JSON_EXTRACT(al.action_details, '\$.teacher_id')) = t.id
+LEFT JOIN teacher t ON JSON_UNQUOTE(JSON_EXTRACT(al.action_details, '$.teacher_id')) = t.id
         LEFT JOIN schools s ON JSON_UNQUOTE(JSON_EXTRACT(al.action_details, '\$.school_id')) = s.school_id
         LEFT JOIN admin adm ON al.admin_id = adm.id
         WHERE al.action_type = 'force_unenroll'
