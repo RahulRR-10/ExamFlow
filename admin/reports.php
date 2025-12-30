@@ -1,324 +1,308 @@
 <?php
 /**
- * Admin Reports & Analytics Dashboard
- * 
- * Comprehensive analytics for teaching activity verification
+ * Admin Analytics & Reports Dashboard (Combined)
+ * Comprehensive overview of teaching slots, sessions, and enrollments
  */
-
 session_start();
 require_once '../utils/admin_auth.php';
 requireAdminAuth();
 
 include '../config.php';
 
-// Date range filter
-$startDate = $_GET['start_date'] ?? date('Y-m-01'); // First day of current month
-$endDate = $_GET['end_date'] ?? date('Y-m-d');
-$schoolFilter = intval($_GET['school_id'] ?? 0);
+$admin_id = $_SESSION['admin_id'];
 
-// Get overall statistics
-$stats = [];
+// Get date filters
+$view_period = $_GET['period'] ?? 'month';
+$filter_school = intval($_GET['school'] ?? 0);
 
-// Total submissions in date range
-$sql = "SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN verification_status = 'pending' THEN 1 ELSE 0 END) as pending,
-            SUM(CASE WHEN verification_status = 'approved' THEN 1 ELSE 0 END) as approved,
-            SUM(CASE WHEN verification_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-            SUM(CASE WHEN location_match_status = 'matched' THEN 1 ELSE 0 END) as location_matched,
-            SUM(CASE WHEN location_match_status = 'mismatched' THEN 1 ELSE 0 END) as location_mismatched,
-            SUM(CASE WHEN is_suspicious = 1 THEN 1 ELSE 0 END) as suspicious
-        FROM teaching_activity_submissions
-        WHERE DATE(upload_date) BETWEEN ? AND ?";
-$params = [$startDate, $endDate];
-$types = "ss";
-
-if ($schoolFilter > 0) {
-    $sql .= " AND school_id = ?";
-    $params[] = $schoolFilter;
-    $types .= "i";
+// Calculate date ranges
+$today = date('Y-m-d');
+switch ($view_period) {
+    case 'today':
+        $start_date = $today;
+        $end_date = $today;
+        break;
+    case 'week':
+        $start_date = date('Y-m-d', strtotime('monday this week'));
+        $end_date = date('Y-m-d', strtotime('sunday this week'));
+        break;
+    case 'month':
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
+        break;
+    case 'all':
+        $start_date = '2000-01-01';
+        $end_date = '2099-12-31';
+        break;
+    default:
+        $start_date = date('Y-m-01');
+        $end_date = date('Y-m-t');
 }
 
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, $types, ...$params);
-mysqli_stmt_execute($stmt);
-$stats = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-mysqli_stmt_close($stmt);
-
-// Calculate rates
-$stats['approval_rate'] = $stats['total'] > 0 ? round(($stats['approved'] / $stats['total']) * 100, 1) : 0;
-$stats['rejection_rate'] = $stats['total'] > 0 ? round(($stats['rejected'] / $stats['total']) * 100, 1) : 0;
-$stats['location_match_rate'] = $stats['total'] > 0 ? round(($stats['location_matched'] / $stats['total']) * 100, 1) : 0;
-
-// Daily submission trend (last 30 days)
-$trendSql = "SELECT DATE(upload_date) as date, 
-                    COUNT(*) as total,
-                    SUM(CASE WHEN verification_status = 'approved' THEN 1 ELSE 0 END) as approved,
-                    SUM(CASE WHEN verification_status = 'rejected' THEN 1 ELSE 0 END) as rejected
-             FROM teaching_activity_submissions
-             WHERE DATE(upload_date) BETWEEN ? AND ?";
-if ($schoolFilter > 0) {
-    $trendSql .= " AND school_id = ?";
+// Get all schools for dropdown
+$schools_sql = "SELECT school_id, school_name FROM schools WHERE status = 'active' ORDER BY school_name";
+$schools = mysqli_query($conn, $schools_sql);
+$schools_list = [];
+while ($s = mysqli_fetch_assoc($schools)) {
+    $schools_list[$s['school_id']] = $s['school_name'];
 }
-$trendSql .= " GROUP BY DATE(upload_date) ORDER BY date ASC";
 
-$stmt = mysqli_prepare($conn, $trendSql);
-if ($schoolFilter > 0) {
-    mysqli_stmt_bind_param($stmt, "ssi", $startDate, $endDate, $schoolFilter);
-} else {
-    mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
+// Build filters
+$stats_where = "WHERE sts.slot_date BETWEEN '$start_date' AND '$end_date'";
+if ($filter_school > 0) {
+    $stats_where .= " AND sts.school_id = $filter_school";
 }
-mysqli_stmt_execute($stmt);
-$trendResult = mysqli_stmt_get_result($stmt);
-$trendData = [];
-while ($row = mysqli_fetch_assoc($trendResult)) {
-    $trendData[] = $row;
-}
-mysqli_stmt_close($stmt);
 
-// Top teachers by submissions
+// === SLOT STATS ===
+$slot_stats = [
+    'total_slots' => 0,
+    'open_slots' => 0,
+    'filled_slots' => 0,
+    'total_enrollments' => 0,
+    'pending_sessions' => 0,
+    'approved_sessions' => 0
+];
+
+$stats_sql = "SELECT 
+    COUNT(*) as total_slots,
+    SUM(CASE WHEN slot_status = 'open' THEN 1 ELSE 0 END) as open_slots,
+    SUM(CASE WHEN slot_status = 'full' OR slot_status = 'partially_filled' THEN 1 ELSE 0 END) as filled_slots,
+    SUM(teachers_enrolled) as total_enrollments
+    FROM school_teaching_slots sts $stats_where";
+$result = mysqli_query($conn, $stats_sql);
+if ($row = mysqli_fetch_assoc($result)) {
+    $slot_stats = array_merge($slot_stats, $row);
+}
+
+// Session stats
+$session_sql = "SELECT 
+    SUM(CASE WHEN ts.session_status = 'pending' OR ts.session_status = 'photo_submitted' THEN 1 ELSE 0 END) as pending_sessions,
+    SUM(CASE WHEN ts.session_status = 'approved' THEN 1 ELSE 0 END) as approved_sessions
+    FROM teaching_sessions ts
+    JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
+    $stats_where";
+$result = mysqli_query($conn, $session_sql);
+if ($row = mysqli_fetch_assoc($result)) {
+    $slot_stats['pending_sessions'] = $row['pending_sessions'] ?? 0;
+    $slot_stats['approved_sessions'] = $row['approved_sessions'] ?? 0;
+}
+
+// === UPCOMING SLOTS ===
+$upcoming_where = "WHERE sts.slot_date >= '$today' AND sts.slot_status NOT IN ('completed', 'cancelled')";
+if ($filter_school > 0) {
+    $upcoming_where .= " AND sts.school_id = $filter_school";
+}
+$upcoming_sql = "SELECT sts.*, s.school_name
+    FROM school_teaching_slots sts
+    JOIN schools s ON sts.school_id = s.school_id
+    $upcoming_where
+    ORDER BY sts.slot_date ASC, sts.start_time ASC
+    LIMIT 8";
+$upcoming_slots = mysqli_query($conn, $upcoming_sql);
+
+// === RECENT ENROLLMENTS ===
+$recent_sql = "SELECT ste.*, t.fname as teacher_name, t.email as teacher_email,
+    sts.slot_date, sts.start_time, s.school_name
+    FROM slot_teacher_enrollments ste
+    JOIN teacher t ON ste.teacher_id = t.id
+    JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+    JOIN schools s ON sts.school_id = s.school_id
+    ORDER BY ste.booked_at DESC
+    LIMIT 8";
+$recent_enrollments = mysqli_query($conn, $recent_sql);
+
+// === SCHOOL BREAKDOWN ===
+$school_stats_sql = "SELECT s.school_id, s.school_name,
+    COUNT(sts.slot_id) as total_slots,
+    SUM(CASE WHEN sts.slot_status IN ('open', 'partially_filled') THEN 1 ELSE 0 END) as open_slots,
+    SUM(CASE WHEN sts.slot_status = 'full' THEN 1 ELSE 0 END) as full_slots,
+    SUM(sts.teachers_enrolled) as enrolled_teachers,
+    SUM(sts.teachers_required) as required_teachers
+    FROM schools s
+    LEFT JOIN school_teaching_slots sts ON s.school_id = sts.school_id 
+        AND sts.slot_date BETWEEN '$start_date' AND '$end_date'
+    WHERE s.status = 'active'
+    GROUP BY s.school_id
+    ORDER BY total_slots DESC";
+$school_stats = mysqli_query($conn, $school_stats_sql);
+
+// === SESSION SUBMISSION STATS ===
+$submission_stats = ['total' => 0, 'approved' => 0, 'rejected' => 0, 'pending' => 0];
+$sub_sql = "SELECT 
+    COUNT(*) as total,
+    SUM(CASE WHEN session_status = 'approved' THEN 1 ELSE 0 END) as approved,
+    SUM(CASE WHEN session_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
+    SUM(CASE WHEN session_status IN ('pending', 'photo_submitted') THEN 1 ELSE 0 END) as pending
+    FROM teaching_sessions ts
+    JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
+    $stats_where";
+$result = mysqli_query($conn, $sub_sql);
+if ($row = mysqli_fetch_assoc($result)) {
+    $submission_stats = $row;
+}
+
+// Top teachers by sessions
 $topTeachersSql = "SELECT t.id, t.fname, t.email, 
-                          COUNT(*) as total_submissions,
-                          SUM(CASE WHEN tas.verification_status = 'approved' THEN 1 ELSE 0 END) as approved,
-                          SUM(CASE WHEN tas.verification_status = 'rejected' THEN 1 ELSE 0 END) as rejected
-                   FROM teaching_activity_submissions tas
-                   JOIN teacher t ON tas.teacher_id = t.id
-                   WHERE DATE(tas.upload_date) BETWEEN ? AND ?";
-if ($schoolFilter > 0) {
-    $topTeachersSql .= " AND tas.school_id = ?";
-}
-$topTeachersSql .= " GROUP BY t.id ORDER BY total_submissions DESC LIMIT 10";
-
-$stmt = mysqli_prepare($conn, $topTeachersSql);
-if ($schoolFilter > 0) {
-    mysqli_stmt_bind_param($stmt, "ssi", $startDate, $endDate, $schoolFilter);
-} else {
-    mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
-}
-mysqli_stmt_execute($stmt);
-$topTeachers = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-mysqli_stmt_close($stmt);
-
-// Schools by submissions
-$schoolStatsSql = "SELECT s.school_id, s.school_name,
-                          COUNT(*) as total_submissions,
-                          SUM(CASE WHEN tas.verification_status = 'approved' THEN 1 ELSE 0 END) as approved,
-                          SUM(CASE WHEN tas.verification_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-                          SUM(CASE WHEN tas.location_match_status = 'matched' THEN 1 ELSE 0 END) as location_matched
-                   FROM teaching_activity_submissions tas
-                   JOIN schools s ON tas.school_id = s.school_id
-                   WHERE DATE(tas.upload_date) BETWEEN ? AND ?
-                   GROUP BY s.school_id
-                   ORDER BY total_submissions DESC";
-
-$stmt = mysqli_prepare($conn, $schoolStatsSql);
-mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
-mysqli_stmt_execute($stmt);
-$schoolStats = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-mysqli_stmt_close($stmt);
-
-// Admin verification activity
-$adminStatsSql = "SELECT a.id, a.fname,
-                         COUNT(*) as verifications,
-                         SUM(CASE WHEN tas.verification_status = 'approved' THEN 1 ELSE 0 END) as approved,
-                         SUM(CASE WHEN tas.verification_status = 'rejected' THEN 1 ELSE 0 END) as rejected
-                  FROM teaching_activity_submissions tas
-                  JOIN admin a ON tas.verified_by = a.id
-                  WHERE DATE(tas.verified_at) BETWEEN ? AND ?
-                  GROUP BY a.id
-                  ORDER BY verifications DESC";
-
-$stmt = mysqli_prepare($conn, $adminStatsSql);
-mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
-mysqli_stmt_execute($stmt);
-$adminStats = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-mysqli_stmt_close($stmt);
-
-// Get all schools for filter dropdown
-$allSchools = [];
-$schoolsResult = mysqli_query($conn, "SELECT school_id, school_name FROM schools WHERE status = 'active' ORDER BY school_name");
-while ($row = mysqli_fetch_assoc($schoolsResult)) {
-    $allSchools[] = $row;
-}
-
-// Hourly distribution
-$hourlyDistSql = "SELECT HOUR(upload_date) as hour, COUNT(*) as count
-                  FROM teaching_activity_submissions
-                  WHERE DATE(upload_date) BETWEEN ? AND ?";
-if ($schoolFilter > 0) {
-    $hourlyDistSql .= " AND school_id = ?";
-}
-$hourlyDistSql .= " GROUP BY HOUR(upload_date) ORDER BY hour";
-
-$stmt = mysqli_prepare($conn, $hourlyDistSql);
-if ($schoolFilter > 0) {
-    mysqli_stmt_bind_param($stmt, "ssi", $startDate, $endDate, $schoolFilter);
-} else {
-    mysqli_stmt_bind_param($stmt, "ss", $startDate, $endDate);
-}
-mysqli_stmt_execute($stmt);
-$hourlyDist = mysqli_fetch_all(mysqli_stmt_get_result($stmt), MYSQLI_ASSOC);
-mysqli_stmt_close($stmt);
-
-// Convert to full 24-hour array
-$hourlyData = array_fill(0, 24, 0);
-foreach ($hourlyDist as $h) {
-    $hourlyData[$h['hour']] = intval($h['count']);
-}
+    COUNT(*) as total_sessions,
+    SUM(CASE WHEN ts.session_status = 'approved' THEN 1 ELSE 0 END) as approved
+    FROM teaching_sessions ts
+    JOIN slot_teacher_enrollments ste ON ts.enrollment_id = ste.enrollment_id
+    JOIN teacher t ON ste.teacher_id = t.id
+    JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+    $stats_where
+    GROUP BY t.id ORDER BY total_sessions DESC LIMIT 5";
+$topTeachers = mysqli_query($conn, $topTeachersSql);
 ?>
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Reports & Analytics | Admin</title>
+    <title>Analytics & Reports | Admin | ExamFlow</title>
     <link rel="stylesheet" href="css/style.css?v=2.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .filter-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 25px;
-            flex-wrap: wrap;
-            align-items: flex-end;
-        }
-        .filter-group {
-            display: flex;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .filter-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #666;
-        }
-        .filter-group input, .filter-group select {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-        .filter-btn {
-            padding: 10px 20px;
-            background: var(--primary-color);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-        }
-        .filter-btn:hover { background: var(--primary-dark); }
-
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
             gap: 15px;
             margin-bottom: 25px;
         }
         .stat-card {
-            background: white;
+            background: var(--card-bg);
             padding: 20px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             text-align: center;
         }
-        .stat-card .number {
-            font-size: 32px;
-            font-weight: 700;
+        .stat-card h3 {
+            font-size: 28px;
             margin-bottom: 5px;
         }
-        .stat-card .label {
+        .stat-card h3.primary { color: var(--primary-color); }
+        .stat-card h3.success { color: var(--success-color); }
+        .stat-card h3.warning { color: var(--warning-color); }
+        .stat-card h3.danger { color: var(--danger-color); }
+        .stat-card h3.info { color: var(--info-color); }
+        .stat-card p {
+            color: var(--text-muted);
             font-size: 13px;
-            color: #666;
         }
-        .stat-card.total .number { color: #4f46e5; }
-        .stat-card.approved .number { color: #10b981; }
-        .stat-card.rejected .number { color: #ef4444; }
-        .stat-card.pending .number { color: #f59e0b; }
-        .stat-card.matched .number { color: #06b6d4; }
-        .stat-card .rate {
-            font-size: 14px;
-            font-weight: 600;
-            margin-top: 5px;
-        }
-
-        .charts-grid {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 20px;
+        .filters-bar {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
             margin-bottom: 25px;
+            display: flex;
+            gap: 15px;
+            align-items: flex-end;
+            flex-wrap: wrap;
         }
-        @media (max-width: 1200px) {
-            .charts-grid { grid-template-columns: 1fr; }
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 12px;
+            color: var(--text-muted);
         }
-
-        .chart-card {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        .period-tabs {
+            display: flex;
+            gap: 5px;
+            background: #f0f0f0;
+            padding: 4px;
+            border-radius: 8px;
         }
-        .chart-card h3 {
-            margin: 0 0 20px 0;
-            font-size: 16px;
-            font-weight: 600;
+        .period-tab {
+            padding: 8px 14px;
+            border: none;
+            background: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 13px;
+            transition: all 0.2s;
         }
-        .chart-container {
-            position: relative;
-            height: 300px;
+        .period-tab.active {
+            background: var(--primary-color);
+            color: white;
         }
-
-        .tables-grid {
+        .content-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            grid-template-columns: 1fr 1fr;
             gap: 20px;
         }
-        .table-card {
-            background: white;
-            padding: 20px;
+        @media (max-width: 1100px) {
+            .content-grid { grid-template-columns: 1fr; }
+        }
+        .slot-status {
+            display: inline-block;
+            padding: 3px 10px;
             border-radius: 12px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            font-size: 11px;
+            font-weight: 500;
         }
-        .table-card h3 {
-            margin: 0 0 15px 0;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .mini-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .mini-table th, .mini-table td {
-            padding: 10px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-            font-size: 13px;
-        }
-        .mini-table th {
-            font-weight: 600;
-            color: #666;
-        }
-        .mini-table tr:last-child td { border-bottom: none; }
-
+        .slot-status.open { background: #dcfce7; color: #166534; }
+        .slot-status.partially_filled { background: #fef3c7; color: #92400e; }
+        .slot-status.full { background: #dbeafe; color: #1e40af; }
         .progress-bar {
-            height: 6px;
             background: #e5e7eb;
-            border-radius: 3px;
+            border-radius: 10px;
+            height: 6px;
             overflow: hidden;
             margin-top: 5px;
         }
-        .progress-bar .fill {
+        .progress-fill {
             height: 100%;
-            border-radius: 3px;
+            background: linear-gradient(90deg, var(--success-color), var(--primary-color));
         }
-        .progress-bar .fill.approved { background: #10b981; }
-        .progress-bar .fill.rejected { background: #ef4444; }
-
+        .mini-table {
+            width: 100%;
+            font-size: 13px;
+        }
+        .mini-table th {
+            text-align: left;
+            padding: 8px 10px;
+            background: #f8f9fa;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .mini-table td {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .enrollment-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        .enrollment-badge.booked { background: #dbeafe; color: #1e40af; }
+        .enrollment-badge.cancelled { background: #fee2e2; color: #991b1b; }
+        .school-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid var(--border-color);
+        }
+        .school-info h4 { margin-bottom: 5px; font-size: 14px; }
+        .school-stats {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        .school-stats strong { color: var(--text-color); }
+        .chart-container {
+            position: relative;
+            height: 200px;
+        }
         .export-btn {
-            padding: 10px 20px;
-            background: #059669;
+            padding: 8px 16px;
+            background: var(--success-color);
             color: white;
             border: none;
             border-radius: 8px;
@@ -327,306 +311,259 @@ foreach ($hourlyDist as $h) {
             text-decoration: none;
             display: inline-flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
+            font-size: 13px;
         }
         .export-btn:hover { background: #047857; }
     </style>
 </head>
 <body>
     <?php include 'includes/nav.php'; ?>
-
+    
     <div class="main-content">
-        <div class="page-header">
+        <div class="dashboard-header" style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
-                <h1><i class='bx bx-bar-chart-alt-2'></i> Reports & Analytics</h1>
-                <p class="subtitle">Teaching Activity Verification Statistics</p>
+                <h1><i class='bx bx-bar-chart-alt-2'></i> Analytics & Reports</h1>
+                <p class="subtitle">Teaching slots, sessions, and enrollment overview</p>
             </div>
-            <a href="export_report.php?start_date=<?= $startDate ?>&end_date=<?= $endDate ?>&school_id=<?= $schoolFilter ?>" class="export-btn">
+            <a href="export_report.php?start_date=<?= $start_date ?>&end_date=<?= $end_date ?>&school_id=<?= $filter_school ?>" class="export-btn">
                 <i class='bx bx-download'></i> Export CSV
             </a>
         </div>
-
+        
         <!-- Filters -->
-        <form method="GET" class="filter-bar">
+        <div class="filters-bar">
             <div class="filter-group">
-                <label>Start Date</label>
-                <input type="date" name="start_date" value="<?= $startDate ?>">
-            </div>
-            <div class="filter-group">
-                <label>End Date</label>
-                <input type="date" name="end_date" value="<?= $endDate ?>">
+                <label>Time Period</label>
+                <div class="period-tabs">
+                    <button class="period-tab <?= $view_period === 'today' ? 'active' : '' ?>" onclick="setPeriod('today')">Today</button>
+                    <button class="period-tab <?= $view_period === 'week' ? 'active' : '' ?>" onclick="setPeriod('week')">Week</button>
+                    <button class="period-tab <?= $view_period === 'month' ? 'active' : '' ?>" onclick="setPeriod('month')">Month</button>
+                    <button class="period-tab <?= $view_period === 'all' ? 'active' : '' ?>" onclick="setPeriod('all')">All</button>
+                </div>
             </div>
             <div class="filter-group">
                 <label>School</label>
-                <select name="school_id">
-                    <option value="0">All Schools</option>
-                    <?php foreach ($allSchools as $school): ?>
-                    <option value="<?= $school['school_id'] ?>" <?= $schoolFilter == $school['school_id'] ? 'selected' : '' ?>>
-                        <?= htmlspecialchars($school['school_name']) ?>
-                    </option>
+                <select id="filter-school" onchange="applyFilters()" style="padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd;">
+                    <option value="">All Schools</option>
+                    <?php foreach ($schools_list as $id => $name): ?>
+                    <option value="<?= $id ?>" <?= $filter_school == $id ? 'selected' : '' ?>><?= htmlspecialchars($name) ?></option>
                     <?php endforeach; ?>
                 </select>
             </div>
-            <button type="submit" class="filter-btn">Apply Filter</button>
-        </form>
-
+        </div>
+        
         <!-- Key Stats -->
         <div class="stats-grid">
-            <div class="stat-card total">
-                <div class="number"><?= number_format($stats['total']) ?></div>
-                <div class="label">Total Submissions</div>
+            <div class="stat-card">
+                <h3 class="primary"><?= $slot_stats['total_slots'] ?? 0 ?></h3>
+                <p>Total Slots</p>
             </div>
-            <div class="stat-card approved">
-                <div class="number"><?= number_format($stats['approved']) ?></div>
-                <div class="label">Approved</div>
-                <div class="rate"><?= $stats['approval_rate'] ?>%</div>
+            <div class="stat-card">
+                <h3 class="success"><?= $slot_stats['open_slots'] ?? 0 ?></h3>
+                <p>Open Slots</p>
             </div>
-            <div class="stat-card rejected">
-                <div class="number"><?= number_format($stats['rejected']) ?></div>
-                <div class="label">Rejected</div>
-                <div class="rate"><?= $stats['rejection_rate'] ?>%</div>
+            <div class="stat-card">
+                <h3 class="info"><?= $slot_stats['total_enrollments'] ?? 0 ?></h3>
+                <p>Enrollments</p>
             </div>
-            <div class="stat-card pending">
-                <div class="number"><?= number_format($stats['pending']) ?></div>
-                <div class="label">Pending Review</div>
+            <div class="stat-card">
+                <h3 class="warning"><?= $slot_stats['pending_sessions'] ?? 0 ?></h3>
+                <p>Pending Review</p>
             </div>
-            <div class="stat-card matched">
-                <div class="number"><?= $stats['location_match_rate'] ?>%</div>
-                <div class="label">Location Match Rate</div>
+            <div class="stat-card">
+                <h3 class="success"><?= $slot_stats['approved_sessions'] ?? 0 ?></h3>
+                <p>Approved</p>
             </div>
-            <div class="stat-card" style="background: #fef3c7;">
-                <div class="number" style="color: #d97706;"><?= number_format($stats['suspicious']) ?></div>
-                <div class="label">Flagged Suspicious</div>
+            <div class="stat-card">
+                <h3 class="danger"><?= $submission_stats['rejected'] ?? 0 ?></h3>
+                <p>Rejected</p>
             </div>
         </div>
-
-        <!-- Charts -->
-        <div class="charts-grid">
-            <div class="chart-card">
-                <h3><i class='bx bx-trending-up'></i> Submission Trend</h3>
-                <div class="chart-container">
-                    <canvas id="trendChart"></canvas>
+        
+        <!-- Main Content -->
+        <div class="content-grid">
+            <!-- Upcoming Slots -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class='bx bx-calendar'></i> Upcoming Slots</h2>
+                    <a href="teaching_slots.php" class="btn btn-primary btn-sm">View All</a>
+                </div>
+                <div class="card-body">
+                    <?php if (mysqli_num_rows($upcoming_slots) > 0): ?>
+                    <table class="mini-table">
+                        <thead>
+                            <tr><th>School</th><th>Date</th><th>Teachers</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($slot = mysqli_fetch_assoc($upcoming_slots)): 
+                                $fill_pct = $slot['teachers_required'] > 0 ? ($slot['teachers_enrolled'] / $slot['teachers_required']) * 100 : 0;
+                            ?>
+                            <tr>
+                                <td>
+                                    <a href="view_slot.php?id=<?= $slot['slot_id'] ?>" style="color: var(--primary-color); font-weight: 500;">
+                                        <?= htmlspecialchars($slot['school_name']) ?>
+                                    </a>
+                                </td>
+                                <td><?= date('M j', strtotime($slot['slot_date'])) ?><br><small><?= date('h:i A', strtotime($slot['start_time'])) ?></small></td>
+                                <td>
+                                    <?= $slot['teachers_enrolled'] ?>/<?= $slot['teachers_required'] ?>
+                                    <div class="progress-bar"><div class="progress-fill" style="width: <?= min(100, $fill_pct) ?>%"></div></div>
+                                </td>
+                                <td><span class="slot-status <?= $slot['slot_status'] ?>"><?= ucfirst(str_replace('_', ' ', $slot['slot_status'])) ?></span></td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                    <?php else: ?>
+                    <p class="text-muted">No upcoming slots.</p>
+                    <?php endif; ?>
                 </div>
             </div>
-            <div class="chart-card">
-                <h3><i class='bx bx-time'></i> Upload Time Distribution</h3>
-                <div class="chart-container">
-                    <canvas id="hourlyChart"></canvas>
+            
+            <!-- Recent Enrollments -->
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class='bx bx-group'></i> Recent Enrollments</h2>
+                </div>
+                <div class="card-body">
+                    <?php if (mysqli_num_rows($recent_enrollments) > 0): ?>
+                    <table class="mini-table">
+                        <thead>
+                            <tr><th>Teacher</th><th>School</th><th>Date</th><th>Status</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($enroll = mysqli_fetch_assoc($recent_enrollments)): ?>
+                            <tr>
+                                <td><strong><?= htmlspecialchars($enroll['teacher_name']) ?></strong></td>
+                                <td><?= htmlspecialchars($enroll['school_name']) ?></td>
+                                <td><?= date('M j', strtotime($enroll['slot_date'])) ?></td>
+                                <td><span class="enrollment-badge <?= $enroll['enrollment_status'] ?>"><?= ucfirst($enroll['enrollment_status']) ?></span></td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                    <?php else: ?>
+                    <p class="text-muted">No recent enrollments.</p>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
-
-        <div class="charts-grid" style="grid-template-columns: 1fr 1fr;">
-            <div class="chart-card">
-                <h3><i class='bx bx-pie-chart-alt-2'></i> Verification Status</h3>
-                <div class="chart-container" style="height: 250px;">
-                    <canvas id="statusChart"></canvas>
+        
+        <!-- Charts Row -->
+        <div class="content-grid" style="margin-top: 20px;">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class='bx bx-pie-chart-alt-2'></i> Session Status</h2>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
                 </div>
             </div>
-            <div class="chart-card">
-                <h3><i class='bx bx-map-pin'></i> Location Match Status</h3>
-                <div class="chart-container" style="height: 250px;">
-                    <canvas id="locationChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Tables -->
-        <div class="tables-grid">
+            
             <!-- Top Teachers -->
-            <div class="table-card">
-                <h3><i class='bx bx-user'></i> Top Teachers by Submissions</h3>
-                <?php if (empty($topTeachers)): ?>
-                <p style="color: #666; text-align: center; padding: 20px;">No data available</p>
-                <?php else: ?>
-                <table class="mini-table">
-                    <thead>
-                        <tr>
-                            <th>Teacher</th>
-                            <th>Total</th>
-                            <th>Approved</th>
-                            <th>Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($topTeachers as $teacher): 
-                            $rate = $teacher['total_submissions'] > 0 
-                                ? round(($teacher['approved'] / $teacher['total_submissions']) * 100) 
-                                : 0;
-                        ?>
-                        <tr>
-                            <td>
-                                <strong><?= htmlspecialchars($teacher['fname']) ?></strong>
-                                <br><small style="color: #666;"><?= htmlspecialchars($teacher['email']) ?></small>
-                            </td>
-                            <td><?= $teacher['total_submissions'] ?></td>
-                            <td style="color: #10b981;"><?= $teacher['approved'] ?></td>
-                            <td>
-                                <?= $rate ?>%
-                                <div class="progress-bar">
-                                    <div class="fill approved" style="width: <?= $rate ?>%"></div>
-                                </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <?php endif; ?>
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class='bx bx-trophy'></i> Top Teachers</h2>
+                </div>
+                <div class="card-body">
+                    <?php if (mysqli_num_rows($topTeachers) > 0): ?>
+                    <table class="mini-table">
+                        <thead>
+                            <tr><th>Teacher</th><th>Sessions</th><th>Approved</th></tr>
+                        </thead>
+                        <tbody>
+                            <?php while ($teacher = mysqli_fetch_assoc($topTeachers)): 
+                                $rate = $teacher['total_sessions'] > 0 ? round(($teacher['approved'] / $teacher['total_sessions']) * 100) : 0;
+                            ?>
+                            <tr>
+                                <td>
+                                    <strong><?= htmlspecialchars($teacher['fname']) ?></strong><br>
+                                    <small style="color: var(--text-muted);"><?= htmlspecialchars($teacher['email']) ?></small>
+                                </td>
+                                <td><?= $teacher['total_sessions'] ?></td>
+                                <td>
+                                    <span style="color: var(--success-color);"><?= $teacher['approved'] ?></span>
+                                    <span style="color: var(--text-muted); font-size: 11px;">(<?= $rate ?>%)</span>
+                                </td>
+                            </tr>
+                            <?php endwhile; ?>
+                        </tbody>
+                    </table>
+                    <?php else: ?>
+                    <p class="text-muted">No data available.</p>
+                    <?php endif; ?>
+                </div>
             </div>
-
-            <!-- School Stats -->
-            <div class="table-card">
-                <h3><i class='bx bx-building'></i> Submissions by School</h3>
-                <?php if (empty($schoolStats)): ?>
-                <p style="color: #666; text-align: center; padding: 20px;">No data available</p>
-                <?php else: ?>
-                <table class="mini-table">
-                    <thead>
-                        <tr>
-                            <th>School</th>
-                            <th>Total</th>
-                            <th>Approved</th>
-                            <th>Location ✓</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($schoolStats as $school): ?>
-                        <tr>
-                            <td><strong><?= htmlspecialchars($school['school_name']) ?></strong></td>
-                            <td><?= $school['total_submissions'] ?></td>
-                            <td style="color: #10b981;"><?= $school['approved'] ?></td>
-                            <td style="color: #06b6d4;"><?= $school['location_matched'] ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-                <?php endif; ?>
+        </div>
+        
+        <!-- School Breakdown -->
+        <div class="card" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><i class='bx bx-building'></i> School Overview</h2>
             </div>
-
-            <!-- Admin Stats -->
-            <div class="table-card">
-                <h3><i class='bx bx-user'></i> Admin Verification Activity</h3>
-                <?php if (empty($adminStats)): ?>
-                <p style="color: #666; text-align: center; padding: 20px;">No verifications in this period</p>
+            <div class="card-body">
+                <?php 
+                mysqli_data_seek($school_stats, 0);
+                if (mysqli_num_rows($school_stats) > 0): 
+                ?>
+                    <?php while ($school = mysqli_fetch_assoc($school_stats)): 
+                        $coverage = ($school['required_teachers'] > 0) ? round(($school['enrolled_teachers'] / $school['required_teachers']) * 100) : 0;
+                    ?>
+                    <div class="school-card">
+                        <div class="school-info">
+                            <h4><?= htmlspecialchars($school['school_name']) ?></h4>
+                            <div class="school-stats">
+                                <span><strong><?= $school['total_slots'] ?? 0 ?></strong> Slots</span>
+                                <span><strong><?= $school['open_slots'] ?? 0 ?></strong> Open</span>
+                                <span><strong><?= $school['full_slots'] ?? 0 ?></strong> Full</span>
+                            </div>
+                        </div>
+                        <div style="text-align: right; min-width: 120px;">
+                            <div style="font-size: 20px; font-weight: 600; color: <?= $coverage >= 80 ? 'var(--success-color)' : ($coverage >= 50 ? 'var(--warning-color)' : 'var(--danger-color)') ?>;">
+                                <?= $coverage ?>%
+                            </div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Coverage</div>
+                            <div class="progress-bar" style="margin-top: 5px;">
+                                <div class="progress-fill" style="width: <?= min(100, $coverage) ?>%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endwhile; ?>
                 <?php else: ?>
-                <table class="mini-table">
-                    <thead>
-                        <tr>
-                            <th>Admin</th>
-                            <th>Verified</th>
-                            <th>Approved</th>
-                            <th>Rejected</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($adminStats as $admin): ?>
-                        <tr>
-                            <td><strong><?= htmlspecialchars($admin['fname']) ?></strong></td>
-                            <td><?= $admin['verifications'] ?></td>
-                            <td style="color: #10b981;"><?= $admin['approved'] ?></td>
-                            <td style="color: #ef4444;"><?= $admin['rejected'] ?></td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+                <p class="text-muted">No schools found.</p>
                 <?php endif; ?>
             </div>
         </div>
     </div>
-
+    
     <script>
-        // Trend Chart
-        const trendCtx = document.getElementById('trendChart').getContext('2d');
-        new Chart(trendCtx, {
-            type: 'line',
-            data: {
-                labels: <?= json_encode(array_column($trendData, 'date')) ?>,
-                datasets: [{
-                    label: 'Total',
-                    data: <?= json_encode(array_map('intval', array_column($trendData, 'total'))) ?>,
-                    borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                    fill: true,
-                    tension: 0.4
-                }, {
-                    label: 'Approved',
-                    data: <?= json_encode(array_map('intval', array_column($trendData, 'approved'))) ?>,
-                    borderColor: '#10b981',
-                    backgroundColor: 'transparent',
-                    tension: 0.4
-                }, {
-                    label: 'Rejected',
-                    data: <?= json_encode(array_map('intval', array_column($trendData, 'rejected'))) ?>,
-                    borderColor: '#ef4444',
-                    backgroundColor: 'transparent',
-                    tension: 0.4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-
-        // Hourly Distribution Chart
-        const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
-        new Chart(hourlyCtx, {
-            type: 'bar',
-            data: {
-                labels: Array.from({length: 24}, (_, i) => i + ':00'),
-                datasets: [{
-                    label: 'Uploads',
-                    data: <?= json_encode($hourlyData) ?>,
-                    backgroundColor: 'rgba(79, 70, 229, 0.7)',
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { beginAtZero: true }
-                }
-            }
-        });
-
-        // Status Pie Chart
+        function setPeriod(period) {
+            const school = document.getElementById('filter-school').value;
+            let url = `reports.php?period=${period}`;
+            if (school) url += `&school=${school}`;
+            window.location.href = url;
+        }
+        
+        function applyFilters() {
+            const school = document.getElementById('filter-school').value;
+            const period = '<?= $view_period ?>';
+            let url = `reports.php?period=${period}`;
+            if (school) url += `&school=${school}`;
+            window.location.href = url;
+        }
+        
+        // Status Chart
         const statusCtx = document.getElementById('statusChart').getContext('2d');
         new Chart(statusCtx, {
             type: 'doughnut',
             data: {
-                labels: ['Approved', 'Rejected', 'Pending'],
+                labels: ['Approved', 'Pending', 'Rejected'],
                 datasets: [{
-                    data: [<?= $stats['approved'] ?>, <?= $stats['rejected'] ?>, <?= $stats['pending'] ?>],
-                    backgroundColor: ['#10b981', '#ef4444', '#f59e0b'],
-                    borderWidth: 0
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { position: 'bottom' } }
-            }
-        });
-
-        // Location Pie Chart
-        const locationCtx = document.getElementById('locationChart').getContext('2d');
-        new Chart(locationCtx, {
-            type: 'doughnut',
-            data: {
-                labels: ['Matched', 'Mismatched', 'Unknown'],
-                datasets: [{
-                    data: [
-                        <?= $stats['location_matched'] ?>, 
-                        <?= $stats['location_mismatched'] ?>, 
-                        <?= $stats['total'] - $stats['location_matched'] - $stats['location_mismatched'] ?>
-                    ],
-                    backgroundColor: ['#06b6d4', '#f59e0b', '#9ca3af'],
+                    data: [<?= $submission_stats['approved'] ?? 0 ?>, <?= $submission_stats['pending'] ?? 0 ?>, <?= $submission_stats['rejected'] ?? 0 ?>],
+                    backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
                     borderWidth: 0
                 }]
             },

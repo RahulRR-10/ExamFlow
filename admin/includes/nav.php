@@ -30,12 +30,6 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span class="nav-text">Teaching Slots</span>
             </a>
         </li>
-        <li class="<?= $current_page === 'slot_dashboard.php' ? 'active' : '' ?>">
-            <a href="slot_dashboard.php">
-                <i class='bx bx-bar-chart-alt-2'></i>
-                <span class="nav-text">Slot Dashboard</span>
-            </a>
-        </li>
         <li class="<?= $current_page === 'pending_sessions.php' || $current_page === 'review_session.php' ? 'active' : '' ?>">
             <a href="pending_sessions.php">
                 <i class='bx bx-camera'></i>
