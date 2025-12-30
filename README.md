@@ -5,365 +5,477 @@
 </p>
 
 <p align="center">
-  <b>The Ultimate Assessment Platform with Blockchain-Verified Credentials & Advanced Proctoring</b>
+  <b>The Ultimate Multi-School Assessment Platform with Blockchain-Verified Credentials, AI-Powered Grading & Teaching Slot Management</b>
 </p>
 
 <p align="center">
-  <a href="#blockchain-verified-credentials">Blockchain Verification</a> •
-  <a href="#integrity-scoring">Integrity Scoring</a> •
-  <a href="#advanced-proctoring">Proctoring</a> •
-  <a href="#ai-powered-mock-tests">Mock Tests</a> •
-  <a href="#examination-analytics">Analytics</a> •
   <a href="#key-features">Features</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#installation">Installation</a>
+  <a href="#blockchain-verified-credentials">Blockchain</a> •
+  <a href="#ai-powered-features">AI Features</a> •
+  <a href="#multi-school-architecture">Multi-School</a> •
+  <a href="#teaching-slot-management">Teaching Slots</a> •
+  <a href="#installation">Installation</a> •
+  <a href="#tech-stack">Tech Stack</a>
 </p>
 
-## Blockchain-Verified Credentials
+---
 
-ExamFlow's cutting-edge blockchain integration ensures absolute credential authenticity through immutable NFT certificates that **cannot be forged or tampered with**.
+## Overview
 
-### Tamper-Proof Verification
+ExamFlow is a comprehensive educational assessment platform designed for multi-school deployments. It combines traditional exam management with cutting-edge features including blockchain-verified certificates, AI-powered grading, OCR-based answer processing, advanced proctoring, and geotagged teaching activity verification.
 
-- **Ethereum-Backed Authenticity**: Each certificate is minted as a unique non-fungible token on the Ethereum blockchain, creating a permanent, public record that can never be altered or deleted
-- **Cryptographic Proof**: Digital signatures and hash functions establish mathematical certainty of certificate legitimacy
-- **Decentralized Storage**: Certificate data and images stored on IPFS (InterPlanetary File System) ensuring no single point of failure or tampering opportunity
-- **Public Verification**: Anyone can instantly verify credential authenticity without special software or institutional access
-
-### Comprehensive Certificate Security
-
-| Security Layer        | Implementation                   | Benefit                                                     |
-| --------------------- | -------------------------------- | ----------------------------------------------------------- |
-| Blockchain Record     | Ethereum Sepolia Network         | Immutable timestamped proof that cannot be altered          |
-| Decentralized Storage | IPFS via Pinata                  | Tamper-proof file storage without centralized vulnerability |
-| Smart Contract        | ERC-721 NFT Standard             | Cryptographic ownership with transfer capabilities          |
-| Verification Portal   | Public blockchain explorer       | Universal accessibility for verification                    |
-| Digital Signature     | Institutional cryptographic keys | Authorized issuance verification                            |
-
-### Immediate Benefits
-
-- **Eliminates Certificate Forgery**: Makes falsifying academic credentials mathematically impossible
-- **Streamlines Verification**: Employers and institutions can instantly verify authenticity
-- **Permanent Record**: Credentials persist indefinitely on the blockchain, immune to institutional system changes
-- **Student Ownership**: Students truly own their credentials as blockchain assets
-
-## Integrity Scoring
-
-ExamFlow's revolutionary Integrity Scoring system provides objective, transparent measurement of examination conduct, combining academic performance with ethical behavior metrics.
-
-### Real-Time Integrity Evaluation
-
-- **100-Point Scale**: Students begin with a perfect integrity score that dynamically adjusts based on detected behaviors
-- **Transparent Monitoring**: Real-time integrity score displayed during examination, providing immediate feedback
-- **Permanent Record**: Final integrity scores permanently recorded alongside academic performance
-- **Blockchain Integration**: Integrity metrics embedded in certificate NFTs for permanent ethical behavior verification
-
-### Sophisticated Classification System
-
-| Category  | Score Range | Interpretation                              | Action                             |
-| --------- | ----------- | ------------------------------------------- | ---------------------------------- |
-| Exemplary | 90-100      | Perfect examination conduct                 | Normal certificate issuance        |
-| Good      | 75-89       | Minor issues but acceptable behavior        | Standard certificate with note     |
-| At-Risk   | 50-74       | Concerning patterns requiring review        | Certificate with integrity warning |
-| Violation | 0-49        | Significant evidence of academic dishonesty | Potential examination invalidation |
-
-### Comprehensive Violation Detection
-
-ExamFlow's integrity scoring accounts for various violation types with escalating penalties:
-
-- **Tab Switching**: 3-15 point penalties based on frequency
-- **Window Focus Loss**: 2-8 point penalties per occurrence
-- **Combined Violations**: Severe 10-20 point penalties for pattern violations
-- **Threshold Enforcement**: Automatic examination termination when integrity falls below critical thresholds
-
-## Advanced Proctoring
-
-ExamFlow employs state-of-the-art proctoring technology that balances rigorous security with student privacy, ensuring examination integrity without invasive surveillance.
-
-### Multi-Layered Detection System
-
-- **Browser Activity Monitoring**: Advanced event tracking detects suspicious browser behaviors
-- **Focus Analysis**: Sophisticated algorithms identify attention shifts and external resource usage
-- **Temporal Pattern Recognition**: AI-powered identification of statistically suspicious behavioral patterns
-- **Full-Screen Enforcement**: Automatic detection of examination environment manipulation
-
-### Proctor Dashboard
-
-Instructors gain access to a powerful real-time monitoring system:
-
-- **Live Violation Alerts**: Instant notification of suspicious activities
-- **Student Monitoring Panel**: Overview of all examination participants with integrity status
-- **Detailed Logs**: Comprehensive timestamped record of all detected behaviors
-- **Statistical Analysis**: Institutional patterns and trends in academic integrity
-- **Evidence Repository**: Secure storage of all integrity-related data for review
-
-### Privacy-Conscious Design
-
-- **Data Minimization**: Only essential behavioral metrics collected without invasive video/audio
-- **Transparent Monitoring**: Students fully informed of all monitored behaviors
-- **Local Processing**: Primary behavior analysis performed in browser to minimize data transmission
-- **Secure Protocols**: Industry-standard encryption for all integrity data
-- **Ethical Design**: Balances academic integrity with student dignity and privacy
-
-## AI-Powered Mock Tests
-
-ExamFlow revolutionizes exam preparation with intelligent mock tests that adapt to student needs, providing realistic practice environments with personalized learning experiences.
-
-### Intelligent Test Generation
-
-- **Automatic Creation**: AI-powered system generates multiple versions of practice exams from question banks
-- **Content Balancing**: Smart distribution of question types, topics, and difficulty levels
-- **Real Environment Simulation**: Mock tests mirror the actual exam experience, including timing and interface
-- **Varied Scenarios**: Multiple unique mock exams for each assessment preventing memorization
-
-### Adaptive Learning
-
-- **Performance Analysis**: Sophisticated algorithms identify knowledge gaps and strengths
-- **Progress Tracking**: Detailed statistics across multiple practice attempts
-- **Weak Area Identification**: Automatic detection of concepts requiring additional study
-- **Confidence Building**: Graduated difficulty progression as mastery improves
-
-### Comprehensive Preparation
-
-- **Unlimited Practice**: Students can attempt mock exams multiple times
-- **Instant Feedback**: Immediate scoring with detailed answer explanations
-- **Strategic Insights**: Performance metrics for optimization of study strategies
-- **Authentic Experience**: Full proctoring environment simulation for reduced test anxiety
-
-## Examination Analytics
-
-ExamFlow's analytical engine transforms examination data into actionable insights, helping instructors understand and optimize educational outcomes through visual data representation.
-
-### Question-Level Analysis
-
-- **Performance Metrics**: Detailed statistics for each question showing response distribution
-- **Difficulty Assessment**: Automatic calculation of question difficulty based on response patterns
-- **Distractor Analysis**: Effectiveness evaluation of incorrect options
-- **Visual Representation**: Intuitive graphical display of response patterns
-
-### Exam-Wide Insights
-
-- **Performance Distribution**: Visual representation of score distribution across student population
-- **Time Analysis**: Metrics on time spent per question and section
-- **Comparative Statistics**: Historical performance trends across different cohorts
-- **Integrity Correlation**: Relationship between integrity scores and academic performance
-
-### Data Visualization
-
-- **Interactive Charts**: Dynamic visualizations of examination performance data
-- **Custom Filtering**: Segmentation analysis by student demographics or question characteristics
-- **Exportable Reports**: Comprehensive analytics for institutional assessment
-- **Real-Time Updates**: Live data processing as students complete examinations
+---
 
 ## Key Features
 
-### Administration Panel
+### 🎓 Three-Portal Architecture
 
-- **Comprehensive Dashboard**: Real-time examination statistics with performance metrics
-- **Advanced Exam Creation**: Intuitive interface with flexible configuration options
-- **Secure Question Repository**: Organized question bank with categorization
-- **Instant Grading**: Automated assessment with customizable scoring parameters
-- **Integrity Management**: Complete violation reporting and monitoring
-- **Communication Center**: Centralized notification and messaging system
+| Portal | Description | Key Functions |
+|--------|-------------|---------------|
+| **Student Portal** | Clean, intuitive interface for exam-taking | MCQ exams, Objective exams, Mock tests, Certificate minting, Results viewing |
+| **Teacher Portal** | Comprehensive teaching management | Exam creation, Grading, Analytics, School management, Slot booking |
+| **Admin Portal** | System-wide oversight | Session verification, School management, Teaching slots, Audit logs |
 
-### Student Experience
+### 📝 Multiple Exam Types
 
-- **Intuitive Interface**: Clean, distraction-free examination environment
-- **Progress Monitoring**: Real-time completion tracking and navigation
-- **Immediate Results**: Instant scoring with detailed performance feedback
-- **Certificate Generation**: One-click blockchain credential creation
-- **Personal Analytics**: Individual performance insights and comparison metrics
-- **Preparation Tools**: Access to AI-generated practice exams and resources
+- **MCQ Exams**: Auto-graded multiple choice assessments with real-time scoring
+- **Objective Exams**: Handwritten answer submission with OCR processing and AI grading
+- **Mock Exams**: AI-generated practice tests from existing question banks
 
-## Architecture
+### 🔐 Advanced Proctoring System
+
+- Real-time integrity scoring (0-100 scale)
+- Tab switching detection with escalating penalties
+- Window focus loss monitoring
+- Combined violation detection
+- Automatic exam termination at critical thresholds
+
+### 📊 Comprehensive Analytics
+
+- Question-level performance analysis
+- Response distribution visualization
+- Difficulty assessment based on actual results
+- Integrity score correlation analysis
+- Exportable reports
+
+---
+
+## Blockchain-Verified Credentials
+
+### NFT Certificate System
+
+ExamFlow mints examination certificates as ERC-721 NFTs on the Ethereum Sepolia network, ensuring tamper-proof credential verification.
+
+| Component | Technology | Purpose |
+|-----------|------------|---------|
+| Smart Contract | Solidity (ERC-721) | Certificate minting and ownership |
+| Storage | IPFS via Pinata | Decentralized certificate data |
+| Network | Ethereum Sepolia | Blockchain transactions |
+| Verification | Public explorer | Universal credential verification |
+
+### Certificate Features
+
+- **Immutable Records**: Once minted, certificates cannot be altered or deleted
+- **Integrity Embedding**: Exam integrity scores permanently recorded on-chain
+- **Instant Verification**: Anyone can verify authenticity via blockchain explorer
+- **Student Ownership**: Certificates are true digital assets owned by students
+
+---
+
+## AI-Powered Features
+
+### 🤖 Groq AI Grading
+
+Objective exam answers are automatically graded using Groq's LLM API:
+
+- Compares student answers against teacher-provided answer keys
+- Supports per-question mark allocation
+- Provides partial credit scoring
+- Generates detailed feedback
+
+### 📸 OCR Processing
+
+Handwritten answer sheets are processed using Tesseract OCR:
+
+- Automatic text extraction from uploaded images
+- Support for multiple image formats
+- Preprocessing for improved accuracy
+- Queue-based processing via cron jobs
+
+### 📚 AI Mock Test Generation
+
+- Automatically generates practice exams from existing question banks
+- Randomizes questions while maintaining topic balance
+- Creates multiple unique versions for each exam
+- Full proctoring simulation for realistic practice
+
+---
+
+## Multi-School Architecture
+
+ExamFlow supports multi-school deployments with complete data isolation:
 
 ```
-┌─────────────────────────┐      ┌────────────────────┐      ┌──────────────────────┐
-│                         │      │                    │      │                      │
-│   ADMINISTRATION PANEL  │◄────►│      DATABASE      │◄────►│    STUDENT PORTAL    │
-│                         │      │                    │      │                      │
-└─────────────────────────┘      └────────────────────┘      └──────────────────────┘
-           │                               │                            │
-           │                               │                            │
-           ▼                               ▼                            ▼
-┌─────────────────────────┐      ┌────────────────────┐      ┌──────────────────────┐
-│                         │      │                    │      │                      │
-│   EXAMINATION ANALYTICS │◄────►│   PROCTORING SYSTEM│◄────►│ BLOCKCHAIN INTEGRATION│
-│                         │      │                    │      │                      │
-└─────────────────────────┘      └────────────────────┘      └──────────────────────┘
-                                         │                            │
-                                         │                    ┌───────┴───────┐
-                                         │                    ▼               ▼
-                                         │             ┌─────────────┐ ┌─────────────┐
-                                         │             │    IPFS     │ │  ETHEREUM   │
-                                         │             │   STORAGE   │ │   NETWORK   │
-                                         │             └─────────────┘ └─────────────┘
-                                         ▼
-                                ┌────────────────────┐
-                                │                    │
-                                │   AI MOCK EXAMS    │
-                                │                    │
-                                └────────────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                      ADMIN DASHBOARD                        │
+│         (Cross-school oversight & verification)             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+         ┌────────────────────┼────────────────────┐
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│    School A     │  │    School B     │  │    School C     │
+│  ┌───────────┐  │  │  ┌───────────┐  │  │  ┌───────────┐  │
+│  │ Teachers  │  │  │  │ Teachers  │  │  │  │ Teachers  │  │
+│  │ Students  │  │  │  │ Students  │  │  │  │ Students  │  │
+│  │   Exams   │  │  │  │   Exams   │  │  │  │   Exams   │  │
+│  └───────────┘  │  │  └───────────┘  │  │  └───────────┘  │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
 ```
+
+### School Access Control
+
+- Teachers and students are enrolled to specific schools
+- Data isolation between schools
+- Cross-school messaging with school_id filtering
+- School-specific analytics and reporting
+
+---
+
+## Teaching Slot Management
+
+### Geotagged Activity Verification
+
+Teachers can book teaching slots at partner schools and submit geotagged photos as proof of activity:
+
+1. **Admin Creates Slots**: Define available teaching slots at schools
+2. **Teachers Book Slots**: Browse and reserve available time slots
+3. **Session Documentation**: Upload geotagged photos during teaching sessions
+4. **Admin Verification**: Review submissions with location validation
+5. **Audit Trail**: Complete history of all teaching activities
+
+### Location Verification
+
+- EXIF data extraction from uploaded photos
+- GPS coordinate validation against school location
+- Distance calculation and threshold enforcement
+- Automatic flagging of suspicious submissions
+
+---
+
+## System Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                           WEB SERVER                                │
+│                     (Apache + PHP 7.4+/8.x)                         │
+└─────────────────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Student Portal │  │  Teacher Portal │  │  Admin Portal   │
+│  /students/*    │  │  /teachers/*    │  │  /admin/*       │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+         │                    │                    │
+         └────────────────────┼────────────────────┘
+                              ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                         MYSQL DATABASE                              │
+│                          (db_eval)                                  │
+│  Tables: student, teacher, admin, exm_list, atmpt_list,             │
+│  certificate_nfts, cheat_violations, objective_exm_list,            │
+│  objective_submissions, school_teaching_slots, teaching_sessions... │
+└─────────────────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+│  Groq AI API    │  │  Tesseract OCR  │  │  Blockchain     │
+│  (AI Grading)   │  │  (Text Extract) │  │  (Ethereum +    │
+│                 │  │                 │  │   IPFS/Pinata)  │
+└─────────────────┘  └─────────────────┘  └─────────────────┘
+```
+
+---
+
+## Database Schema
+
+### Core Tables
+
+| Table | Purpose |
+|-------|---------|
+| `student` | Student accounts and profiles |
+| `teacher` | Teacher accounts with subject specialization |
+| `admin` | Administrator accounts for verification tasks |
+| `exm_list` | MCQ examination definitions |
+| `qstn_list` | Question bank for MCQ exams |
+| `atmpt_list` | Student exam attempts with integrity scores |
+| `certificate_nfts` | Minted certificate records |
+| `cheat_violations` | Detailed violation logs |
+
+### Objective Exam Tables
+
+| Table | Purpose |
+|-------|---------|
+| `objective_exm_list` | Objective exam definitions |
+| `objective_submissions` | Student answer sheet uploads |
+| `ocr_queue` | Pending OCR processing jobs |
+
+### Teaching Slots Tables
+
+| Table | Purpose |
+|-------|---------|
+| `schools` | Partner school information with GPS |
+| `school_teaching_slots` | Available teaching slots |
+| `slot_teacher_enrollments` | Teacher slot bookings |
+| `teaching_sessions` | Session documentation and verification |
+| `admin_audit_log` | Admin action history |
+
+---
+
+## Tech Stack
+
+| Category | Technology |
+|----------|------------|
+| **Backend** | PHP 7.4+ / 8.x |
+| **Database** | MySQL 5.7+ / MariaDB 10.4+ |
+| **Frontend** | HTML5, CSS3, JavaScript, Chart.js |
+| **Blockchain** | Ethereum (Sepolia), Solidity, Hardhat |
+| **Smart Contract** | ERC-721 (OpenZeppelin) |
+| **IPFS** | Pinata Gateway |
+| **AI/ML** | Groq API (LLaMA 3.3 70B) |
+| **OCR** | Tesseract 5.x |
+| **Web Server** | Apache (XAMPP compatible) |
+
+---
 
 ## Installation
 
 ### Prerequisites
 
-- Web server with PHP 7.4+
-- MySQL 5.7+ database
-- Node.js 14+ for blockchain features
-- Composer for PHP dependencies
-- Pinata API key for IPFS storage
+- PHP 7.4+ with mysqli, curl, gd, json extensions
+- MySQL 5.7+ or MariaDB 10.4+
+- Node.js 14+ (for blockchain features)
+- Tesseract OCR 5.x (for objective exam processing)
+- Composer (for PHP dependencies)
 
-### Setup Process
+### Quick Start
 
 1. **Clone the repository**
-
    ```bash
-   git clone https://github.com/your-organization/examflow.git
+   git clone https://github.com/your-org/examflow.git
    cd examflow
    ```
 
 2. **Configure database**
-
    ```bash
    # Create database
    mysql -u root -p -e "CREATE DATABASE db_eval CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;"
-
+   
    # Import schema
-   mysql -u root -p db_eval < database/db_eval.sql
+   mysql -u root -p db_eval < db/db_eval.sql
    ```
 
-3. **Set up required tables**
-
+3. **Set up environment**
    ```bash
-   # Set up analytics tables
-   php setup_analytics_db.php
-
-   # Set up mock exam system
-   php install_mock_tables.php
+   # Copy example environment file
+   cp .env.example .env
+   
+   # Edit with your credentials
+   # Required: Database, Groq API, Pinata API, Ethereum wallet
    ```
 
-4. **Configure environment**
-
+4. **Configure PHP**
    ```bash
-   # Copy example configuration
-   cp config.example.php config.php
-
-   # Edit configuration with your database details
-   nano config.php
+   # Edit config.php with your database credentials
+   $hostname = "localhost";
+   $username = "root";
+   $password = "";
+   $database = "db_eval";
    ```
 
-5. **Set up blockchain integration**
-
+5. **Install Node dependencies** (for blockchain)
    ```bash
-   # Create environment file
-   cp students/.env.example students/.env
-
-   # Add your Pinata API keys and Ethereum credentials
-   nano students/.env
+   npm install
    ```
 
-6. **Deploy to web server**
+6. **Deploy smart contract** (optional)
    ```bash
-   # Ensure correct permissions
+   # Using Remix IDE (recommended) or Hardhat
+   npx hardhat run scripts/deploy.js --network sepolia
+   ```
+
+7. **Set permissions**
+   ```bash
    chmod -R 755 .
    chmod -R 777 uploads/
+   chmod -R 777 certificates/
    ```
 
-## How to Use
+### Environment Variables (.env)
 
-### For Administrators
+```env
+# Database (configured in config.php)
 
-1. **Login to Admin Panel**
+# Groq AI
+GROQ_API_KEY=your_groq_api_key
+GROQ_MODEL=llama-3.3-70b-versatile
 
-   - Navigate to `/admin` directory
-   - Use your administrator credentials to login
+# Pinata (IPFS)
+PINATA_API_KEY=your_pinata_api_key
+PINATA_SECRET_KEY=your_pinata_secret_key
 
-2. **Create an Examination**
+# Ethereum
+NFT_CONTRACT_ADDRESS=your_deployed_contract
+ETHEREUM_WALLET_ADDRESS=your_wallet_address
+ETHEREUM_PRIVATE_KEY=your_private_key
 
-   - From the dashboard, select "Create Exam"
-   - Configure exam settings including duration, passing score, and integrity thresholds
-   - Add questions from the question bank or create new ones
-   - Set the exam availability window
+# Infura (RPC)
+INFURA_API_KEY=your_infura_key
+```
 
-3. **Monitor Exams**
+---
 
-   - Use the proctor dashboard to view active examinations
-   - Monitor student integrity scores in real-time
-   - Review automated violation reports
-   - Export results after completion
+## Cron Jobs
 
-4. **Manage Certificates**
-   - Review and approve certificate issuance
-   - Monitor blockchain verification status
-   - Access certificate analytics
+Set up these cron jobs for background processing:
 
-### For Instructors
+```bash
+# Process OCR queue (every 5 minutes)
+*/5 * * * * php /path/to/examflow/cron/process_ocr_queue.php
 
-1. **Create Question Banks**
+# Process AI grading queue (every 5 minutes)
+*/5 * * * * php /path/to/examflow/cron/process_ai_grading.php
+```
 
-   - Build reusable question repositories
-   - Configure difficulty levels and categories
-   - Set up rubrics for essay/open-ended questions
+---
 
-2. **Generate Mock Exams**
+## User Roles
 
-   - Use the AI system to create practice tests
-   - Customize mock exam parameters
-   - Review student performance on practice attempts
+### Student
+- Register/Login with school enrollment
+- Take MCQ and objective exams
+- Attempt AI-generated mock tests
+- View results and integrity scores
+- Generate and mint NFT certificates
+- Access messages from teachers
 
-3. **Analyze Results**
-   - Access detailed performance analytics
-   - Identify knowledge gaps and class-wide trends
-   - Generate comprehensive reports
+### Teacher
+- Create and manage MCQ exams
+- Upload objective exam answer keys
+- Review AI-graded submissions
+- View analytics and reports
+- Browse and book teaching slots
+- Upload session verification photos
 
-### For Students
+### Admin
+- Manage schools and teaching slots
+- Review pending session verifications
+- Validate geotagged submissions
+- Access audit logs
+- Generate system reports
+- Force enrollment/unenrollment
 
-1. **Register and Enroll**
+---
 
-   - Create a student account
-   - Enroll in available courses and examinations
+## Directory Structure
 
-2. **Prepare with Mock Tests**
+```
+examflow/
+├── admin/              # Admin portal
+├── students/           # Student portal
+├── teachers/           # Teacher portal
+├── contracts/          # Solidity smart contracts
+├── cron/               # Background job processors
+├── db/                 # Database schemas
+├── utils/              # Helper utilities
+│   ├── groq_grader.php    # AI grading
+│   ├── ocr_processor.php  # OCR handling
+│   ├── env_loader.php     # Environment config
+│   └── ...
+├── uploads/            # User uploads
+│   ├── student_answers/   # Objective exam submissions
+│   └── ocr_temp/          # OCR processing temp
+├── certificates/       # Generated certificates
+├── assets/             # Static assets
+├── js/                 # JavaScript files
+├── img/                # Images
+├── config.php          # Database configuration
+├── .env                # Environment variables
+└── package.json        # Node.js dependencies
+```
 
-   - Access AI-generated practice exams
-   - Review performance feedback
-   - Focus on identified knowledge gaps
-
-3. **Take Examinations**
-
-   - Follow the proctoring guidelines
-   - Complete assessments within the allocated time
-   - Maintain integrity standards throughout
-
-4. **Access Certificates**
-   - View and download blockchain-verified credentials
-   - Share certificates via secure links
-   - Verify certificate authenticity
+---
 
 ## Security Features
 
-- **Blockchain Verification**: Tamper-proof credential verification
-- **Multi-Factor Authentication**: Enhanced login security
-- **Advanced Proctoring**: Sophisticated integrity monitoring
-- **Secure Sessions**: Protected session management
-- **Data Encryption**: Protection of sensitive information
-- **Input Validation**: Prevention of injection attacks
+| Feature | Implementation |
+|---------|----------------|
+| **Authentication** | Session-based with password hashing |
+| **Authorization** | Role-based access control (RBAC) |
+| **SQL Injection** | Prepared statements throughout |
+| **XSS Prevention** | Output escaping with htmlspecialchars |
+| **CSRF Protection** | Session token validation |
+| **File Upload** | Type validation and secure storage |
+| **Blockchain** | Immutable credential verification |
+| **Audit Logging** | Complete admin action history |
+
+---
+
+## API Integrations
+
+| Service | Purpose | Documentation |
+|---------|---------|---------------|
+| Groq | AI-powered answer grading | [docs.groq.com](https://docs.groq.com) |
+| Pinata | IPFS storage for certificates | [pinata.cloud](https://pinata.cloud) |
+| Infura | Ethereum RPC provider | [infura.io](https://infura.io) |
+| Etherscan | Transaction verification | [sepolia.etherscan.io](https://sepolia.etherscan.io) |
+
+---
+
+## Integrity Scoring
+
+| Category | Score | Action |
+|----------|-------|--------|
+| Exemplary | 90-100 | Normal certificate |
+| Good | 75-89 | Certificate with note |
+| At-Risk | 50-74 | Certificate with warning |
+| Violation | 0-49 | Potential invalidation |
+
+### Violation Penalties
+
+- **Tab Switch**: 3-15 points (escalating)
+- **Window Blur**: 2-8 points (escalating)
+- **Combined**: 10-20 points (pattern detection)
+
+---
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
 
 ## Acknowledgments
 
-- Developed by Team Cerebro
-- Special thanks to all contributors and testers
+- **Team Cerebro** - Development team
+- **OpenZeppelin** - Smart contract libraries
+- **Groq** - AI inference API
+- **Pinata** - IPFS pinning service
+- **Tesseract** - OCR engine
 
 ---
 
 <p align="center">
-  <b>ExamFlow: Redefining Academic Assessment With Blockchain Integrity</b><br>
-  Made with precision and innovation by Team Cerebro
+  <b>ExamFlow: Redefining Academic Assessment with Blockchain Integrity & AI Intelligence</b><br>
+  <sub>Built with ❤️ by Team Cerebro</sub>
 </p>
