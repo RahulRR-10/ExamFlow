@@ -4,38 +4,67 @@ if (!isset($_SESSION["fname"])) {
   header("Location: ../login_teacher.php");
 }
 include '../config.php';
-error_reporting(0);
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
 
 $teacher_id = $_SESSION['user_id'];
 
-// Get teacher's enrolled schools
-$schools_sql = "SELECT s.school_id, s.school_name 
-                FROM schools s 
-                INNER JOIN teacher_schools ts ON s.school_id = ts.school_id 
-                WHERE ts.teacher_id = ? AND s.status = 'active'
-                ORDER BY ts.is_primary DESC, s.school_name ASC";
-$schools_stmt = mysqli_prepare($conn, $schools_sql);
-mysqli_stmt_bind_param($schools_stmt, "i", $teacher_id);
-mysqli_stmt_execute($schools_stmt);
-$schools_result = mysqli_stmt_get_result($schools_stmt);
-$teacher_schools = [];
+// Get schools where the teacher has booked teaching slots
+$sql = "SELECT DISTINCT 
+          s.school_id,
+          s.school_name,
+          COUNT(DISTINCT ste.enrollment_id) as total_bookings,
+          COUNT(DISTINCT CASE WHEN ste.enrollment_status = 'booked' THEN ste.enrollment_id END) as active_bookings
+        FROM schools s
+        INNER JOIN school_teaching_slots sts ON s.school_id = sts.school_id
+        INNER JOIN slot_teacher_enrollments ste ON sts.slot_id = ste.slot_id
+        WHERE ste.teacher_id = ?
+        GROUP BY s.school_id, s.school_name
+        ORDER BY s.school_name";
+
+$stmt = mysqli_prepare($conn, $sql);
+if (!$stmt) {
+  die("Prepare failed: " . mysqli_error($conn));
+}
+mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+mysqli_stmt_execute($stmt);
+$schools_result = mysqli_stmt_get_result($stmt);
+$booked_schools = [];
 while ($school = mysqli_fetch_assoc($schools_result)) {
-  $teacher_schools[] = $school;
+  $booked_schools[] = $school;
 }
 
-// Get students from teacher's enrolled schools only
-$school_ids = array_column($teacher_schools, 'school_id');
-if (!empty($school_ids)) {
-  $school_ids_str = implode(',', $school_ids);
-  $sql = "SELECT s.*, sch.school_name 
-            FROM student s 
-            LEFT JOIN schools sch ON s.school_id = sch.school_id 
-            WHERE s.school_id IN ($school_ids_str) 
-            ORDER BY sch.school_name, s.fname";
-} else {
-  $sql = "SELECT s.*, NULL as school_name FROM student s WHERE 1=0"; // No results if no schools
+// Get students from schools where teacher has bookings
+$students = [];
+if (!empty($booked_schools)) {
+  $school_ids = array_column($booked_schools, 'school_id');
+  $placeholders = implode(',', array_fill(0, count($school_ids), '?'));
+  
+  $student_sql = "SELECT 
+                    st.*,
+                    sch.school_name,
+                    COUNT(DISTINCT al.exid) as total_exams_taken,
+                    AVG(al.ptg) as avg_marks
+                  FROM student st
+                  INNER JOIN schools sch ON st.school_id = sch.school_id
+                  LEFT JOIN atmpt_list al ON st.uname = al.uname
+                  WHERE st.school_id IN ($placeholders)
+                  GROUP BY st.id
+                  ORDER BY sch.school_name, st.fname";
+  
+  $student_stmt = mysqli_prepare($conn, $student_sql);
+  if (!$student_stmt) {
+    die("Prepare failed: " . mysqli_error($conn));
+  }
+  $types = str_repeat('i', count($school_ids));
+  mysqli_stmt_bind_param($student_stmt, $types, ...$school_ids);
+  mysqli_stmt_execute($student_stmt);
+  $students_result = mysqli_stmt_get_result($student_stmt);
+  
+  while ($student = mysqli_fetch_assoc($students_result)) {
+    $students[] = $student;
+  }
 }
-$result = mysqli_query($conn, $sql);
 
 ?>
 <!DOCTYPE html>
@@ -43,10 +72,54 @@ $result = mysqli_query($conn, $sql);
 
 <head>
   <meta charset="UTF-8">
-  <title>Messages</title>
+  <title>Student Records - Booked Schools</title>
   <link rel="stylesheet" href="css/dash.css">
   <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .school-filter {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f8f9fa;
+      border-radius: 8px;
+    }
+    .school-filter select {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 14px;
+      min-width: 250px;
+    }
+    .stats-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 20px;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .stat-card h3 {
+      margin: 0;
+      font-size: 32px;
+      font-weight: bold;
+    }
+    .stat-card p {
+      margin: 5px 0 0 0;
+      opacity: 0.9;
+    }
+    .info-message {
+      background: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      padding: 15px;
+      margin: 20px 0;
+      border-radius: 5px;
+    }
+  </style>
 </head>
 
 <body>
@@ -134,7 +207,7 @@ $result = mysqli_query($conn, $sql);
     <nav>
       <div class="sidebar-button">
         <i class='bx bx-menu sidebarBtn'></i>
-        <span class="dashboard">Teacher's Dashboard</span>
+        <span class="dashboard">Student Records - My Booked Schools</span>
       </div>
       <div class="profile-details">
         <img src="<?php echo $_SESSION['img']; ?>" alt="pro">
@@ -143,93 +216,106 @@ $result = mysqli_query($conn, $sql);
     </nav>
 
     <div class="home-content">
-      <div class="stat-boxes">
-        <div class="recent-stat box" style="padding: 0px 0px;">
-          <table>
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>Full name</th>
-                <th>Username</th>
-                <th>School</th>
-                <th>Email</th>
-                <th>Gender</th>
-                <th>DOB</th>
-                <th>EDIT</th>
-                <th>DELETE</th>
-              </tr>
-            </thead>
-            <tbody>
-              <?php
-              if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
-              ?>
-                  <tr>
-                    <td><?php echo $row['id']; ?></td>
-                    <td><?php echo $row['fname']; ?></td>
-                    <td><?php echo $row['uname']; ?></td>
-                    <td><?php echo htmlspecialchars($row['school_name'] ?? 'N/A'); ?></td>
-                    <td><?php echo $row['email']; ?></td>
-                    <td><?php echo $row['gender']; ?></td>
-                    <td><?php echo $row['dob']; ?></td>
-                    <td>
-                      <form action="updateuserform.php" method="post">
-                        <input type="hidden" name="edit_id" value="<?php echo $row['id']; ?>">
-                        <button type="submit" name="edit_btn" class="rounded-button-updt"><i class='bx bxs-edit'></i></button>
-                      </form>
-                    </td>
-                    <td>
-                      <form action="del.php" method="post">
-                        <input type="hidden" name="delete_id" value="<?php echo $row['id']; ?>">
-                        <button type="submit" name="delete_btn" class="rounded-button-del"><i class='bx bx-x'></i></button>
-                      </form>
-                    </td>
-                  </tr>
-              <?php
+      <?php if (empty($booked_schools)): ?>
+        <div class="info-message">
+          <h3>No Teaching Slots Booked Yet</h3>
+          <p>You haven't booked any teaching slots yet. Once you book slots at schools, you'll be able to view the students from those schools here.</p>
+          <p><a href="browse_slots.php" style="color: #2196f3; text-decoration: underline;">Browse Available Teaching Slots</a></p>
+        </div>
+      <?php else: ?>
+        
+        <div class="stats-summary">
+          <div class="stat-card">
+            <h3><?php echo count($booked_schools); ?></h3>
+            <p>Schools with Bookings</p>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+            <h3><?php echo count($students); ?></h3>
+            <p>Total Students</p>
+          </div>
+          <div class="stat-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+            <h3><?php echo array_sum(array_column($booked_schools, 'active_bookings')); ?></h3>
+            <p>Active Bookings</p>
+          </div>
+        </div>
+
+        <div class="school-filter">
+          <label for="schoolFilter"><strong>Filter by School:</strong></label>
+          <select id="schoolFilter" onchange="filterBySchool()">
+            <option value="">All Schools</option>
+            <?php foreach ($booked_schools as $school): ?>
+              <option value="<?php echo $school['school_id']; ?>">
+                <?php echo htmlspecialchars($school['school_name']); ?> 
+                (<?php echo $school['active_bookings']; ?> active bookings)
+              </option>
+            <?php endforeach; ?>
+          </select>
+        </div>
+
+        <div class="stat-boxes">
+          <div class="recent-stat box" style="padding: 0px 0px; width: 100%;">
+            <div class="title">Students from My Booked Schools</div>
+            <table>
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Full Name</th>
+                  <th>Username</th>
+                  <th>School</th>
+                  <th>Email</th>
+                  <th>Gender</th>
+                  <th>DOB</th>
+                  <th>Exams Taken</th>
+                  <th>Avg Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                <?php
+                if (!empty($students)) {
+                  foreach ($students as $student) {
+                ?>
+                    <tr data-school-id="<?php echo $student['school_id']; ?>">
+                      <td><?php echo $student['id']; ?></td>
+                      <td><?php echo htmlspecialchars($student['fname']); ?></td>
+                      <td><?php echo htmlspecialchars($student['uname']); ?></td>
+                      <td><?php echo htmlspecialchars($student['school_name']); ?></td>
+                      <td><?php echo htmlspecialchars($student['email']); ?></td>
+                      <td><?php echo $student['gender']; ?></td>
+                      <td><?php echo $student['dob']; ?></td>
+                      <td><?php echo $student['total_exams_taken']; ?></td>
+                      <td><?php echo $student['avg_marks'] ? round($student['avg_marks'], 1) . '%' : 'N/A'; ?></td>
+                    </tr>
+                <?php
+                  }
+                } else {
+                  echo '<tr><td colspan="9" style="text-align:center;">No students found</td></tr>';
                 }
-              }
-              ?>
-            </tbody>
-          </table>
+                ?>
+              </tbody>
+            </table>
+          </div>
         </div>
-        <div class="top-stat box">
-          <div class="title">Add new student</div>
-          <br><br>
-          <img src="../img/anon.png" alt="pro" style=" display: block; margin-left: auto; margin-right: auto; width:30%; max-width:200px" ;>
-          <form action="adduser.php" method="post">
-            <label for="school_id">School *</label><br>
-            <select class="inputbox" id="school_id" name="school_id" required style="width:100%; padding:8px; margin-bottom:10px;">
-              <option value="">-- Select School --</option>
-              <?php foreach ($teacher_schools as $school): ?>
-                <option value="<?php echo $school['school_id']; ?>"><?php echo htmlspecialchars($school['school_name']); ?></option>
-              <?php endforeach; ?>
-            </select><br>
-            <label for="fname">Full Name</label><br>
-            <input class="inputbox" type="text" id="fname" name="fname" placeholder="Enter full name" minlength="4" maxlength="30" required /></br>
-            <label for="uname">Username</label><br>
-            <input class="inputbox" type="text" id="uname" name="uname" placeholder="Enter username" minlength="5" maxlength="15" required /></br>
-            <label for="pword">Password</label><br>
-            <input class="inputbox" type="password" id="pword" name="pword" placeholder="pass****" minlength="8" maxlength="16" required /></br>
-            <label for="cpword">Confirm password</label><br>
-            <input class="inputbox" type="password" id="cpword" name="cpword" placeholder="pass****" minlength="8" maxlength="16" required /></br>
-            <label for="email">Email</label><br>
-            <input class="inputbox" type="email" id="email" name="email" placeholder="Enter email" minlength="5" maxlength="50" required />
-            <label for="dob">Date of Birth</label><br>
-            <input class="inputbox" type="date" id="dob" name="dob" placeholder="Enter DOB" required /><br>
-            <label for="gender">Gender</label><br>
-            <input class="inputbox" type="text" id="gender" name="gender" placeholder="Enter gender (M or F)" minlength="1" maxlength="1" required /><br>
-            <br><br>
-            <button type="submit" name="adduser" class="btn">Add Student</button>
-          </form>
-        </div>
-      </div>
+      <?php endif; ?>
 
     </div>
   </section>
 
   <script src="../js/script.js"></script>
-
-
+  <script>
+    function filterBySchool() {
+      const select = document.getElementById('schoolFilter');
+      const selectedSchool = select.value;
+      const rows = document.querySelectorAll('tbody tr[data-school-id]');
+      
+      rows.forEach(row => {
+        if (selectedSchool === '' || row.getAttribute('data-school-id') === selectedSchool) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+  </script>
 </body>
 
 </html>

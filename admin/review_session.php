@@ -133,10 +133,12 @@ if ($session['photo_taken_at']) {
     <style>
         .review-container {
             display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 25px;
+            grid-template-columns: 1fr 380px;
+            gap: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
-        @media (max-width: 1100px) {
+        @media (max-width: 1000px) {
             .review-container { grid-template-columns: 1fr; }
         }
         .back-link {
@@ -145,412 +147,390 @@ if ($session['photo_taken_at']) {
             gap: 8px;
             color: var(--text-muted);
             text-decoration: none;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
+            font-size: 14px;
         }
         .back-link:hover { color: var(--primary-color); }
+        
+        /* Photo Section */
+        .photo-section {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
         .photo-card {
             background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
         }
-        .photo-main {
+        .photo-wrapper {
             position: relative;
-            background: #000;
+            background: #1a1a2e;
+            padding: 20px;
         }
-        .photo-main img {
+        .photo-wrapper img {
             width: 100%;
-            max-height: 500px;
+            max-height: 400px;
             object-fit: contain;
             cursor: zoom-in;
+            display: block;
+            border-radius: 8px;
         }
-        .photo-status-bar {
+        .photo-overlay {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            padding: 15px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.7), transparent);
+            top: 30px;
+            left: 30px;
+            right: 30px;
             display: flex;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
         }
-        .status-badge {
-            padding: 6px 16px;
+        .status-pill {
+            padding: 6px 14px;
             border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-pill.photo_submitted { background: #3b82f6; color: white; }
+        .status-pill.approved { background: #10b981; color: white; }
+        .status-pill.rejected { background: #ef4444; color: white; }
+        .status-pill.pending { background: #f59e0b; color: white; }
+        
+        .quick-badges {
+            display: flex;
+            gap: 8px;
+        }
+        .quick-badge {
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            background: rgba(255,255,255,0.95);
+        }
+        .quick-badge.ok { color: #059669; }
+        .quick-badge.warn { color: #d97706; }
+        .quick-badge.bad { color: #dc2626; }
+        
+        .map-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            overflow: hidden;
+            padding: 15px;
+        }
+        .map-card h4 {
             font-size: 13px;
-            font-weight: 500;
-        }
-        .status-badge.photo_submitted { background: #dbeafe; color: #1e40af; }
-        .status-badge.approved { background: #dcfce7; color: #166534; }
-        .status-badge.rejected { background: #fee2e2; color: #991b1b; }
-        .status-badge.pending { background: #fef3c7; color: #92400e; }
-        .validation-badges {
-            display: flex;
-            gap: 10px;
-        }
-        .validation-badge {
-            padding: 5px 12px;
-            border-radius: 15px;
-            font-size: 12px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .validation-badge.success { background: #dcfce7; color: #166534; }
-        .validation-badge.warning { background: #fef3c7; color: #92400e; }
-        .validation-badge.danger { background: #fee2e2; color: #991b1b; }
-        .validation-badge.unknown { background: #e5e7eb; color: #374151; }
-        .photo-meta {
-            padding: 20px;
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-        }
-        .meta-item {
-            font-size: 14px;
-        }
-        .meta-item label {
-            display: block;
-            font-size: 12px;
+            font-weight: 600;
+            margin: 0 0 12px 0;
             color: var(--text-muted);
-            margin-bottom: 3px;
-        }
-        .meta-item span {
-            font-weight: 500;
         }
         #map {
-            height: 250px;
-            border-radius: 10px;
-            margin: 0 20px 20px;
+            height: 220px;
+            border-radius: 8px;
         }
-        .action-card {
+        
+        .no-photo {
+            padding: 80px 20px;
+            text-align: center;
+            background: #f8f9fa;
+            border-radius: 12px;
+        }
+        
+        /* Side Panel */
+        .side-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .panel-card {
             background: var(--card-bg);
             border-radius: 12px;
             overflow: hidden;
         }
-        .action-header {
-            padding: 20px;
+        .panel-header {
+            padding: 16px 20px;
             background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
         }
-        .action-header h2 {
-            font-size: 18px;
-            margin-bottom: 5px;
-        }
-        .action-header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-        .action-body {
-            padding: 20px;
-        }
-        .info-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .info-section:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-            padding-bottom: 0;
-        }
-        .info-section h3 {
-            font-size: 14px;
-            color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-        .info-row:last-child { margin-bottom: 0; }
-        .info-row .label { color: var(--text-muted); }
-        .info-row .value { font-weight: 500; }
-        .action-form textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            min-height: 80px;
-            resize: vertical;
-            margin-bottom: 15px;
-            font-family: inherit;
-        }
-        .action-buttons {
-            display: flex;
-            gap: 10px;
-        }
-        .action-buttons .btn {
-            flex: 1;
-        }
-        .alert {
-            padding: 15px 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .alert-success { background: #dcfce7; color: #166534; }
-        .alert-danger { background: #fee2e2; color: #991b1b; }
-        .alert-warning { background: #fef3c7; color: #92400e; }
-        .verification-checklist {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .verification-checklist h4 {
-            font-size: 14px;
-            margin-bottom: 12px;
-        }
-        .check-item {
+        .panel-header h2 {
+            font-size: 16px;
+            margin: 0 0 4px 0;
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 14px;
+            gap: 8px;
         }
-        .check-item:last-child { margin-bottom: 0; }
+        .panel-header p {
+            font-size: 13px;
+            opacity: 0.9;
+            margin: 0;
+        }
+        .panel-body {
+            padding: 16px 20px;
+        }
+        .info-grid {
+            display: grid;
+            gap: 10px;
+        }
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+        }
+        .info-item .label { color: var(--text-muted); }
+        .info-item .value { font-weight: 500; text-align: right; }
+        
+        .divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 12px 0;
+        }
+        
+        .checklist {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 12px;
+        }
+        .checklist-title {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .check-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        .check-row:last-child { margin-bottom: 0; }
         .check-icon {
-            width: 24px;
-            height: 24px;
+            width: 18px;
+            height: 18px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 12px;
+            font-size: 10px;
+            flex-shrink: 0;
         }
         .check-icon.pass { background: #dcfce7; color: #166534; }
         .check-icon.fail { background: #fee2e2; color: #991b1b; }
         .check-icon.warn { background: #fef3c7; color: #92400e; }
-        .check-icon.unknown { background: #e5e7eb; color: #374151; }
-        .no-photo {
-            padding: 60px 20px;
-            text-align: center;
-            background: #f8f9fa;
-        }
-        .no-photo i {
-            font-size: 48px;
-            color: #ccc;
-            margin-bottom: 15px;
-        }
-        .previous-action {
-            background: #f0f9ff;
-            border: 1px solid #bae6fd;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 20px;
-        }
-        .previous-action h4 {
-            font-size: 14px;
-            color: #0369a1;
-            margin-bottom: 8px;
-        }
-        .previous-action p {
+        .check-icon.unknown { background: #e5e7eb; color: #6b7280; }
+        
+        /* Action Form */
+        .action-form textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            min-height: 70px;
+            resize: vertical;
+            font-family: inherit;
             font-size: 13px;
-            color: #0c4a6e;
+            margin-bottom: 12px;
         }
+        .action-form label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+        .action-btns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .action-btns .btn {
+            padding: 10px 16px;
+            font-size: 13px;
+        }
+        
+        .alert {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+        }
+        .alert-success { background: #dcfce7; color: #166534; }
+        .alert-danger { background: #fee2e2; color: #991b1b; }
+        
+        .prev-decision {
+            background: #eff6ff;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 13px;
+            margin-bottom: 12px;
+        }
+        .prev-decision strong { color: #1e40af; }
     </style>
 </head>
 <body>
     <?php include 'includes/nav.php'; ?>
     
     <div class="main-content">
-        <a href="pending_sessions.php" class="back-link">
-            ← Back to Session Reviews
-        </a>
+        <a href="pending_sessions.php" class="back-link">← Back to Session Reviews</a>
         
         <?php if ($message): ?>
-        <div class="alert alert-success"><?= htmlspecialchars($message) ?></div>
+        <div class="alert alert-success" style="margin-bottom: 15px;"><?= htmlspecialchars($message) ?></div>
         <?php endif; ?>
         
         <?php if ($error): ?>
-        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+        <div class="alert alert-danger" style="margin-bottom: 15px;"><?= htmlspecialchars($error) ?></div>
         <?php endif; ?>
         
         <div class="review-container">
             <!-- Photo Section -->
-            <div class="photo-card">
+            <div class="photo-section">
                 <?php if ($session['photo_path']): ?>
-                <div class="photo-main">
-                    <img src="../<?= htmlspecialchars($session['photo_path']) ?>" 
-                         alt="Session Photo"
-                         onclick="window.open('../<?= htmlspecialchars($session['photo_path']) ?>', '_blank')">
-                    <div class="photo-status-bar">
-                        <span class="status-badge <?= $session['session_status'] ?>">
-                            <?= ucfirst(str_replace('_', ' ', $session['session_status'])) ?>
-                        </span>
-                        <div class="validation-badges">
-                            <?php if ($session['gps_latitude'] && $session['gps_longitude']): ?>
-                                <?php if ($distance_ok): ?>
-                                <span class="validation-badge success">📍 <?= number_format($distance) ?>m ✓</span>
-                                <?php else: ?>
-                                <span class="validation-badge danger">📍 <?= number_format($distance) ?>m ✗</span>
+                <div class="photo-card">
+                    <div class="photo-wrapper">
+                        <img src="../<?= htmlspecialchars($session['photo_path']) ?>" 
+                             alt="Session Photo"
+                             onclick="window.open('../<?= htmlspecialchars($session['photo_path']) ?>', '_blank')">
+                        <div class="photo-overlay">
+                            <span class="status-pill <?= $session['session_status'] ?>">
+                                <?= ucfirst(str_replace('_', ' ', $session['session_status'])) ?>
+                            </span>
+                            <div class="quick-badges">
+                                <?php if ($session['gps_latitude'] && $session['gps_longitude']): ?>
+                                <span class="quick-badge <?= $distance_ok ? 'ok' : 'bad' ?>">
+                                    📍 <?= number_format($distance) ?>m <?= $distance_ok ? '✓' : '✗' ?>
+                                </span>
                                 <?php endif; ?>
-                            <?php else: ?>
-                            <span class="validation-badge unknown">📍 No GPS</span>
-                            <?php endif; ?>
-                            
-                            <?php if ($date_match): ?>
-                            <span class="validation-badge success">📅 Date ✓</span>
-                            <?php elseif ($session['photo_taken_at']): ?>
-                            <span class="validation-badge warning">📅 Date ≠</span>
-                            <?php else: ?>
-                            <span class="validation-badge unknown">📅 Unknown</span>
-                            <?php endif; ?>
+                                <span class="quick-badge <?= $date_match ? 'ok' : 'warn' ?>">
+                                    📅 <?= $date_match ? 'Date ✓' : 'Date ≠' ?>
+                                </span>
+                            </div>
                         </div>
-                    </div>
-                </div>
-                
-                <div class="photo-meta">
-                    <div class="meta-item">
-                        <label>Uploaded At</label>
-                        <span><?= date('M j, Y h:i A', strtotime($session['photo_uploaded_at'])) ?></span>
-                    </div>
-                    <?php if ($session['photo_taken_at']): ?>
-                    <div class="meta-item">
-                        <label>Photo Taken</label>
-                        <span><?= date('M j, Y h:i A', strtotime($session['photo_taken_at'])) ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <?php if ($session['gps_latitude'] && $session['gps_longitude']): ?>
-                    <div class="meta-item">
-                        <label>Photo GPS</label>
-                        <span><?= number_format($session['gps_latitude'], 6) ?>, <?= number_format($session['gps_longitude'], 6) ?></span>
-                    </div>
-                    <?php endif; ?>
-                    <div class="meta-item">
-                        <label>Distance from School</label>
-                        <span style="color: <?= $distance_ok ? '#10b981' : ($distance !== null ? '#ef4444' : '#9ca3af') ?>">
-                            <?= $distance !== null ? number_format($distance) . 'm' : 'Unknown' ?>
-                            (max: <?= $allowed_radius ?>m)
-                        </span>
                     </div>
                 </div>
                 
                 <?php if ($session['gps_latitude'] && $session['gps_longitude'] && $session['school_lat'] && $session['school_lng']): ?>
-                <div id="map"></div>
+                <div class="map-card">
+                    <h4>📍 Location Verification</h4>
+                    <div id="map"></div>
+                </div>
                 <?php endif; ?>
                 
                 <?php else: ?>
                 <div class="no-photo">
-                    <div style="font-size: 48px; color: #ccc; margin-bottom: 15px;">📷</div>
+                    <div style="font-size: 48px; margin-bottom: 15px;">📷</div>
                     <h3>No Photo Uploaded</h3>
-                    <p style="color: var(--text-muted);">Teacher has not submitted a photo for this session yet.</p>
+                    <p style="color: var(--text-muted);">Teacher has not submitted a photo yet.</p>
                 </div>
                 <?php endif; ?>
             </div>
             
-            <!-- Action Panel -->
-            <div class="action-card">
-                <div class="action-header">
-                    <h2>🏫 <?= htmlspecialchars($session['school_name']) ?></h2>
-                    <p><?= htmlspecialchars($session['full_address'] ?: 'No address') ?></p>
+            <!-- Side Panel -->
+            <div class="side-panel">
+                <!-- School Info -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h2>🏫 <?= htmlspecialchars($session['school_name']) ?></h2>
+                        <p><?= htmlspecialchars($session['full_address'] ?: 'No address provided') ?></p>
+                    </div>
+                    <div class="panel-body">
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="label">Name</span>
+                                <span class="value"><?= htmlspecialchars($session['teacher_name']) ?></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Email</span>
+                                <span class="value"><?= htmlspecialchars($session['teacher_email']) ?></span>
+                            </div>
+                        </div>
+                        
+                        <div class="divider"></div>
+                        
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <span class="label">Date</span>
+                                <span class="value"><?= date('M j, Y', strtotime($session['slot_date'])) ?></span>
+                            </div>
+                            <div class="info-item">
+                                <span class="label">Time</span>
+                                <span class="value"><?= date('h:i A', strtotime($session['start_time'])) ?> - <?= date('h:i A', strtotime($session['end_time'])) ?></span>
+                            </div>
+                            <?php if ($session['contact_person']): ?>
+                            <div class="info-item">
+                                <span class="label">Contact</span>
+                                <span class="value"><?= htmlspecialchars($session['contact_person']) ?></span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="divider"></div>
+                        
+                        <!-- Verification Checklist -->
+                        <div class="checklist">
+                            <div class="checklist-title">✅ Verification Checklist</div>
+                            <div class="check-row">
+                                <span class="check-icon <?= $session['photo_path'] ? 'pass' : 'fail' ?>">
+                                    <?= $session['photo_path'] ? '✓' : '✗' ?>
+                                </span>
+                                <span>Photo uploaded</span>
+                            </div>
+                            <div class="check-row">
+                                <span class="check-icon <?= ($session['gps_latitude'] && $session['gps_longitude']) ? ($distance_ok ? 'pass' : 'fail') : 'unknown' ?>">
+                                    <?= ($session['gps_latitude'] && $session['gps_longitude']) ? ($distance_ok ? '✓' : '✗') : '?' ?>
+                                </span>
+                                <span>Location within <?= $allowed_radius ?>m of school</span>
+                            </div>
+                            <div class="check-row">
+                                <span class="check-icon <?= $session['photo_taken_at'] ? ($date_match ? 'pass' : 'warn') : 'unknown' ?>">
+                                    <?= $session['photo_taken_at'] ? ($date_match ? '✓' : '!') : '?' ?>
+                                </span>
+                                <span>Photo date matches session date</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="action-body">
-                    <!-- Session Info -->
-                    <div class="info-section">
-                        <h3>👤 Teacher</h3>
-                        <div class="info-row">
-                            <span class="label">Name</span>
-                            <span class="value"><?= htmlspecialchars($session['teacher_name']) ?></span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Email</span>
-                            <span class="value"><?= htmlspecialchars($session['teacher_email']) ?></span>
-                        </div>
-                        <?php if ($session['subject']): ?>
-                        <div class="info-row">
-                            <span class="label">Subject</span>
-                            <span class="value"><?= htmlspecialchars($session['subject']) ?></span>
+                
+                <!-- Action Card -->
+                <div class="panel-card">
+                    <div class="panel-body">
+                        <?php if ($session['verified_at']): ?>
+                        <div class="prev-decision">
+                            <strong><?= $session['session_status'] === 'approved' ? '✅ Approved' : '❌ Rejected' ?></strong>
+                            by <?= htmlspecialchars($session['verified_by_name']) ?><br>
+                            <small><?= date('M j, Y h:i A', strtotime($session['verified_at'])) ?></small>
+                            <?php if ($session['admin_remarks']): ?>
+                            <p style="margin-top: 6px; font-style: italic;">"<?= htmlspecialchars($session['admin_remarks']) ?>"</p>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
-                    </div>
-                    
-                    <div class="info-section">
-                        <h3>📅 Slot Details</h3>
-                        <div class="info-row">
-                            <span class="label">Date</span>
-                            <span class="value"><?= date('M j, Y', strtotime($session['slot_date'])) ?></span>
-                        </div>
-                        <div class="info-row">
-                            <span class="label">Time</span>
-                            <span class="value"><?= date('h:i A', strtotime($session['start_time'])) ?> - <?= date('h:i A', strtotime($session['end_time'])) ?></span>
-                        </div>
-                        <?php if ($session['contact_person']): ?>
-                        <div class="info-row">
-                            <span class="label">Contact</span>
-                            <span class="value"><?= htmlspecialchars($session['contact_person']) ?></span>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Verification Checklist -->
-                    <div class="verification-checklist">
-                        <h4>✅ Verification Checklist</h4>
-                        <div class="check-item">
-                            <span class="check-icon <?= $session['photo_path'] ? 'pass' : 'fail' ?>">
-                                <?= $session['photo_path'] ? '✓' : '✗' ?>
-                            </span>
-                            <span>Photo uploaded</span>
-                        </div>
-                        <div class="check-item">
-                            <span class="check-icon <?= ($session['gps_latitude'] && $session['gps_longitude']) ? ($distance_ok ? 'pass' : 'fail') : 'unknown' ?>">
-                                <?= ($session['gps_latitude'] && $session['gps_longitude']) ? ($distance_ok ? '✓' : '✗') : '?' ?>
-                            </span>
-                            <span>Location within <?= $allowed_radius ?>m of school</span>
-                        </div>
-                        <div class="check-item">
-                            <span class="check-icon <?= $session['photo_taken_at'] ? ($date_match ? 'pass' : 'warn') : 'unknown' ?>">
-                                <?= $session['photo_taken_at'] ? ($date_match ? '✓' : '!' ) : '?' ?>
-                            </span>
-                            <span>Photo date matches session date</span>
-                        </div>
-                    </div>
-                    
-                    <?php if ($session['verified_at']): ?>
-                    <div class="previous-action">
-                        <h4><?= $session['session_status'] === 'approved' ? '✅ Previously Approved' : '❌ Previously Rejected' ?></h4>
-                        <p>By <?= htmlspecialchars($session['verified_by_name']) ?> on <?= date('M j, Y h:i A', strtotime($session['verified_at'])) ?></p>
-                        <?php if ($session['admin_remarks']): ?>
-                        <p style="margin-top: 8px;"><em>"<?= htmlspecialchars($session['admin_remarks']) ?>"</em></p>
-                        <?php endif; ?>
-                    </div>
-                    <?php endif; ?>
-                    
-                    <!-- Action Form -->
-                    <?php if ($session['session_status'] === 'photo_submitted'): ?>
-                    <form method="POST" class="action-form">
-                        <input type="hidden" name="session_id" value="<?= $session_id ?>">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Remarks (optional for approval, required for rejection)</label>
-                        <textarea name="remarks" placeholder="Enter any remarks or feedback..."></textarea>
-                        <div class="action-buttons">
-                            <button type="submit" name="action" value="approve" class="btn btn-success">
-                                ✓ Approve
-                            </button>
-                            <button type="submit" name="action" value="reject" class="btn btn-danger"
+                        
+                        <?php if ($session['session_status'] === 'photo_submitted'): ?>
+                        <form method="POST" class="action-form">
+                            <input type="hidden" name="session_id" value="<?= $session_id ?>">
+                            <label>Remarks (optional for approval, required for rejection)</label>
+                            <textarea name="remarks" placeholder="Enter remarks..."></textarea>
+                            <div class="action-btns">
+                                <button type="submit" name="action" value="approve" class="btn btn-success">✓ Approve</button>
+                                <button type="submit" name="action" value="reject" class="btn btn-danger"
                                     onclick="if(!document.querySelector('textarea[name=remarks]').value.trim()){alert('Please enter a rejection reason');return false;}">
-                                ✗ Reject
+                                    ✗ Reject
+                                </button>
+                            </div>
+                        </form>
+                        <?php elseif ($session['session_status'] === 'approved'): ?>
+                        <div class="alert alert-success" style="margin: 0;">✅ This session has been approved.</div>
+                        <?php elseif ($session['session_status'] === 'rejected'): ?>
+                        <form method="POST" class="action-form">
+                            <input type="hidden" name="session_id" value="<?= $session_id ?>">
+                            <label>Change decision:</label>
+                            <textarea name="remarks" placeholder="Enter remarks..."></textarea>
+                            <button type="submit" name="action" value="approve" class="btn btn-success" style="width: 100%;">
+                                ✓ Approve Instead
                             </button>
-                        </div>
-                    </form>
-                    <?php elseif ($session['session_status'] === 'approved'): ?>
-                    <div class="alert alert-success" style="margin-bottom: 0;">
-                        ✅ This session has been approved.
+                        </form>
+                        <?php endif; ?>
                     </div>
-                    <?php elseif ($session['session_status'] === 'rejected'): ?>
-                    <div class="alert alert-danger" style="margin-bottom: 15px;">
-                        ❌ This session was rejected. Teacher can resubmit.
-                    </div>
-                    <form method="POST" class="action-form">
-                        <input type="hidden" name="session_id" value="<?= $session_id ?>">
-                        <label style="display: block; margin-bottom: 8px; font-weight: 500;">Change decision:</label>
-                        <textarea name="remarks" placeholder="Enter remarks..."></textarea>
-                        <button type="submit" name="action" value="approve" class="btn btn-success btn-block">
-                            ✓ Approve Instead
-                        </button>
-                    </form>
-                    <?php endif; ?>
                 </div>
             </div>
         </div>

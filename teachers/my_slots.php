@@ -487,14 +487,9 @@ foreach ($upcoming as $b) {
                             </div>
                         </div>
                         <div class="booking-actions">
-                            <?php if ($needs_photo && $booking['session_id']): ?>
-                            <a href="upload_session_photo.php?session=<?= $booking['session_id'] ?>" class="btn btn-warning btn-sm">
-                                <i class='bx bx-camera'></i> Upload Photo
-                            </a>
-                            <?php endif; ?>
                             <?php if ($booking['session_id']): ?>
-                            <a href="view_session.php?id=<?= $booking['session_id'] ?>" class="btn btn-secondary btn-sm">
-                                <i class='bx bx-show'></i> View Session
+                            <a href="view_session.php?id=<?= $booking['session_id'] ?>" class="btn <?= $needs_photo ? 'btn-warning' : 'btn-secondary' ?> btn-sm">
+                                <i class='bx <?= $needs_photo ? 'bx-camera' : 'bx-show' ?>'></i> <?= $needs_photo ? 'Upload Photo' : 'View Session' ?>
                             </a>
                             <?php endif; ?>
                             <?php if ($can_cancel): ?>
