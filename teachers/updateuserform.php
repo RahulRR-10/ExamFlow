@@ -152,7 +152,7 @@ while ($school = mysqli_fetch_assoc($schools_result)) {
                 <label for="gender">Gender</label><br>
                 <input class="inputbox" type="text" id="gender" name="gender" placeholder="Enter gender (M or F)" value="<?php echo $row['gender']; ?>" minlength="1" maxlength="1" required /><br>
 
-                <a href="records.php" class="btnc" style="border: 1px solid #d80000; background-color: #d80000;">Cancel</a>
+                <a href="dash.php" class="btnc" style="border: 1px solid #d80000; background-color: #d80000;">Cancel</a>
                 <button type="submit" name="updatebtn" class="btnc">Update</button>
               </form>
           <?php

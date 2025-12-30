@@ -380,7 +380,6 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
             <li><a href="exams.php"><i class='bx bx-book-content'></i><span class="links_name">MCQ Exams</span></a></li>
             <li><a href="objective_exams.php"><i class='bx bx-edit'></i><span class="links_name">Objective Exams</span></a></li>
             <li><a href="results.php"><i class='bx bxs-bar-chart-alt-2'></i><span class="links_name">Results</span></a></li>
-            <li><a href="records.php"><i class='bx bxs-user-circle'></i><span class="links_name">Records</span></a></li>
             <li><a href="messages.php"><i class='bx bx-message'></i><span class="links_name">Messages</span></a></li>
             <li><a href="school_management.php"><i class='bx bx-building-house'></i><span class="links_name">Schools</span></a></li>
             <li><a href="browse_slots.php" class="active"><i class='bx bx-calendar-check'></i><span class="links_name">Teaching Slots</span></a></li>

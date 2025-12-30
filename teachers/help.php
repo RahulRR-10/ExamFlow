@@ -47,12 +47,6 @@ if (!isset($_SESSION["user_id"])) {
         </a>
       </li>
       <li>
-        <a href="records.php">
-          <i class='bx bxs-user-circle'></i>
-          <span class="links_name">Records</span>
-        </a>
-      </li>
-      <li>
         <a href="messages.php">
           <i class='bx bx-message'></i>
           <span class="links_name">Messages</span>

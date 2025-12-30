@@ -620,7 +620,6 @@ $submissions_list = mysqli_stmt_get_result($list_stmt);
             <li><a href="exams.php"><i class='bx bx-book'></i><span class="links_name">MCQ Exams</span></a></li>
             <li><a href="objective_exams.php"><i class='bx bx-file'></i><span class="links_name">Objective Exams</span></a></li>
             <li><a href="grade_objective.php" class="active"><i class='bx bx-check-circle'></i><span class="links_name">Grade Submissions</span></a></li>
-            <li><a href="records.php"><i class='bx bx-user'></i><span class="links_name">Student Records</span></a></li>
             <li><a href="results.php"><i class='bx bx-bar-chart-alt-2'></i><span class="links_name">Results</span></a></li>
             <li><a href="messages.php"><i class='bx bx-message'></i><span class="links_name">Messages</span></a></li>
             <li><a href="settings.php"><i class='bx bx-cog'></i><span class="links_name">Settings</span></a></li>

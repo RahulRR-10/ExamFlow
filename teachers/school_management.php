@@ -261,7 +261,6 @@ $total_approved = array_sum(array_column($my_schools, 'approved_sessions'));
             <li><a href="exams.php"><i class='bx bx-book-content'></i><span class="links_name">MCQ Exams</span></a></li>
             <li><a href="objective_exams.php"><i class='bx bx-edit'></i><span class="links_name">Objective Exams</span></a></li>
             <li><a href="results.php"><i class='bx bxs-bar-chart-alt-2'></i><span class="links_name">Results</span></a></li>
-            <li><a href="records.php"><i class='bx bxs-user-circle'></i><span class="links_name">Records</span></a></li>
             <li><a href="messages.php"><i class='bx bx-message'></i><span class="links_name">Messages</span></a></li>
             <li><a href="#" class="active"><i class='bx bx-building-house'></i><span class="links_name">Schools</span></a></li>
             <li><a href="browse_slots.php"><i class='bx bx-calendar-check'></i><span class="links_name">Teaching Slots</span></a></li>
@@ -359,9 +358,6 @@ $total_approved = array_sum(array_column($my_schools, 'approved_sessions'));
                     <div class="school-actions">
                         <a href="my_slots.php" class="btn-sm btn-primary">
                             <i class='bx bx-calendar'></i> My Bookings
-                        </a>
-                        <a href="records.php" class="btn-sm btn-secondary">
-                            <i class='bx bx-user'></i> Students
                         </a>
                     </div>
                 </div>
