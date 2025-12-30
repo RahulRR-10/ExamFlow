@@ -314,259 +314,124 @@ LEFT JOIN teacher t ON JSON_UNQUOTE(JSON_EXTRACT(al.action_details, '$.teacher_i
         </div>
 
         <div id="enrollments-tab" class="tab-content active">
-            <div class="card">
-                <div class="card-header">
-                    <i class='bx bx-user-check'></i>
-                    <h2>Teacher-School Enrollments</h2>
-                </div>
-                <div class="card-body">
-                    <div class="filter-bar">
-                        <select id="filter-school" onchange="filterEnrollments()">
-                            <option value="">All Schools</option>
-                            <?php foreach ($schools as $school): ?>
-                                <option value="<?= $school['id'] ?>"><?= htmlspecialchars($school['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                        <select id="filter-obligations" onchange="filterEnrollments()">
-                            <option value="">All Teachers</option>
-                            <option value="with">With Obligations Only</option>
-                            <option value="without">Without Obligations</option>
-                        </select>
-                    </div>
-
-                    <?php if (count($enrollments) > 0): ?>
-                        <table class="enrollment-table">
-                            <thead>
-                                <tr>
-                                    <th>Teacher</th>
-                                    <th>School</th>
-                                    <th>Enrolled Since</th>
-                                    <th>Obligations</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="enrollments-body">
-                                <?php foreach ($enrollments as $enrollment): ?>
-                                    <tr class="enrollment-row" 
-                                        data-school="<?= $enrollment['school_id'] ?>" 
-                                        data-has-obligations="<?= $enrollment['has_obligations'] ? '1' : '0' ?>">
-                                        <td>
-                                            <strong><?= htmlspecialchars($enrollment['teacher_name']) ?></strong>
-                                            <br><small style="color: #888;"><?= htmlspecialchars($enrollment['teacher_email']) ?></small>
-                                        </td>
-                                        <td><?= htmlspecialchars($enrollment['school_name']) ?></td>
-                                        <td><?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></td>
-                                        <td>
-                                            <?php if ($enrollment['has_obligations']): ?>
-                                                <div class="obligations">
-                                                    <?php if ($enrollment['upcoming_slots'] > 0): ?>
-                                                        <span class="obligation-badge slots">
-                                                            <i class='bx bx-calendar'></i>
-                                                            <?= $enrollment['upcoming_slots'] ?> upcoming
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($enrollment['pending_photos'] > 0): ?>
-                                                        <span class="obligation-badge photos">
-                                                            <i class='bx bx-camera'></i>
-                                                            <?= $enrollment['pending_photos'] ?> pending photos
-                                                        </span>
-                                                    <?php endif; ?>
-                                                    <?php if ($enrollment['pending_reviews'] > 0): ?>
-                                                        <span class="obligation-badge reviews">
-                                                            <i class='bx bx-check-double'></i>
-                                                            <?= $enrollment['pending_reviews'] ?> pending review
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </div>
-                                            <?php else: ?>
-                                                <span class="badge badge-success">
-                                                    <i class='bx bx-check'></i> No obligations
-                                                </span>
-                                            <?php endif; ?>
-                                        </td>
-                                        <td>
-                                            <button class="btn btn-danger action-btn" 
-                                                    onclick="openUnenrollModal(<?= $enrollment['teacher_id'] ?>, '<?= htmlspecialchars(addslashes($enrollment['teacher_name'])) ?>', '<?= htmlspecialchars($enrollment['teacher_email']) ?>', <?= $enrollment['school_id'] ?>, '<?= htmlspecialchars(addslashes($enrollment['school_name'])) ?>', <?= $enrollment['upcoming_slots'] ?>, <?= $enrollment['pending_photos'] ?>, <?= $enrollment['pending_reviews'] ?>)">
-                                                <i class='bx bx-user-x'></i> Force Unenroll
-                                            </button>
-                                        </td>
-                                    </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    <?php else: ?>
-                        <div class="empty-state">
-                            <i class='bx bx-user-x'></i>
-                            <p>No active teacher enrollments found.</p>
-                        </div>
-                    <?php endif; ?>
-                </div>
+            <div class="filters-bar">
+                <select id="filter-school" onchange="filterEnrollments()">
+                    <option value="">All Schools</option>
+                    <?php foreach ($schools as $school): ?>
+                        <option value="<?= $school['id'] ?>"><?= htmlspecialchars($school['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <select id="filter-obligations" onchange="filterEnrollments()">
+                    <option value="">All Teachers</option>
+                    <option value="with">With Obligations</option>
+                    <option value="without">No Obligations</option>
+                </select>
             </div>
+
+            <?php if (count($enrollments) > 0): ?>
+                <div id="enrollments-list">
+                    <?php foreach ($enrollments as $enrollment): ?>
+                    <div class="enrollment-card <?= $enrollment['has_obligations'] ? 'has-obligations' : '' ?>" 
+                         data-school="<?= $enrollment['school_id'] ?>" 
+                         data-has-obligations="<?= $enrollment['has_obligations'] ? '1' : '0' ?>">
+                        <div class="enrollment-header">
+                            <div>
+                                <h3><?= htmlspecialchars($enrollment['teacher_name']) ?></h3>
+                                <p class="school-name"><?= htmlspecialchars($enrollment['teacher_email']) ?></p>
+                            </div>
+                            <div style="text-align: right;">
+                                <strong><?= htmlspecialchars($enrollment['school_name']) ?></strong>
+                                <p class="school-name">Since <?= date('M d, Y', strtotime($enrollment['enrolled_at'])) ?></p>
+                            </div>
+                        </div>
+                        
+                        <div class="obligation-badges">
+                            <?php if ($enrollment['has_obligations']): ?>
+                                <?php if ($enrollment['upcoming_slots'] > 0): ?>
+                                    <span class="obligation-badge info"><i class='bx bx-calendar'></i> <?= $enrollment['upcoming_slots'] ?> upcoming slots</span>
+                                <?php endif; ?>
+                                <?php if ($enrollment['pending_photos'] > 0): ?>
+                                    <span class="obligation-badge warning"><i class='bx bx-camera'></i> <?= $enrollment['pending_photos'] ?> pending photos</span>
+                                <?php endif; ?>
+                                <?php if ($enrollment['pending_reviews'] > 0): ?>
+                                    <span class="obligation-badge danger"><i class='bx bx-time'></i> <?= $enrollment['pending_reviews'] ?> pending reviews</span>
+                                <?php endif; ?>
+                            <?php else: ?>
+                                <span class="obligation-badge" style="background: #d1fae5; color: #065f46;"><i class='bx bx-check'></i> No obligations</span>
+                            <?php endif; ?>
+                        </div>
+                        
+                        <div class="unenroll-form">
+                            <form method="POST" onsubmit="return confirm('Are you sure you want to force unenroll this teacher?');">
+                                <input type="hidden" name="action" value="force_unenroll">
+                                <input type="hidden" name="teacher_id" value="<?= $enrollment['teacher_id'] ?>">
+                                <input type="hidden" name="school_id" value="<?= $enrollment['school_id'] ?>">
+                                <textarea name="reason" placeholder="Reason for force unenrollment (required)" required></textarea>
+                                <div class="form-actions">
+                                    <button type="submit" class="btn btn-danger"><i class='bx bx-user-x'></i> Force Unenroll</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php else: ?>
+                <div class="empty-state">
+                    <i class='bx bx-user-check'></i>
+                    <h3>No Enrollments</h3>
+                    <p>No teacher-school enrollments found.</p>
+                </div>
+            <?php endif; ?>
         </div>
 
         <div id="audit-tab" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <i class='bx bx-history'></i>
-                    <h2>Force Unenrollment History</h2>
-                </div>
-                <div class="card-body">
-                    <?php if (count($audit_entries) > 0): ?>
-                        <ul class="audit-list">
-                            <?php foreach ($audit_entries as $entry): 
-                                $details = json_decode($entry['details'], true);
-                            ?>
-                                <li class="audit-item">
-                                    <div class="audit-icon">
-                                        <i class='bx bx-user-x'></i>
-                                    </div>
-                                    <div class="audit-content">
-                                        <p>
-                                            <strong><?= htmlspecialchars($entry['admin_name'] ?? 'Admin') ?></strong> 
-                                            force-unenrolled 
-                                            <strong><?= htmlspecialchars($entry['teacher_name'] ?? 'Teacher') ?></strong>
-                                            from 
-                                            <strong><?= htmlspecialchars($entry['school_name'] ?? 'School') ?></strong>
-                                        </p>
-                                        <?php if (!empty($details['reason'])): ?>
-                                            <p style="color: #666; font-size: 13px; margin-top: 5px;">
-                                                <i class='bx bx-message-detail'></i> 
-                                                "<?= htmlspecialchars($details['reason']) ?>"
-                                            </p>
-                                        <?php endif; ?>
-                                        <?php if (!empty($details['cancelled_enrollments']) || !empty($details['cancelled_sessions'])): ?>
-                                            <p style="font-size: 12px; color: #888; margin-top: 5px;">
-                                                Cancelled: <?= $details['cancelled_enrollments'] ?? 0 ?> enrollments, 
-                                                <?= $details['cancelled_sessions'] ?? 0 ?> sessions
-                                            </p>
-                                        <?php endif; ?>
-                                        <p class="timestamp">
-                                            <i class='bx bx-time'></i>
-                                            <?= date('M d, Y \a\t h:i A', strtotime($entry['created_at'])) ?>
-                                        </p>
-                                    </div>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php else: ?>
-                        <div class="empty-state">
-                            <i class='bx bx-history'></i>
-                            <p>No force unenrollment records found.</p>
-                        </div>
+            <?php if (count($audit_entries) > 0): ?>
+                <?php foreach ($audit_entries as $entry): 
+                    $details = json_decode($entry['details'], true);
+                ?>
+                <div class="audit-entry">
+                    <p class="time"><i class='bx bx-time'></i> <?= date('M d, Y h:i A', strtotime($entry['created_at'])) ?></p>
+                    <p class="action">
+                        <strong><?= htmlspecialchars($entry['admin_name'] ?? 'Admin') ?></strong> unenrolled 
+                        <strong><?= htmlspecialchars($entry['teacher_name'] ?? 'Teacher') ?></strong> from 
+                        <strong><?= htmlspecialchars($entry['school_name'] ?? 'School') ?></strong>
+                    </p>
+                    <?php if (!empty($details['reason'])): ?>
+                    <p class="details">"<?= htmlspecialchars($details['reason']) ?>"</p>
                     <?php endif; ?>
                 </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Force Unenroll Modal -->
-    <div id="unenroll-modal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><i class='bx bx-user-x' style="color: #dc3545;"></i> Confirm Force Unenrollment</h3>
-                <button class="modal-close" onclick="closeModal()">&times;</button>
-            </div>
-            <form method="POST" action="">
-                <div class="modal-body">
-                    <input type="hidden" name="action" value="force_unenroll">
-                    <input type="hidden" name="teacher_id" id="modal-teacher-id">
-                    <input type="hidden" name="school_id" id="modal-school-id">
-
-                    <div class="teacher-info">
-                        <p><strong>Teacher:</strong> <span id="modal-teacher-name"></span></p>
-                        <p><strong>Email:</strong> <span id="modal-teacher-email"></span></p>
-                        <p><strong>School:</strong> <span id="modal-school-name"></span></p>
-                    </div>
-
-                    <div id="modal-obligations" style="margin-bottom: 20px;"></div>
-
-                    <div class="form-group">
-                        <label for="reason">Reason for Force Unenrollment <span class="required">*</span></label>
-                        <textarea name="reason" id="reason" class="form-control" 
-                                  placeholder="Explain why this teacher needs to be force-unenrolled..." required></textarea>
-                        <small style="color: #888; font-size: 12px;">This will be recorded in the audit log.</small>
-                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="empty-state">
+                    <i class='bx bx-history'></i>
+                    <h3>No History</h3>
+                    <p>No force unenrollments have been recorded.</p>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                    <button type="submit" class="btn btn-danger">
-                        <i class='bx bx-user-x'></i> Force Unenroll
-                    </button>
-                </div>
-            </form>
+            <?php endif; ?>
         </div>
     </div>
 
     <script>
         function showTab(tab) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tab}')"]`).classList.add('active');
             document.getElementById(tab + '-tab').classList.add('active');
-            event.target.classList.add('active');
         }
-
+        
         function filterEnrollments() {
-            const schoolFilter = document.getElementById('filter-school').value;
-            const obligationsFilter = document.getElementById('filter-obligations').value;
-            
-            document.querySelectorAll('.enrollment-row').forEach(row => {
+            const school = document.getElementById('filter-school').value;
+            const obligations = document.getElementById('filter-obligations').value;
+            document.querySelectorAll('.enrollment-card').forEach(card => {
                 let show = true;
-                
-                if (schoolFilter && row.dataset.school !== schoolFilter) {
-                    show = false;
-                }
-                
-                if (obligationsFilter === 'with' && row.dataset.hasObligations !== '1') {
-                    show = false;
-                } else if (obligationsFilter === 'without' && row.dataset.hasObligations !== '0') {
-                    show = false;
-                }
-                
-                row.style.display = show ? '' : 'none';
+                if (school && card.dataset.school !== school) show = false;
+                if (obligations === 'with' && card.dataset.hasObligations !== '1') show = false;
+                if (obligations === 'without' && card.dataset.hasObligations !== '0') show = false;
+                card.style.display = show ? 'block' : 'none';
             });
         }
-
-        function openUnenrollModal(teacherId, teacherName, teacherEmail, schoolId, schoolName, upcomingSlots, pendingPhotos, pendingReviews) {
-            document.getElementById('modal-teacher-id').value = teacherId;
-            document.getElementById('modal-school-id').value = schoolId;
-            document.getElementById('modal-teacher-name').textContent = teacherName;
-            document.getElementById('modal-teacher-email').textContent = teacherEmail;
-            document.getElementById('modal-school-name').textContent = schoolName;
-            
-            let obligationsHtml = '';
-            if (upcomingSlots > 0 || pendingPhotos > 0 || pendingReviews > 0) {
-                obligationsHtml = '<div class="warning-box" style="margin: 0;"><i class="bx bx-error"></i><div>';
-                obligationsHtml += '<p><strong>This teacher has pending obligations:</strong></p>';
-                obligationsHtml += '<ul style="margin-top: 8px; margin-left: 20px; font-size: 13px;">';
-                if (upcomingSlots > 0) {
-                    obligationsHtml += '<li>' + upcomingSlots + ' upcoming slot(s) will be cancelled</li>';
-                }
-                if (pendingPhotos > 0) {
-                    obligationsHtml += '<li>' + pendingPhotos + ' session(s) awaiting photo upload</li>';
-                }
-                if (pendingReviews > 0) {
-                    obligationsHtml += '<li>' + pendingReviews + ' session(s) pending admin review</li>';
-                }
-                obligationsHtml += '</ul></div></div>';
-            }
-            document.getElementById('modal-obligations').innerHTML = obligationsHtml;
-            
-            document.getElementById('reason').value = '';
-            document.getElementById('unenroll-modal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('unenroll-modal').classList.remove('active');
-        }
-
-        // Close modal on outside click
-        document.getElementById('unenroll-modal').addEventListener('click', function(e) {
-            if (e.target === this) {
-                closeModal();
-            }
-        });
     </script>
 </body>
+</html>
 
 </html>
