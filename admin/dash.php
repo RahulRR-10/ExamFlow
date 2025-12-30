@@ -77,6 +77,29 @@ if (function_exists('getAdminAuditLog')) {
 } else {
     $audit_logs = [];
 }
+
+// Get top teachers this month (for widget)
+$top_teachers = [];
+if ($table_exists) {
+    $top_sql = "SELECT t.id, t.fname, t.subject,
+                COUNT(DISTINCT ts.session_id) as total_sessions,
+                SUM(CASE WHEN ts.session_status = 'approved' THEN 1 ELSE 0 END) as completed,
+                SUM(CASE WHEN ts.session_status = 'approved' THEN COALESCE(ts.actual_duration_minutes, 0) ELSE 0 END) / 60 as hours_taught
+                FROM teaching_sessions ts
+                JOIN teacher t ON ts.teacher_id = t.id
+                JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
+                WHERE sts.slot_date >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)
+                GROUP BY t.id, t.fname, t.subject
+                HAVING completed > 0
+                ORDER BY completed DESC, hours_taught DESC
+                LIMIT 5";
+    $result = mysqli_query($conn, $top_sql);
+    if ($result) {
+        while ($row = mysqli_fetch_assoc($result)) {
+            $top_teachers[] = $row;
+        }
+    }
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -227,6 +250,58 @@ if (function_exists('getAdminAuditLog')) {
                 </div>
             </div>
         </div>
+        
+        <!-- Top Teachers This Month -->
+        <?php if (!empty($top_teachers)): ?>
+        <div class="card full-width" style="margin-top: 20px;">
+            <div class="card-header">
+                <h2><i class='bx bx-trophy' style="color: #f59e0b;"></i> Top Teachers (Last 30 Days)</h2>
+                <a href="teacher_stats.php" class="btn btn-primary btn-sm">View All Stats</a>
+            </div>
+            <div class="card-body">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">#</th>
+                            <th>Teacher</th>
+                            <th>Subject</th>
+                            <th>Completed Sessions</th>
+                            <th>Hours Taught</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($top_teachers as $idx => $teacher): ?>
+                        <tr>
+                            <td>
+                                <?php if ($idx === 0): ?>
+                                    <span style="font-size: 20px;">🥇</span>
+                                <?php elseif ($idx === 1): ?>
+                                    <span style="font-size: 20px;">🥈</span>
+                                <?php elseif ($idx === 2): ?>
+                                    <span style="font-size: 20px;">🥉</span>
+                                <?php else: ?>
+                                    <?= $idx + 1 ?>
+                                <?php endif; ?>
+                            </td>
+                            <td><strong><?= htmlspecialchars($teacher['fname']) ?></strong></td>
+                            <td><?= htmlspecialchars($teacher['subject'] ?? 'N/A') ?></td>
+                            <td>
+                                <span class="badge badge-success"><?= $teacher['completed'] ?></span>
+                            </td>
+                            <td><?= number_format($teacher['hours_taught'], 1) ?>h</td>
+                            <td>
+                                <a href="teacher_detail.php?id=<?= $teacher['id'] ?>" class="btn btn-sm btn-outline">
+                                    View Detail
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        <?php endif; ?>
         
         <?php if ($table_exists): ?>
         <!-- Recent Pending Sessions -->

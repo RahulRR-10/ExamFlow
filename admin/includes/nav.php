@@ -36,6 +36,12 @@ $current_page = basename($_SERVER['PHP_SELF']);
                 <span class="nav-text">Session Reviews</span>
             </a>
         </li>
+        <li class="<?= $current_page === 'teacher_stats.php' || $current_page === 'teacher_detail.php' ? 'active' : '' ?>">
+            <a href="teacher_stats.php">
+                <i class='bx bx-bar-chart-alt-2'></i>
+                <span class="nav-text">Teacher Stats</span>
+            </a>
+        </li>
         <li class="<?= $current_page === 'force_unenroll.php' ? 'active' : '' ?>">
             <a href="force_unenroll.php">
                 <i class='bx bx-user-minus'></i>
