@@ -1,7 +1,7 @@
 <?php
 /**
- * Teacher Portal - Session Details & Photo Upload (Combined)
- * Phase 5: View session details and upload geotagged photo proof
+ * Teacher Portal - Session Details & Dual Photo Upload
+ * Phase 2: View session details and upload start/end geotagged photos
  */
 session_start();
 if (!isset($_SESSION["user_id"])) {
@@ -11,6 +11,7 @@ if (!isset($_SESSION["user_id"])) {
 include '../config.php';
 require_once '../utils/exif_extractor.php';
 require_once '../utils/location_validator.php';
+require_once '../utils/duration_validator.php';
 
 $teacher_id = $_SESSION['user_id'];
 $message = '';
@@ -48,126 +49,212 @@ if (!$session) {
     exit;
 }
 
+// Determine which photo can be uploaded
+$is_today = $session['slot_date'] === date('Y-m-d');
+$is_past = strtotime($session['slot_date']) < strtotime(date('Y-m-d'));
+$can_upload = ($is_today || $is_past);
+
+// Determine upload type based on session status
+$upload_type = null;
+$upload_title = '';
+$upload_instructions = '';
+
+if ($can_upload) {
+    if (in_array($session['session_status'], ['pending'])) {
+        $upload_type = 'start';
+        $upload_title = 'Upload Arrival Photo';
+        $upload_instructions = 'Take a photo when you arrive at the school to start your teaching session.';
+    } elseif (in_array($session['session_status'], ['start_submitted', 'start_approved'])) {
+        $upload_type = 'end';
+        $upload_title = 'Upload Completion Photo';
+        $upload_instructions = 'Take a photo after you finish teaching to complete verification.';
+    } elseif ($session['session_status'] === 'rejected') {
+        // Allow re-upload of start photo if rejected
+        $upload_type = 'start';
+        $upload_title = 'Re-upload Arrival Photo';
+        $upload_instructions = 'Your previous photo was rejected. Please upload a new arrival photo.';
+    }
+}
+
 // Handle photo upload
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo'])) {
-    // Check if already approved
-    if ($session['session_status'] === 'approved') {
-        $error = "Session already approved. Cannot change photo.";
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && $upload_type) {
+    $file = $_FILES['session_photo'];
+    
+    // Validate file
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $error = "Upload error. Please try again.";
+    } elseif ($file['size'] > 10 * 1024 * 1024) {
+        $error = "File size too large. Maximum 10MB allowed.";
     } else {
-        $file = $_FILES['session_photo'];
+        $allowed_types = ['image/jpeg', 'image/jpg', 'image/png'];
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $file['tmp_name']);
+        finfo_close($finfo);
         
-        // Validate file
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            $error = "Upload error. Please try again.";
-        } elseif ($file['size'] > 10 * 1024 * 1024) { // 10MB limit
-            $error = "File size too large. Maximum 10MB allowed.";
+        if (!in_array($mime_type, $allowed_types)) {
+            $error = "Invalid file type. Only JPEG and PNG allowed.";
         } else {
-            $allowed_types = ['image/jpeg', 'image/jpg', 'image/png'];
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $mime_type = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
+            // Create upload directory
+            $upload_dir = '../uploads/session_photos/' . date('Y/m');
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
             
-            if (!in_array($mime_type, $allowed_types)) {
-                $error = "Invalid file type. Only JPEG and PNG allowed.";
-            } else {
-                // Create upload directory
-                $upload_dir = '../uploads/session_photos/' . date('Y/m');
-                if (!is_dir($upload_dir)) {
-                    mkdir($upload_dir, 0755, true);
-                }
+            // Generate unique filename
+            $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+            $filename = 'session_' . $session_id . '_' . $upload_type . '_' . time() . '_' . uniqid() . '.' . $ext;
+            $filepath = $upload_dir . '/' . $filename;
+            $relative_path = 'uploads/session_photos/' . date('Y/m') . '/' . $filename;
+            
+            if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                // Extract EXIF data
+                $gps_data = ExifExtractor::extractGPS($filepath);
+                $timestamp = ExifExtractor::extractTimestamp($filepath);
                 
-                // Generate unique filename
-                $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-                $filename = 'session_' . $session_id . '_' . time() . '_' . uniqid() . '.' . $ext;
-                $filepath = $upload_dir . '/' . $filename;
-                $relative_path = 'uploads/session_photos/' . date('Y/m') . '/' . $filename;
+                $photo_lat = null;
+                $photo_lng = null;
+                $distance = null;
                 
-                if (move_uploaded_file($file['tmp_name'], $filepath)) {
-                    // Extract EXIF data
-                    $gps_data = ExifExtractor::extractGPS($filepath);
-                    $timestamp = ExifExtractor::extractTimestamp($filepath);
-                    $device_info = ExifExtractor::extractDeviceInfo($filepath);
+                // Process GPS data
+                if (isset($gps_data['latitude']) && isset($gps_data['longitude'])) {
+                    $photo_lat = $gps_data['latitude'];
+                    $photo_lng = $gps_data['longitude'];
                     
-                    $photo_lat = null;
-                    $photo_lng = null;
-                    $distance = null;
-                    
-                    // Process GPS data
-                    if (isset($gps_data['latitude']) && isset($gps_data['longitude'])) {
-                        $photo_lat = $gps_data['latitude'];
-                        $photo_lng = $gps_data['longitude'];
+                    // Calculate distance from school
+                    if ($session['school_lat'] && $session['school_lng']) {
+                        $distance = LocationValidator::calculateDistance(
+                            $photo_lat, $photo_lng,
+                            $session['school_lat'], $session['school_lng']
+                        );
                         
-                        // Calculate distance from school
-                        if ($session['school_lat'] && $session['school_lng']) {
-                            $distance = LocationValidator::calculateDistance(
-                                $photo_lat, $photo_lng,
-                                $session['school_lat'], $session['school_lng']
-                            );
-                            
-                            // Check if within allowed radius (default 500m)
-                            $allowed_radius = $session['allowed_radius'] ?? 500;
-                            if ($distance > $allowed_radius) {
-                                $warnings[] = "Photo location is " . round($distance) . "m from school (allowed: {$allowed_radius}m)";
-                            }
+                        $allowed_radius = $session['allowed_radius'] ?? 500;
+                        if ($distance > $allowed_radius) {
+                            $warnings[] = "Photo location is " . round($distance) . "m from school (allowed: {$allowed_radius}m)";
                         }
-                    } else {
-                        $warnings[] = "No GPS data found in photo. Location cannot be verified.";
-                    }
-                    
-                    // Check photo date
-                    $photo_taken_at = null;
-                    if ($timestamp) {
-                        $photo_taken_at = $timestamp->format('Y-m-d H:i:s');
-                        $photo_date = $timestamp->format('Y-m-d');
-                        
-                        if ($photo_date !== $session['slot_date']) {
-                            $warnings[] = "Photo date ({$photo_date}) doesn't match session date ({$session['slot_date']})";
-                        }
-                    } else {
-                        $warnings[] = "Could not determine when photo was taken.";
-                    }
-                    
-                    // Update session with photo data
-                    $update_sql = "UPDATE teaching_sessions SET 
-                                  photo_path = ?,
-                                  photo_uploaded_at = NOW(),
-                                  gps_latitude = ?,
-                                  gps_longitude = ?,
-                                  photo_taken_at = ?,
-                                  distance_from_school = ?,
-                                  session_status = 'photo_submitted'
-                                  WHERE session_id = ?";
-                    $stmt = mysqli_prepare($conn, $update_sql);
-                    mysqli_stmt_bind_param($stmt, "sddsdi", 
-                        $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance, $session_id);
-                    
-                    if (mysqli_stmt_execute($stmt)) {
-                        $message = "Photo uploaded successfully!";
-                        if (!empty($warnings)) {
-                            $message .= " However, there are some concerns that admin will review.";
-                        }
-                        // Refresh session data
-                        $stmt = mysqli_prepare($conn, $session_sql);
-                        mysqli_stmt_bind_param($stmt, "ii", $session_id, $teacher_id);
-                        mysqli_stmt_execute($stmt);
-                        $session = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-                    } else {
-                        $error = "Failed to save photo info: " . mysqli_error($conn);
-                        unlink($filepath); // Clean up uploaded file
                     }
                 } else {
-                    $error = "Failed to upload file. Please try again.";
+                    $warnings[] = "No GPS data found in photo. Location cannot be verified.";
                 }
+                
+                // Check photo date
+                $photo_taken_at = null;
+                if ($timestamp) {
+                    $photo_taken_at = $timestamp->format('Y-m-d H:i:s');
+                    $photo_date = $timestamp->format('Y-m-d');
+                    
+                    if ($photo_date !== $session['slot_date']) {
+                        $warnings[] = "Photo date ({$photo_date}) doesn't match session date ({$session['slot_date']})";
+                    }
+                } else {
+                    $warnings[] = "Could not determine when photo was taken.";
+                }
+                
+                if ($upload_type === 'start') {
+                    // Update start photo fields
+                    $new_status = 'start_submitted';
+                    $update_sql = "UPDATE teaching_sessions SET 
+                                  start_photo_path = ?,
+                                  start_photo_uploaded_at = NOW(),
+                                  start_gps_latitude = ?,
+                                  start_gps_longitude = ?,
+                                  start_photo_taken_at = ?,
+                                  start_distance_from_school = ?,
+                                  session_status = ?
+                                  WHERE session_id = ?";
+                    $stmt = mysqli_prepare($conn, $update_sql);
+                    mysqli_stmt_bind_param($stmt, "sddsdsi", 
+                        $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance, $new_status, $session_id);
+                } else {
+                    // End photo - calculate duration
+                    $actual_duration = null;
+                    $expected_duration = null;
+                    $duration_verified = false;
+                    
+                    if ($session['start_photo_taken_at'] && $photo_taken_at) {
+                        $actual_duration = DurationValidator::calculateDuration(
+                            $session['start_photo_taken_at'], 
+                            $photo_taken_at
+                        );
+                        $expected_duration = DurationValidator::calculateExpectedDuration(
+                            $session['start_time'], 
+                            $session['end_time']
+                        );
+                        $duration_verified = DurationValidator::verifyDuration($actual_duration, $expected_duration);
+                        
+                        // Add warning if duration is too short
+                        if ($actual_duration < 0) {
+                            $warnings[] = "End photo appears to be taken before start photo.";
+                        } elseif (!DurationValidator::meetsMinimumDuration($actual_duration, $expected_duration)) {
+                            $warnings[] = "Session duration (" . DurationValidator::formatDuration($actual_duration) . 
+                                        ") is below expected (" . DurationValidator::formatDuration($expected_duration) . ")";
+                        }
+                    }
+                    
+                    $new_status = 'end_submitted';
+                    $update_sql = "UPDATE teaching_sessions SET 
+                                  end_photo_path = ?,
+                                  end_photo_uploaded_at = NOW(),
+                                  end_gps_latitude = ?,
+                                  end_gps_longitude = ?,
+                                  end_photo_taken_at = ?,
+                                  end_distance_from_school = ?,
+                                  actual_duration_minutes = ?,
+                                  expected_duration_minutes = ?,
+                                  duration_verified = ?,
+                                  session_status = ?
+                                  WHERE session_id = ?";
+                    $stmt = mysqli_prepare($conn, $update_sql);
+                    $duration_verified_int = $duration_verified ? 1 : 0;
+                    mysqli_stmt_bind_param($stmt, "sddsdiiiis", 
+                        $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance,
+                        $actual_duration, $expected_duration, $duration_verified_int, $new_status, $session_id);
+                }
+                
+                if (mysqli_stmt_execute($stmt)) {
+                    $message = ucfirst($upload_type) . " photo uploaded successfully!";
+                    if (!empty($warnings)) {
+                        $message .= " However, there are some concerns that admin will review.";
+                    }
+                    // Refresh session data
+                    $stmt = mysqli_prepare($conn, $session_sql);
+                    mysqli_stmt_bind_param($stmt, "ii", $session_id, $teacher_id);
+                    mysqli_stmt_execute($stmt);
+                    $session = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+                    
+                    // Re-determine upload type after refresh
+                    $upload_type = null;
+                    if ($can_upload) {
+                        if (in_array($session['session_status'], ['pending'])) {
+                            $upload_type = 'start';
+                        } elseif (in_array($session['session_status'], ['start_submitted', 'start_approved'])) {
+                            $upload_type = 'end';
+                        }
+                    }
+                } else {
+                    $error = "Failed to save photo info: " . mysqli_error($conn);
+                    unlink($filepath);
+                }
+            } else {
+                $error = "Failed to upload file. Please try again.";
             }
         }
     }
 }
 
-$is_today = $session['slot_date'] === date('Y-m-d');
-$is_past = strtotime($session['slot_date']) < strtotime(date('Y-m-d'));
-$can_upload = ($is_today || $is_past) && $session['session_status'] !== 'approved';
-$distance_ok = $session['distance_from_school'] !== null && 
-               $session['distance_from_school'] <= ($session['allowed_radius'] ?? 500);
+// Calculate display values
+$start_distance_ok = $session['start_distance_from_school'] !== null && 
+                     $session['start_distance_from_school'] <= ($session['allowed_radius'] ?? 500);
+$end_distance_ok = $session['end_distance_from_school'] !== null && 
+                   $session['end_distance_from_school'] <= ($session['allowed_radius'] ?? 500);
+
+// Get duration status if both photos exist
+$duration_status = null;
+if ($session['actual_duration_minutes'] !== null && $session['expected_duration_minutes'] !== null) {
+    $duration_status = DurationValidator::getDurationStatus(
+        $session['actual_duration_minutes'],
+        $session['expected_duration_minutes']
+    );
+}
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -182,7 +269,7 @@ $distance_ok = $session['distance_from_school'] !== null &&
     <style>
         .session-container {
             padding: 20px;
-            max-width: 1100px;
+            max-width: 1200px;
             margin: 0 auto;
         }
         .back-link {
@@ -211,10 +298,7 @@ $distance_ok = $session['distance_from_school'] !== null &&
             align-items: center;
             gap: 10px;
         }
-        .session-header p {
-            opacity: 0.9;
-            margin-bottom: 15px;
-        }
+        .session-header p { opacity: 0.9; margin-bottom: 15px; }
         .session-meta {
             display: flex;
             gap: 25px;
@@ -226,6 +310,8 @@ $distance_ok = $session['distance_from_school'] !== null &&
             align-items: center;
             gap: 6px;
         }
+        
+        /* Status Badges */
         .status-badge {
             display: inline-block;
             padding: 6px 16px;
@@ -234,54 +320,75 @@ $distance_ok = $session['distance_from_school'] !== null &&
             font-weight: 500;
         }
         .status-badge.pending { background: #fef3c7; color: #92400e; }
-        .status-badge.photo_submitted { background: #dbeafe; color: #1e40af; }
+        .status-badge.start_submitted { background: #dbeafe; color: #1e40af; }
+        .status-badge.start_approved { background: #d1fae5; color: #065f46; }
+        .status-badge.end_submitted { background: #e0e7ff; color: #3730a3; }
         .status-badge.approved { background: #dcfce7; color: #166534; }
         .status-badge.rejected { background: #fee2e2; color: #991b1b; }
+        .status-badge.partial { background: #fef3c7; color: #92400e; }
         
-        /* Tab Navigation */
-        .tabs {
+        /* Progress Steps */
+        .progress-steps {
             display: flex;
-            gap: 5px;
-            margin-bottom: 20px;
-            background: white;
-            padding: 8px;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            justify-content: space-between;
+            margin: 25px 0;
+            padding: 0 10px;
         }
-        .tab-btn {
-            padding: 12px 24px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            color: #666;
+        .step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            flex: 1;
+            position: relative;
+        }
+        .step:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 60%;
+            width: 80%;
+            height: 3px;
+            background: #e5e7eb;
+        }
+        .step.completed:not(:last-child)::after { background: #10b981; }
+        .step.active:not(:last-child)::after { background: linear-gradient(90deg, #10b981, #e5e7eb); }
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e5e7eb;
             display: flex;
             align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
+            justify-content: center;
+            font-weight: 600;
+            z-index: 1;
+            color: #666;
         }
-        .tab-btn:hover { background: #f5f5f5; color: #333; }
-        .tab-btn.active {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
+        .step.completed .step-circle { background: #10b981; color: white; }
+        .step.active .step-circle { background: #f59e0b; color: white; animation: pulse 2s infinite; }
+        .step.rejected .step-circle { background: #ef4444; color: white; }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(245, 158, 11, 0); }
         }
-        .tab-content {
-            display: none;
+        .step-label {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
         }
-        .tab-content.active {
-            display: block;
-        }
+        .step.completed .step-label { color: #10b981; font-weight: 500; }
+        .step.active .step-label { color: #f59e0b; font-weight: 500; }
         
-        /* Content Grid */
-        .content-grid {
+        /* Dual Photo Grid */
+        .photo-grid {
             display: grid;
-            grid-template-columns: 1fr 320px;
+            grid-template-columns: 1fr 1fr;
             gap: 25px;
+            margin-bottom: 25px;
         }
         @media (max-width: 900px) {
-            .content-grid { grid-template-columns: 1fr; }
+            .photo-grid { grid-template-columns: 1fr; }
         }
         
         /* Cards */
@@ -290,7 +397,6 @@ $distance_ok = $session['distance_from_school'] !== null &&
             border-radius: 12px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.05);
             overflow: hidden;
-            margin-bottom: 20px;
         }
         .card-header {
             padding: 18px 20px;
@@ -301,11 +407,11 @@ $distance_ok = $session['distance_from_school'] !== null &&
             align-items: center;
             gap: 10px;
         }
-        .card-body {
-            padding: 20px;
-        }
+        .card-header.start { background: linear-gradient(135deg, #10b981, #059669); color: white; }
+        .card-header.end { background: linear-gradient(135deg, #8b5cf6, #7c3aed); color: white; }
+        .card-body { padding: 20px; }
         
-        /* Photo Section */
+        /* Photo Display */
         .photo-display img {
             width: 100%;
             border-radius: 10px;
@@ -330,18 +436,36 @@ $distance_ok = $session['distance_from_school'] !== null &&
         .photo-meta-row span.warning { color: #f59e0b; }
         .photo-meta-row span.danger { color: #ef4444; }
         
+        /* Empty Photo State */
+        .empty-photo {
+            background: #f8f9fa;
+            border: 2px dashed #ddd;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+        .empty-photo i { font-size: 48px; color: #ccc; margin-bottom: 15px; }
+        .empty-photo p { color: #888; margin-bottom: 10px; }
+        .empty-photo small { color: #aaa; font-size: 12px; }
+        
         /* Upload Section */
         .upload-section {
             background: #f8f9fa;
             border-radius: 12px;
             padding: 25px;
+            margin-top: 25px;
         }
         .upload-section h3 {
-            font-size: 16px;
-            margin-bottom: 15px;
+            font-size: 18px;
+            margin-bottom: 8px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+        }
+        .upload-section .subtitle {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
         }
         .requirements {
             background: #fff3cd;
@@ -349,17 +473,8 @@ $distance_ok = $session['distance_from_school'] !== null &&
             padding: 15px 20px;
             margin-bottom: 20px;
         }
-        .requirements h4 {
-            font-size: 14px;
-            margin-bottom: 10px;
-            color: #856404;
-        }
-        .requirements ul {
-            margin: 0;
-            padding-left: 20px;
-            font-size: 13px;
-            color: #856404;
-        }
+        .requirements h4 { font-size: 14px; margin-bottom: 10px; color: #856404; }
+        .requirements ul { margin: 0; padding-left: 20px; font-size: 13px; color: #856404; }
         .requirements li { margin-bottom: 5px; }
         .upload-area {
             border: 2px dashed #ddd;
@@ -370,106 +485,56 @@ $distance_ok = $session['distance_from_school'] !== null &&
             cursor: pointer;
             transition: all 0.3s;
         }
-        .upload-area:hover {
-            border-color: #667eea;
-            background: #f8f0ff;
-        }
-        .upload-area.dragover {
-            border-color: #667eea;
-            background: #f0e6ff;
-        }
-        .upload-area i {
-            font-size: 48px;
-            color: #667eea;
-            margin-bottom: 15px;
-        }
+        .upload-area:hover { border-color: #667eea; background: #f8f0ff; }
+        .upload-area.dragover { border-color: #667eea; background: #f0e6ff; }
+        .upload-area i { font-size: 48px; color: #667eea; margin-bottom: 15px; }
         .upload-area p { color: #666; margin-bottom: 10px; }
         .upload-area small { color: #999; font-size: 12px; }
         #fileInput { display: none; }
-        .preview-section {
-            margin-top: 20px;
-            display: none;
-        }
+        .preview-section { margin-top: 20px; display: none; }
         .preview-section.active { display: block; }
-        .preview-img {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-        }
-        .empty-photo {
-            background: #f8f9fa;
-            border: 2px dashed #ddd;
-            border-radius: 10px;
-            padding: 40px;
-            text-align: center;
-        }
-        .empty-photo i {
-            font-size: 48px;
-            color: #ccc;
-            margin-bottom: 15px;
-        }
-        .empty-photo p { color: #888; margin-bottom: 15px; }
+        .preview-img { max-width: 100%; max-height: 300px; border-radius: 10px; margin-bottom: 15px; }
         
-        /* Map */
-        #map {
-            height: 220px;
-            border-radius: 10px;
-            margin-top: 15px;
+        /* Duration Card */
+        .duration-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
-        
-        /* Info Rows */
-        .info-row {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .info-row:last-child { border-bottom: none; }
-        .info-row i {
-            color: #667eea;
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-        .info-row .info-content { flex: 1; }
-        .info-row .info-label { font-size: 12px; color: #999; }
-        .info-row .info-value { font-weight: 500; color: #333; }
-        
-        /* Timeline */
-        .timeline { margin-top: 10px; }
-        .timeline-item {
-            display: flex;
-            gap: 15px;
-            padding-bottom: 15px;
-            position: relative;
-        }
-        .timeline-item:not(:last-child)::before {
-            content: '';
-            position: absolute;
-            left: 11px;
-            top: 28px;
-            bottom: 0;
-            width: 2px;
-            background: #e5e7eb;
-        }
-        .timeline-dot {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            background: #e5e7eb;
+        .duration-card h3 {
+            font-size: 16px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            justify-content: center;
-            font-size: 12px;
-            flex-shrink: 0;
+            gap: 10px;
         }
-        .timeline-dot.active { background: #10b981; color: white; }
-        .timeline-dot.pending { background: #f59e0b; color: white; }
-        .timeline-content h4 { font-size: 14px; margin-bottom: 3px; }
-        .timeline-content p { font-size: 12px; color: #888; }
+        .duration-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            text-align: center;
+        }
+        .duration-item label { font-size: 12px; color: #888; display: block; margin-bottom: 5px; }
+        .duration-item .value { font-size: 24px; font-weight: 600; }
+        .duration-item .value.success { color: #10b981; }
+        .duration-item .value.warning { color: #f59e0b; }
+        .duration-item .value.danger { color: #ef4444; }
+        .duration-status {
+            margin-top: 15px;
+            padding: 12px 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+        }
+        .duration-status.success { background: #dcfce7; color: #166534; }
+        .duration-status.warning { background: #fef3c7; color: #92400e; }
+        .duration-status.danger { background: #fee2e2; color: #991b1b; }
+        .duration-status.info { background: #dbeafe; color: #1e40af; }
+        
+        /* Map */
+        #map { height: 300px; border-radius: 10px; margin-top: 20px; }
         
         /* Alerts */
         .alert {
@@ -485,7 +550,6 @@ $distance_ok = $session['distance_from_school'] !== null &&
         .alert-warning { background: #fef3c7; color: #92400e; }
         .alert-error { background: #fee2e2; color: #991b1b; }
         .alert-info { background: #dbeafe; color: #1e40af; }
-        .warning-list { margin-top: 10px; }
         .warning-item {
             display: flex;
             align-items: flex-start;
@@ -511,17 +575,36 @@ $distance_ok = $session['distance_from_school'] !== null &&
             gap: 8px;
             transition: all 0.2s;
         }
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-        }
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
+        .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        .btn-success { background: #10b981; color: white; }
         .btn-secondary { background: #f0f0f0; color: #333; }
-        .btn-warning { background: #f59e0b; color: white; }
-        .btn-block { width: 100%; justify-content: center; }
+        .btn:hover { transform: translateY(-2px); }
+        
+        /* Info Rows */
+        .info-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .info-section h3 {
+            font-size: 16px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .info-row {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-row:last-child { border-bottom: none; }
+        .info-row i { color: #667eea; font-size: 18px; width: 24px; }
+        .info-row .info-label { font-size: 12px; color: #999; }
+        .info-row .info-value { font-weight: 500; color: #333; }
     </style>
 </head>
 <body>
@@ -577,22 +660,13 @@ $distance_ok = $session['distance_from_school'] !== null &&
                 <i class='bx bx-error'></i>
                 <div>
                     <strong>Photo uploaded with warnings:</strong>
-                    <div class="warning-list">
-                        <?php foreach ($warnings as $w): ?>
-                        <div class="warning-item">
-                            <i class='bx bx-info-circle'></i>
-                            <span><?= htmlspecialchars($w) ?></span>
-                        </div>
-                        <?php endforeach; ?>
+                    <?php foreach ($warnings as $w): ?>
+                    <div class="warning-item">
+                        <i class='bx bx-info-circle'></i>
+                        <span><?= htmlspecialchars($w) ?></span>
                     </div>
+                    <?php endforeach; ?>
                 </div>
-            </div>
-            <?php endif; ?>
-            
-            <?php if (isset($_GET['info'])): ?>
-            <div class="alert alert-info">
-                <i class='bx bx-info-circle'></i>
-                <div><?= htmlspecialchars($_GET['info']) ?></div>
             </div>
             <?php endif; ?>
             
@@ -614,396 +688,273 @@ $distance_ok = $session['distance_from_school'] !== null &&
                 </div>
             </div>
             
-            <!-- Tab Navigation -->
-            <div class="tabs">
-                <button class="tab-btn active" data-tab="photo">
-                    <i class='bx bx-camera'></i> Photo Proof
-                </button>
-                <button class="tab-btn" data-tab="details">
-                    <i class='bx bx-info-circle'></i> Slot Details
-                </button>
-                <button class="tab-btn" data-tab="timeline">
-                    <i class='bx bx-list-check'></i> Timeline
-                </button>
-            </div>
-            
-            <!-- Photo Tab -->
-            <div class="tab-content active" id="tab-photo">
-                <div class="content-grid">
-                    <div>
-                        <?php if ($session['photo_path']): ?>
-                        <!-- Uploaded Photo -->
-                        <div class="card">
-                            <div class="card-header">
-                                <i class='bx bx-image'></i> Uploaded Photo
-                            </div>
-                            <div class="card-body">
-                                <div class="photo-display">
-                                    <img src="../<?= htmlspecialchars($session['photo_path']) ?>" 
-                                         alt="Session Photo" 
-                                         onclick="window.open('../<?= htmlspecialchars($session['photo_path']) ?>', '_blank')">
-                                </div>
-                                
-                                <div class="photo-meta">
-                                    <div class="photo-meta-row">
-                                        <label>Uploaded</label>
-                                        <span><?= date('M j, Y h:i A', strtotime($session['photo_uploaded_at'])) ?></span>
-                                    </div>
-                                    <?php if ($session['photo_taken_at']): ?>
-                                    <div class="photo-meta-row">
-                                        <label>Photo Taken</label>
-                                        <span><?= date('M j, Y h:i A', strtotime($session['photo_taken_at'])) ?></span>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($session['gps_latitude'] && $session['gps_longitude']): ?>
-                                    <div class="photo-meta-row">
-                                        <label>GPS Location</label>
-                                        <span><?= number_format($session['gps_latitude'], 6) ?>, <?= number_format($session['gps_longitude'], 6) ?></span>
-                                    </div>
-                                    <?php endif; ?>
-                                    <?php if ($session['distance_from_school'] !== null): ?>
-                                    <div class="photo-meta-row">
-                                        <label>Distance from School</label>
-                                        <span class="<?= $distance_ok ? 'success' : 'danger' ?>">
-                                            <?= number_format($session['distance_from_school']) ?>m
-                                            <?= $distance_ok ? '✓' : '✗' ?>
-                                        </span>
-                                    </div>
-                                    <?php endif; ?>
-                                </div>
-                                
-                                <?php if ($session['gps_latitude'] && $session['gps_longitude']): ?>
-                                <div id="map"></div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <?php if ($session['session_status'] === 'rejected'): ?>
-                        <div class="alert alert-error">
-                            <i class='bx bx-x-circle'></i>
-                            <div>
-                                <strong>Photo Rejected</strong>
-                                <?php if ($session['admin_remarks']): ?>
-                                <p style="margin-top: 8px;"><?= htmlspecialchars($session['admin_remarks']) ?></p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($can_upload && $session['session_status'] !== 'approved'): ?>
-                        <!-- Replace Photo Section -->
-                        <div class="card">
-                            <div class="card-header">
-                                <i class='bx bx-upload'></i> Replace Photo
-                            </div>
-                            <div class="card-body">
-                                <div class="upload-section">
-                                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
-                                        <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                                            <i class='bx bx-cloud-upload'></i>
-                                            <p><strong>Click to select or drag & drop</strong></p>
-                                            <small>JPEG or PNG, max 10MB</small>
-                                        </div>
-                                        <input type="file" name="session_photo" id="fileInput" accept="image/jpeg,image/png">
-                                        
-                                        <div class="preview-section" id="previewSection">
-                                            <h3>Preview</h3>
-                                            <img id="previewImg" class="preview-img" src="">
-                                            <div style="display: flex; gap: 10px;">
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class='bx bx-upload'></i> Upload Photo
-                                                </button>
-                                                <button type="button" class="btn btn-secondary" onclick="clearPreview()">
-                                                    <i class='bx bx-x'></i> Cancel
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php else: ?>
-                        <!-- No Photo Yet -->
-                        <div class="card">
-                            <div class="card-header">
-                                <i class='bx bx-camera'></i> Session Photo
-                            </div>
-                            <div class="card-body">
-                                <?php if ($can_upload): ?>
-                                <div class="upload-section">
-                                    <h3><i class='bx bx-upload'></i> Upload Session Photo</h3>
-                                    
-                                    <div class="requirements">
-                                        <h4><i class='bx bx-list-check'></i> Photo Requirements</h4>
-                                        <ul>
-                                            <li>Take the photo <strong>at the school location</strong> during your teaching session</li>
-                                            <li>Enable <strong>location services</strong> on your camera/phone</li>
-                                            <li>Photo should be taken on <strong><?= date('F j, Y', strtotime($session['slot_date'])) ?></strong></li>
-                                            <li>Maximum file size: 10MB (JPEG or PNG)</li>
-                                        </ul>
-                                    </div>
-                                    
-                                    <form method="POST" enctype="multipart/form-data" id="uploadForm">
-                                        <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                                            <i class='bx bx-cloud-upload'></i>
-                                            <p><strong>Click to select or drag & drop</strong></p>
-                                            <small>JPEG or PNG, max 10MB</small>
-                                        </div>
-                                        <input type="file" name="session_photo" id="fileInput" accept="image/jpeg,image/png">
-                                        
-                                        <div class="preview-section" id="previewSection">
-                                            <h3>Preview</h3>
-                                            <img id="previewImg" class="preview-img" src="">
-                                            <div style="display: flex; gap: 10px;">
-                                                <button type="submit" class="btn btn-primary">
-                                                    <i class='bx bx-upload'></i> Upload Photo
-                                                </button>
-                                                <button type="button" class="btn btn-secondary" onclick="clearPreview()">
-                                                    <i class='bx bx-x'></i> Cancel
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                                <?php else: ?>
-                                <div class="empty-photo">
-                                    <i class='bx bx-camera-off'></i>
-                                    <p>No photo uploaded yet</p>
-                                    <?php if (!$is_today && !$is_past): ?>
-                                    <p style="font-size: 13px; color: #888;">
-                                        Upload will be available on <?= date('M j, Y', strtotime($session['slot_date'])) ?>
-                                    </p>
-                                    <?php endif; ?>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                        
-                        <?php if ($session['admin_remarks'] && $session['session_status'] === 'approved'): ?>
-                        <div class="card">
-                            <div class="card-header"><i class='bx bx-message-dots'></i> Admin Feedback</div>
-                            <div class="card-body">
-                                <p><?= htmlspecialchars($session['admin_remarks']) ?></p>
-                                <?php if ($session['verified_by_name'] && $session['verified_at']): ?>
-                                <p style="font-size: 13px; color: #888; margin-top: 10px;">
-                                    — <?= htmlspecialchars($session['verified_by_name']) ?>, 
-                                    <?= date('M j, Y h:i A', strtotime($session['verified_at'])) ?>
-                                </p>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        <?php endif; ?>
-                    </div>
-                    
-                    <!-- Sidebar Info -->
-                    <div>
-                        <div class="card">
-                            <div class="card-header"><i class='bx bx-info-circle'></i> Quick Info</div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <i class='bx bx-building-house'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">School</div>
-                                        <div class="info-value"><?= htmlspecialchars($session['school_name']) ?></div>
-                                    </div>
-                                </div>
-                                <div class="info-row">
-                                    <i class='bx bx-calendar'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Date</div>
-                                        <div class="info-value"><?= date('M j, Y', strtotime($session['slot_date'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="info-row">
-                                    <i class='bx bx-time'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Time</div>
-                                        <div class="info-value"><?= date('h:i A', strtotime($session['start_time'])) ?> - <?= date('h:i A', strtotime($session['end_time'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="info-row">
-                                    <i class='bx bx-check-circle'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Status</div>
-                                        <div class="info-value"><?= ucfirst(str_replace('_', ' ', $session['session_status'])) ?></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+            <!-- Progress Steps -->
+            <div class="progress-steps">
+                <?php
+                $status = $session['session_status'];
+                $step1_class = 'completed';
+                $step2_class = in_array($status, ['start_submitted', 'start_approved', 'end_submitted', 'approved']) ? 'completed' : ($status === 'pending' && $can_upload ? 'active' : '');
+                $step3_class = in_array($status, ['start_approved', 'end_submitted', 'approved']) ? 'completed' : ($status === 'start_submitted' ? 'active' : '');
+                $step4_class = in_array($status, ['end_submitted', 'approved']) ? 'completed' : ($status === 'start_approved' ? 'active' : '');
+                $step5_class = $status === 'approved' ? 'completed' : ($status === 'end_submitted' ? 'active' : '');
+                if ($status === 'rejected') { $step2_class = 'rejected'; }
+                ?>
+                <div class="step <?= $step1_class ?>">
+                    <div class="step-circle"><i class='bx bx-check'></i></div>
+                    <div class="step-label">Slot Booked</div>
+                </div>
+                <div class="step <?= $step2_class ?>">
+                    <div class="step-circle"><?= $step2_class === 'completed' ? "<i class='bx bx-check'></i>" : ($step2_class === 'rejected' ? "<i class='bx bx-x'></i>" : "2") ?></div>
+                    <div class="step-label">Start Photo</div>
+                </div>
+                <div class="step <?= $step3_class ?>">
+                    <div class="step-circle"><?= $step3_class === 'completed' ? "<i class='bx bx-check'></i>" : "3" ?></div>
+                    <div class="step-label">Start Verified</div>
+                </div>
+                <div class="step <?= $step4_class ?>">
+                    <div class="step-circle"><?= $step4_class === 'completed' ? "<i class='bx bx-check'></i>" : "4" ?></div>
+                    <div class="step-label">End Photo</div>
+                </div>
+                <div class="step <?= $step5_class ?>">
+                    <div class="step-circle"><?= $step5_class === 'completed' ? "<i class='bx bx-check'></i>" : "5" ?></div>
+                    <div class="step-label">Approved</div>
                 </div>
             </div>
             
-            <!-- Details Tab -->
-            <div class="tab-content" id="tab-details">
-                <div class="content-grid">
-                    <div>
-                        <div class="card">
-                            <div class="card-header"><i class='bx bx-building-house'></i> School Information</div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <i class='bx bx-map'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Address</div>
-                                        <div class="info-value"><?= htmlspecialchars($session['full_address'] ?: 'Not provided') ?></div>
-                                    </div>
-                                </div>
-                                <?php if ($session['contact_person']): ?>
-                                <div class="info-row">
-                                    <i class='bx bx-user'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Contact Person</div>
-                                        <div class="info-value"><?= htmlspecialchars($session['contact_person']) ?></div>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                                <?php if ($session['contact_phone']): ?>
-                                <div class="info-row">
-                                    <i class='bx bx-phone'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Phone</div>
-                                        <div class="info-value"><?= htmlspecialchars($session['contact_phone']) ?></div>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                                <?php if ($session['allowed_radius']): ?>
-                                <div class="info-row">
-                                    <i class='bx bx-target-lock'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Allowed Radius</div>
-                                        <div class="info-value"><?= $session['allowed_radius'] ?>m from school</div>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                        
-                        <div class="card">
-                            <div class="card-header"><i class='bx bx-calendar-check'></i> Slot Information</div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <i class='bx bx-calendar'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Date</div>
-                                        <div class="info-value"><?= date('l, F j, Y', strtotime($session['slot_date'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="info-row">
-                                    <i class='bx bx-time'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Time</div>
-                                        <div class="info-value"><?= date('h:i A', strtotime($session['start_time'])) ?> - <?= date('h:i A', strtotime($session['end_time'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="info-row">
-                                    <i class='bx bx-group'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Teachers</div>
-                                        <div class="info-value"><?= $session['teachers_enrolled'] ?>/<?= $session['teachers_required'] ?> enrolled</div>
-                                    </div>
-                                </div>
-                                <?php if ($session['slot_desc']): ?>
-                                <div class="info-row">
-                                    <i class='bx bx-note'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Notes</div>
-                                        <div class="info-value"><?= htmlspecialchars($session['slot_desc']) ?></div>
-                                    </div>
-                                </div>
-                                <?php endif; ?>
-                            </div>
-                        </div>
+            <!-- Dual Photo Grid -->
+            <div class="photo-grid">
+                <!-- Start Photo Card -->
+                <div class="card">
+                    <div class="card-header start">
+                        <i class='bx bx-log-in-circle'></i> Arrival Photo (Start)
                     </div>
-                    
-                    <div>
-                        <div class="card">
-                            <div class="card-header"><i class='bx bx-bookmark'></i> Booking Details</div>
-                            <div class="card-body">
-                                <div class="info-row">
-                                    <i class='bx bx-calendar-plus'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Booked At</div>
-                                        <div class="info-value"><?= date('M j, Y h:i A', strtotime($session['booked_at'])) ?></div>
-                                    </div>
-                                </div>
-                                <div class="info-row">
-                                    <i class='bx bx-check-shield'></i>
-                                    <div class="info-content">
-                                        <div class="info-label">Enrollment Status</div>
-                                        <div class="info-value"><?= ucfirst($session['enrollment_status']) ?></div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Timeline Tab -->
-            <div class="tab-content" id="tab-timeline">
-                <div class="card" style="max-width: 600px;">
-                    <div class="card-header"><i class='bx bx-list-check'></i> Session Progress</div>
                     <div class="card-body">
-                        <div class="timeline">
-                            <div class="timeline-item">
-                                <div class="timeline-dot active">✓</div>
-                                <div class="timeline-content">
-                                    <h4>Slot Booked</h4>
-                                    <p><?= date('M j, Y h:i A', strtotime($session['booked_at'])) ?></p>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-dot <?= $session['photo_path'] ? 'active' : ($can_upload ? 'pending' : '') ?>">
-                                    <?= $session['photo_path'] ? '✓' : '2' ?>
-                                </div>
-                                <div class="timeline-content">
-                                    <h4>Photo Uploaded</h4>
-                                    <p>
-                                        <?php if ($session['photo_uploaded_at']): ?>
-                                        <?= date('M j, Y h:i A', strtotime($session['photo_uploaded_at'])) ?>
-                                        <?php elseif ($can_upload): ?>
-                                        Awaiting upload
-                                        <?php else: ?>
-                                        Pending
-                                        <?php endif; ?>
-                                    </p>
-                                </div>
-                            </div>
-                            <div class="timeline-item">
-                                <div class="timeline-dot <?= $session['session_status'] === 'approved' ? 'active' : ($session['session_status'] === 'photo_submitted' ? 'pending' : '') ?>">
-                                    <?= $session['session_status'] === 'approved' ? '✓' : '3' ?>
-                                </div>
-                                <div class="timeline-content">
-                                    <h4>Admin Verification</h4>
-                                    <p>
-                                        <?php if ($session['verified_at']): ?>
-                                        <?= date('M j, Y h:i A', strtotime($session['verified_at'])) ?>
-                                        <?php elseif ($session['session_status'] === 'photo_submitted'): ?>
-                                        Under review
-                                        <?php else: ?>
-                                        Pending
-                                        <?php endif; ?>
-                                    </p>
-                                </div>
-                            </div>
+                        <?php if ($session['start_photo_path']): ?>
+                        <div class="photo-display">
+                            <img src="../<?= htmlspecialchars($session['start_photo_path']) ?>" 
+                                 alt="Start Photo" 
+                                 onclick="window.open('../<?= htmlspecialchars($session['start_photo_path']) ?>', '_blank')">
                         </div>
-                        
-                        <?php if ($session['session_status'] === 'approved'): ?>
-                        <div class="alert alert-success" style="margin-top: 20px; margin-bottom: 0;">
-                            <i class='bx bx-check-circle'></i>
-                            <div>
-                                <strong>Session Approved!</strong>
-                                <?php if ($session['verified_by_name']): ?>
-                                <p style="margin-top: 5px; font-size: 13px;">
-                                    Verified by <?= htmlspecialchars($session['verified_by_name']) ?>
-                                </p>
-                                <?php endif; ?>
+                        <div class="photo-meta">
+                            <div class="photo-meta-row">
+                                <label>Uploaded</label>
+                                <span><?= date('M j, h:i A', strtotime($session['start_photo_uploaded_at'])) ?></span>
                             </div>
+                            <?php if ($session['start_photo_taken_at']): ?>
+                            <div class="photo-meta-row">
+                                <label>Photo Taken</label>
+                                <span><?= date('M j, h:i A', strtotime($session['start_photo_taken_at'])) ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <?php if ($session['start_distance_from_school'] !== null): ?>
+                            <div class="photo-meta-row">
+                                <label>Distance</label>
+                                <span class="<?= $start_distance_ok ? 'success' : 'danger' ?>">
+                                    <?= number_format($session['start_distance_from_school']) ?>m
+                                    <?= $start_distance_ok ? '✓' : '✗' ?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <div class="empty-photo">
+                            <i class='bx bx-camera'></i>
+                            <p>No arrival photo uploaded</p>
+                            <?php if ($upload_type === 'start'): ?>
+                            <small>Upload your arrival photo below</small>
+                            <?php elseif (!$can_upload): ?>
+                            <small>Available on <?= date('M j', strtotime($session['slot_date'])) ?></small>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
+                    </div>
+                </div>
+                
+                <!-- End Photo Card -->
+                <div class="card">
+                    <div class="card-header end">
+                        <i class='bx bx-log-out-circle'></i> Completion Photo (End)
+                    </div>
+                    <div class="card-body">
+                        <?php if ($session['end_photo_path']): ?>
+                        <div class="photo-display">
+                            <img src="../<?= htmlspecialchars($session['end_photo_path']) ?>" 
+                                 alt="End Photo" 
+                                 onclick="window.open('../<?= htmlspecialchars($session['end_photo_path']) ?>', '_blank')">
+                        </div>
+                        <div class="photo-meta">
+                            <div class="photo-meta-row">
+                                <label>Uploaded</label>
+                                <span><?= date('M j, h:i A', strtotime($session['end_photo_uploaded_at'])) ?></span>
+                            </div>
+                            <?php if ($session['end_photo_taken_at']): ?>
+                            <div class="photo-meta-row">
+                                <label>Photo Taken</label>
+                                <span><?= date('M j, h:i A', strtotime($session['end_photo_taken_at'])) ?></span>
+                            </div>
+                            <?php endif; ?>
+                            <?php if ($session['end_distance_from_school'] !== null): ?>
+                            <div class="photo-meta-row">
+                                <label>Distance</label>
+                                <span class="<?= $end_distance_ok ? 'success' : 'danger' ?>">
+                                    <?= number_format($session['end_distance_from_school']) ?>m
+                                    <?= $end_distance_ok ? '✓' : '✗' ?>
+                                </span>
+                            </div>
+                            <?php endif; ?>
+                        </div>
+                        <?php else: ?>
+                        <div class="empty-photo">
+                            <i class='bx bx-camera'></i>
+                            <p>No completion photo uploaded</p>
+                            <?php if ($upload_type === 'end'): ?>
+                            <small>Upload your completion photo below</small>
+                            <?php elseif (!$session['start_photo_path']): ?>
+                            <small>Upload arrival photo first</small>
+                            <?php endif; ?>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Duration Card (if both photos exist) -->
+            <?php if ($duration_status): ?>
+            <div class="duration-card">
+                <h3><i class='bx bx-time-five'></i> Duration Verification</h3>
+                <div class="duration-grid">
+                    <div class="duration-item">
+                        <label>Expected Duration</label>
+                        <div class="value"><?= $duration_status['formattedExpected'] ?></div>
+                    </div>
+                    <div class="duration-item">
+                        <label>Actual Duration</label>
+                        <div class="value <?= $duration_status['statusClass'] ?>"><?= $duration_status['formattedActual'] ?></div>
+                    </div>
+                    <div class="duration-item">
+                        <label>Difference</label>
+                        <div class="value <?= $duration_status['statusClass'] ?>"><?= $duration_status['formattedDifference'] ?></div>
+                    </div>
+                </div>
+                <div class="duration-status <?= $duration_status['statusClass'] ?>">
+                    <?= $duration_status['statusText'] ?> (<?= $duration_status['percentComplete'] ?>% of expected time)
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Upload Section -->
+            <?php if ($upload_type): ?>
+            <div class="upload-section">
+                <h3>
+                    <i class='bx bx-upload'></i> <?= $upload_title ?>
+                </h3>
+                <p class="subtitle"><?= $upload_instructions ?></p>
+                
+                <div class="requirements">
+                    <h4><i class='bx bx-list-check'></i> Photo Requirements</h4>
+                    <ul>
+                        <li>Take the photo <strong>at the school location</strong></li>
+                        <li>Enable <strong>location services</strong> on your camera/phone</li>
+                        <li>Photo should be taken on <strong><?= date('F j, Y', strtotime($session['slot_date'])) ?></strong></li>
+                        <?php if ($upload_type === 'start'): ?>
+                        <li>Take this photo when you <strong>arrive</strong> at the school</li>
+                        <?php else: ?>
+                        <li>Take this photo when you <strong>finish</strong> teaching</li>
+                        <?php endif; ?>
+                        <li>Maximum file size: 10MB (JPEG or PNG)</li>
+                    </ul>
+                </div>
+                
+                <form method="POST" enctype="multipart/form-data" id="uploadForm">
+                    <div class="upload-area" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                        <i class='bx bx-cloud-upload'></i>
+                        <p><strong>Click to select or drag & drop</strong></p>
+                        <small>JPEG or PNG, max 10MB</small>
+                    </div>
+                    <input type="file" name="session_photo" id="fileInput" accept="image/jpeg,image/png">
+                    
+                    <div class="preview-section" id="previewSection">
+                        <h4>Preview</h4>
+                        <img id="previewImg" class="preview-img" src="">
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-<?= $upload_type === 'start' ? 'success' : 'primary' ?>">
+                                <i class='bx bx-upload'></i> Upload <?= ucfirst($upload_type) ?> Photo
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="clearPreview()">
+                                <i class='bx bx-x'></i> Cancel
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <?php elseif ($session['session_status'] === 'approved'): ?>
+            <div class="alert alert-success">
+                <i class='bx bx-check-circle'></i>
+                <div>
+                    <strong>Session Approved!</strong>
+                    <p style="margin-top: 5px;">Your teaching session has been verified and approved.</p>
+                    <?php if ($session['admin_remarks']): ?>
+                    <p style="margin-top: 10px; font-style: italic;">"<?= htmlspecialchars($session['admin_remarks']) ?>"</p>
+                    <?php endif; ?>
+                    <?php if ($session['verified_by_name']): ?>
+                    <p style="margin-top: 5px; font-size: 13px; opacity: 0.8;">
+                        — <?= htmlspecialchars($session['verified_by_name']) ?>, <?= date('M j, Y', strtotime($session['verified_at'])) ?>
+                    </p>
+                    <?php endif; ?>
+                </div>
+            </div>
+            <?php elseif ($session['session_status'] === 'end_submitted'): ?>
+            <div class="alert alert-info">
+                <i class='bx bx-hourglass'></i>
+                <div>
+                    <strong>Awaiting Final Review</strong>
+                    <p style="margin-top: 5px;">Both photos have been submitted. An admin will review and approve your session soon.</p>
+                </div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- Map Section -->
+            <?php if (($session['start_gps_latitude'] && $session['start_gps_longitude']) || 
+                      ($session['end_gps_latitude'] && $session['end_gps_longitude'])): ?>
+            <div class="info-section">
+                <h3><i class='bx bx-map'></i> Location Map</h3>
+                <div id="map"></div>
+            </div>
+            <?php endif; ?>
+            
+            <!-- School Info -->
+            <div class="info-section">
+                <h3><i class='bx bx-building-house'></i> School Information</h3>
+                <div class="info-row">
+                    <i class='bx bx-map'></i>
+                    <div>
+                        <div class="info-label">Address</div>
+                        <div class="info-value"><?= htmlspecialchars($session['full_address'] ?: 'Not provided') ?></div>
+                    </div>
+                </div>
+                <?php if ($session['contact_person']): ?>
+                <div class="info-row">
+                    <i class='bx bx-user'></i>
+                    <div>
+                        <div class="info-label">Contact Person</div>
+                        <div class="info-value"><?= htmlspecialchars($session['contact_person']) ?></div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <?php if ($session['contact_phone']): ?>
+                <div class="info-row">
+                    <i class='bx bx-phone'></i>
+                    <div>
+                        <div class="info-label">Phone</div>
+                        <div class="info-value"><?= htmlspecialchars($session['contact_phone']) ?></div>
+                    </div>
+                </div>
+                <?php endif; ?>
+                <div class="info-row">
+                    <i class='bx bx-target-lock'></i>
+                    <div>
+                        <div class="info-label">Allowed Radius</div>
+                        <div class="info-value"><?= $session['allowed_radius'] ?? 500 ?>m from school</div>
                     </div>
                 </div>
             </div>
@@ -1017,17 +968,6 @@ $distance_ok = $session['distance_from_school'] !== null &&
         sidebarBtn.onclick = function() {
             sidebar.classList.toggle("active");
         };
-        
-        // Tab switching
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                
-                this.classList.add('active');
-                document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-            });
-        });
         
         // File upload handling
         const dropZone = document.getElementById('dropZone');
@@ -1090,28 +1030,49 @@ $distance_ok = $session['distance_from_school'] !== null &&
         }
         
         // Map initialization
-        <?php if ($session['gps_latitude'] && $session['gps_longitude'] && $session['school_lat'] && $session['school_lng']): ?>
+        <?php 
+        $hasStartGPS = $session['start_gps_latitude'] && $session['start_gps_longitude'];
+        $hasEndGPS = $session['end_gps_latitude'] && $session['end_gps_longitude'];
+        $hasSchoolGPS = $session['school_lat'] && $session['school_lng'];
+        
+        if ($hasStartGPS || $hasEndGPS): 
+        ?>
         document.addEventListener('DOMContentLoaded', function() {
-            const photoLat = <?= $session['gps_latitude'] ?>;
-            const photoLng = <?= $session['gps_longitude'] ?>;
-            const schoolLat = <?= $session['school_lat'] ?>;
-            const schoolLng = <?= $session['school_lng'] ?>;
+            const schoolLat = <?= $session['school_lat'] ?? 0 ?>;
+            const schoolLng = <?= $session['school_lng'] ?? 0 ?>;
             const allowedRadius = <?= $session['allowed_radius'] ?? 500 ?>;
             
-            const map = L.map('map').fitBounds([
-                [Math.min(photoLat, schoolLat) - 0.002, Math.min(photoLng, schoolLng) - 0.002],
-                [Math.max(photoLat, schoolLat) + 0.002, Math.max(photoLng, schoolLng) + 0.002]
-            ]);
+            <?php if ($hasStartGPS): ?>
+            const startLat = <?= $session['start_gps_latitude'] ?>;
+            const startLng = <?= $session['start_gps_longitude'] ?>;
+            <?php endif; ?>
+            
+            <?php if ($hasEndGPS): ?>
+            const endLat = <?= $session['end_gps_latitude'] ?>;
+            const endLng = <?= $session['end_gps_longitude'] ?>;
+            <?php endif; ?>
+            
+            // Calculate bounds
+            const points = [];
+            <?php if ($hasSchoolGPS): ?>points.push([schoolLat, schoolLng]);<?php endif; ?>
+            <?php if ($hasStartGPS): ?>points.push([startLat, startLng]);<?php endif; ?>
+            <?php if ($hasEndGPS): ?>points.push([endLat, endLng]);<?php endif; ?>
+            
+            const map = L.map('map');
+            if (points.length > 0) {
+                map.fitBounds(points, { padding: [50, 50] });
+            }
             
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: '&copy; OpenStreetMap'
             }).addTo(map);
             
+            <?php if ($hasSchoolGPS): ?>
             // School marker
             L.marker([schoolLat, schoolLng], {
                 icon: L.divIcon({
                     className: 'school-marker',
-                    html: '<div style="background:#667eea;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 5px rgba(0,0,0,0.3);">🏫</div>'
+                    html: '<div style="background:#667eea;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.3);">🏫</div>'
                 })
             }).addTo(map).bindPopup('School Location');
             
@@ -1122,21 +1083,27 @@ $distance_ok = $session['distance_from_school'] !== null &&
                 fillOpacity: 0.1,
                 radius: allowedRadius
             }).addTo(map);
+            <?php endif; ?>
             
-            // Photo marker
-            L.marker([photoLat, photoLng], {
+            <?php if ($hasStartGPS): ?>
+            // Start photo marker
+            L.marker([startLat, startLng], {
                 icon: L.divIcon({
-                    className: 'photo-marker',
-                    html: '<div style="background:#10b981;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 2px 5px rgba(0,0,0,0.3);">📷</div>'
+                    className: 'start-marker',
+                    html: '<div style="background:#10b981;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.3);">📸</div>'
                 })
-            }).addTo(map).bindPopup('Photo Location');
+            }).addTo(map).bindPopup('Start Photo Location');
+            <?php endif; ?>
             
-            // Line between
-            L.polyline([[schoolLat, schoolLng], [photoLat, photoLng]], {
-                color: '#f59e0b',
-                dashArray: '5, 10',
-                weight: 2
-            }).addTo(map);
+            <?php if ($hasEndGPS): ?>
+            // End photo marker
+            L.marker([endLat, endLng], {
+                icon: L.divIcon({
+                    className: 'end-marker',
+                    html: '<div style="background:#8b5cf6;color:white;width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 5px rgba(0,0,0,0.3);">🏁</div>'
+                })
+            }).addTo(map).bindPopup('End Photo Location');
+            <?php endif; ?>
         });
         <?php endif; ?>
     </script>

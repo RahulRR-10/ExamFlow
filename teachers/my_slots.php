@@ -16,7 +16,8 @@ $teacher_id = $_SESSION['user_id'];
 $bookings_sql = "SELECT ste.*, sts.slot_date, sts.start_time, sts.end_time, sts.slot_status,
                  sts.description as slot_description, sts.teachers_required, sts.teachers_enrolled,
                  s.school_id, s.school_name, s.full_address, s.gps_latitude, s.gps_longitude,
-                 ts.session_id, ts.session_status, ts.photo_path, ts.photo_uploaded_at,
+                 ts.session_id, ts.session_status, ts.start_photo_path, ts.start_photo_uploaded_at,
+                 ts.end_photo_path, ts.end_photo_uploaded_at, ts.actual_duration_minutes,
                  ts.verified_by, ts.verified_at, ts.admin_remarks
                  FROM slot_teacher_enrollments ste
                  JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
@@ -56,8 +57,12 @@ foreach ($past as $b) {
 }
 
 foreach ($upcoming as $b) {
-    if ($b['slot_date'] === $today && empty($b['photo_path'])) {
-        $stats['pending_upload']++;
+    if ($b['slot_date'] === $today) {
+        // Count sessions needing photo upload (no start photo or start approved but no end photo)
+        if (empty($b['start_photo_path']) || 
+            (in_array($b['session_status'], ['start_submitted', 'start_approved']) && empty($b['end_photo_path']))) {
+            $stats['pending_upload']++;
+        }
     }
 }
 ?>
@@ -178,9 +183,12 @@ foreach ($upcoming as $b) {
             font-weight: 500;
         }
         .status-badge.pending { background: #fef3c7; color: #92400e; }
-        .status-badge.photo_submitted { background: #dbeafe; color: #1e40af; }
+        .status-badge.start_submitted { background: #dbeafe; color: #1e40af; }
+        .status-badge.start_approved { background: #d1fae5; color: #065f46; }
+        .status-badge.end_submitted { background: #e0e7ff; color: #3730a3; }
         .status-badge.approved { background: #dcfce7; color: #166534; }
         .status-badge.rejected { background: #fee2e2; color: #991b1b; }
+        .status-badge.partial { background: #fef3c7; color: #92400e; }
         .status-badge.booked { background: #dbeafe; color: #1e40af; }
         .status-badge.cancelled { background: #e5e7eb; color: #374151; }
         .status-badge.completed { background: #dcfce7; color: #166534; }
@@ -467,13 +475,28 @@ foreach ($upcoming as $b) {
                                 <span class="status-badge <?= $booking['session_status'] ?>">
                                     <?= ucfirst(str_replace('_', ' ', $booking['session_status'])) ?>
                                 </span>
-                                <?php if ($booking['photo_path']): ?>
-                                <p style="margin-top: 10px; font-size: 13px; color: #666;">
-                                    <i class='bx bx-check-circle' style="color: #10b981;"></i> Photo uploaded
+                                <?php 
+                                $has_start = !empty($booking['start_photo_path']);
+                                $has_end = !empty($booking['end_photo_path']);
+                                $needs_start = !$has_start && $is_today;
+                                $needs_end = $has_start && !$has_end && in_array($booking['session_status'], ['start_submitted', 'start_approved']);
+                                ?>
+                                <?php if ($has_start && $has_end): ?>
+                                <p style="margin-top: 10px; font-size: 13px; color: #10b981;">
+                                    <i class='bx bx-check-circle'></i> Both photos uploaded
                                 </p>
-                                <?php elseif ($is_today): ?>
+                                <?php elseif ($has_start): ?>
+                                <p style="margin-top: 10px; font-size: 13px; color: #10b981;">
+                                    <i class='bx bx-check-circle'></i> Start photo uploaded
+                                </p>
+                                <?php if ($needs_end): ?>
+                                <p style="margin-top: 5px; font-size: 13px; color: #f59e0b;">
+                                    <i class='bx bx-camera'></i> End photo required
+                                </p>
+                                <?php endif; ?>
+                                <?php elseif ($needs_start): ?>
                                 <p style="margin-top: 10px; font-size: 13px; color: #f59e0b;">
-                                    <i class='bx bx-camera'></i> Photo upload required today
+                                    <i class='bx bx-camera'></i> Start photo required today
                                 </p>
                                 <?php else: ?>
                                 <p style="margin-top: 10px; font-size: 13px; color: #999;">
@@ -486,9 +509,13 @@ foreach ($upcoming as $b) {
                             </div>
                         </div>
                         <div class="booking-actions">
-                            <?php if ($booking['session_id']): ?>
-                            <a href="view_session.php?id=<?= $booking['session_id'] ?>" class="btn <?= $needs_photo ? 'btn-warning' : 'btn-secondary' ?> btn-sm">
-                                <i class='bx <?= $needs_photo ? 'bx-camera' : 'bx-show' ?>'></i> <?= $needs_photo ? 'Upload Photo' : 'View Session' ?>
+                            <?php if ($booking['session_id']): 
+                                $btn_class = ($needs_start || $needs_end) ? 'btn-warning' : 'btn-secondary';
+                                $btn_icon = ($needs_start || $needs_end) ? 'bx-camera' : 'bx-show';
+                                $btn_text = $needs_start ? 'Upload Start Photo' : ($needs_end ? 'Upload End Photo' : 'View Session');
+                            ?>
+                            <a href="view_session.php?id=<?= $booking['session_id'] ?>" class="btn <?= $btn_class ?> btn-sm">
+                                <i class='bx <?= $btn_icon ?>'></i> <?= $btn_text ?>
                             </a>
                             <?php endif; ?>
                             <?php if ($can_cancel): ?>
@@ -539,9 +566,22 @@ foreach ($upcoming as $b) {
                                 <span class="status-badge <?= $booking['session_status'] ?>">
                                     <?= ucfirst(str_replace('_', ' ', $booking['session_status'])) ?>
                                 </span>
-                                <?php if ($booking['photo_path']): ?>
+                                <?php 
+                                $past_has_start = !empty($booking['start_photo_path']);
+                                $past_has_end = !empty($booking['end_photo_path']);
+                                ?>
+                                <?php if ($past_has_start && $past_has_end): ?>
                                 <p style="margin-top: 10px; font-size: 13px; color: #10b981;">
-                                    <i class='bx bx-check-circle'></i> Photo submitted
+                                    <i class='bx bx-check-circle'></i> Both photos submitted
+                                </p>
+                                <?php elseif ($past_has_start): ?>
+                                <p style="margin-top: 10px; font-size: 13px; color: #f59e0b;">
+                                    <i class='bx bx-camera'></i> Only start photo submitted
+                                </p>
+                                <?php endif; ?>
+                                <?php if ($booking['actual_duration_minutes']): ?>
+                                <p style="margin-top: 5px; font-size: 13px; color: #666;">
+                                    <i class='bx bx-time'></i> Duration: <?= floor($booking['actual_duration_minutes']/60) ?>h <?= $booking['actual_duration_minutes']%60 ?>m
                                 </p>
                                 <?php endif; ?>
                                 <?php if ($booking['admin_remarks']): ?>
