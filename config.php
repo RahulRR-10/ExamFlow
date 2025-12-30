@@ -6,6 +6,14 @@ $username = "root";
 $password = "";
 $database = "db_eval";
 
+// Dual Photo Verification Settings
+define('DURATION_TOLERANCE_MINUTES', 15);       // Allowed variance from expected duration
+define('MIN_DURATION_PERCENT', 80);              // Must complete at least 80% of slot time
+define('AUTO_APPROVE_START_DISTANCE', 100);      // Auto-approve start photo if within 100 meters
+define('MAX_TIME_BEFORE_SLOT_START', 60);        // Max minutes early for start photo
+define('MAX_TIME_AFTER_SLOT_END', 120);          // Max minutes late for end photo
+define('REQUIRE_GPS_FOR_APPROVAL', true);        // Require GPS data for approval
+
 if(!$conn = mysqli_connect($hostname, $username, $password, $database)){
 
  die("Database connection failed");
