@@ -82,14 +82,10 @@ if (isset($_GET['force'])) {
     session_start();
 }
 
-// Get active schools for dropdown
-$schools_sql = "SELECT school_id, school_name FROM schools WHERE status = 'active' ORDER BY school_name";
-$schools_result = mysqli_query($conn, $schools_sql);
-
 $success_msg = '';
 $error_msg = '';
 
-// Handle registration
+// Handle registration - No school selection required, teachers book slots instead
 if (isset($_POST["register"])) {
     $fname = mysqli_real_escape_string($conn, $_POST["fname"]);
     $email = mysqli_real_escape_string($conn, $_POST["email"]);
@@ -98,59 +94,25 @@ if (isset($_POST["register"])) {
     $uname = mysqli_real_escape_string($conn, $_POST["uname"]);
     $pword = md5($_POST["pword"]);
     $subject = mysqli_real_escape_string($conn, $_POST["subject"]);
-    $school_ids = isset($_POST["school_ids"]) ? $_POST["school_ids"] : [];
 
-    // Validate at least one school selected
-    if (empty($school_ids)) {
-        $error_msg = "Please select at least one school to enroll in.";
+    // Check if username already exists
+    $check_user = mysqli_query($conn, "SELECT uname FROM teacher WHERE uname = '$uname'");
+    if (mysqli_num_rows($check_user) > 0) {
+        $error_msg = "Username already exists. Please choose a different username.";
     } else {
-        // Check if username already exists
-        $check_user = mysqli_query($conn, "SELECT uname FROM teacher WHERE uname = '$uname'");
-        if (mysqli_num_rows($check_user) > 0) {
-            $error_msg = "Username already exists. Please choose a different username.";
+        // Check if email already exists
+        $check_email = mysqli_query($conn, "SELECT email FROM teacher WHERE email = '$email'");
+        if (mysqli_num_rows($check_email) > 0) {
+            $error_msg = "Email already registered. Please use a different email.";
         } else {
-            // Check if email already exists
-            $check_email = mysqli_query($conn, "SELECT email FROM teacher WHERE email = '$email'");
-            if (mysqli_num_rows($check_email) > 0) {
-                $error_msg = "Email already registered. Please use a different email.";
+            // Insert new teacher (no school assignment - they'll book slots)
+            $sql = "INSERT INTO teacher (fname, email, dob, gender, uname, pword, subject) 
+                    VALUES ('$fname', '$email', '$dob', '$gender', '$uname', '$pword', '$subject')";
+
+            if (mysqli_query($conn, $sql)) {
+                $success_msg = "Registration successful! You can now login and browse teaching slots.";
             } else {
-                // Insert new teacher
-                $sql = "INSERT INTO teacher (fname, email, dob, gender, uname, pword, subject) 
-                        VALUES ('$fname', '$email', '$dob', '$gender', '$uname', '$pword', '$subject')";
-
-                if (mysqli_query($conn, $sql)) {
-                    $teacher_id = mysqli_insert_id($conn);
-
-                    // Enroll teacher in selected schools
-                    $first = true;
-                    $enrollment_success = true;
-
-                    foreach ($school_ids as $school_id) {
-                        $school_id = intval($school_id);
-
-                        // Verify school exists and is active
-                        $school_check = mysqli_query($conn, "SELECT school_id FROM schools WHERE school_id = $school_id AND status = 'active'");
-                        if (mysqli_num_rows($school_check) > 0) {
-                            $is_primary = $first ? 1 : 0;
-                            $first = false;
-
-                            $enroll_sql = "INSERT INTO teacher_schools (teacher_id, school_id, is_primary, enrollment_status) 
-                                           VALUES ($teacher_id, $school_id, $is_primary, 'active')";
-
-                            if (!mysqli_query($conn, $enroll_sql)) {
-                                $enrollment_success = false;
-                            }
-                        }
-                    }
-
-                    if ($enrollment_success) {
-                        $success_msg = "Registration successful! You can now login.";
-                    } else {
-                        $success_msg = "Registration successful but some school enrollments failed. You can manage schools after login.";
-                    }
-                } else {
-                    $error_msg = "Registration failed. Please try again.";
-                }
+                $error_msg = "Registration failed. Please try again.";
             }
         }
     }
@@ -203,30 +165,14 @@ if (isset($_POST["register"])) {
         font-size: 13px;
     }
 
-    .school-select-container {
-        background: #eee;
+    .info-box {
+        background: #e3f2fd;
+        color: #1565c0;
+        padding: 10px 15px;
         border-radius: 5px;
-        padding: 10px;
-        margin: 8px 0;
-        max-height: 120px;
-        overflow-y: auto;
-        width: 100%;
-    }
-
-    .school-checkbox {
-        display: flex;
-        align-items: center;
-        padding: 3px 0;
-    }
-
-    .school-checkbox input[type="checkbox"] {
-        width: auto;
-        margin-right: 10px;
-    }
-
-    .school-checkbox label {
-        cursor: pointer;
-        font-size: 13px;
+        margin-bottom: 15px;
+        font-size: 12px;
+        text-align: left;
     }
 </style>
 
@@ -245,22 +191,8 @@ if (isset($_POST["register"])) {
                     <div class="error-msg"><?php echo $error_msg; ?></div>
                 <?php endif; ?>
 
-                <span>Select School(s) to Enroll In</span>
-                <div class="school-select-container">
-                    <?php
-                    mysqli_data_seek($schools_result, 0);
-                    while ($school = mysqli_fetch_assoc($schools_result)):
-                    ?>
-                        <div class="school-checkbox">
-                            <input type="checkbox" name="school_ids[]"
-                                value="<?php echo $school['school_id']; ?>"
-                                id="school_<?php echo $school['school_id']; ?>"
-                                <?php echo (isset($_POST['school_ids']) && in_array($school['school_id'], $_POST['school_ids'])) ? 'checked' : ''; ?>>
-                            <label for="school_<?php echo $school['school_id']; ?>">
-                                <?php echo htmlspecialchars($school['school_name']); ?>
-                            </label>
-                        </div>
-                    <?php endwhile; ?>
+                <div class="info-box">
+                    📅 After registration, you can browse and book teaching slots at various schools.
                 </div>
 
                 <input type="text" name="fname" placeholder="Full Name"

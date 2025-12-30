@@ -8,56 +8,56 @@ include '../config.php';
 
 $teacher_id = $_SESSION['user_id'];
 
-// Get teacher's enrolled schools
-$schools_sql = "SELECT s.school_id, s.school_name, ts.is_primary 
-                FROM schools s 
-                INNER JOIN teacher_schools ts ON s.school_id = ts.school_id 
-                WHERE ts.teacher_id = ? AND s.status = 'active'
-                ORDER BY ts.is_primary DESC, s.school_name ASC";
-$stmt = mysqli_prepare($conn, $schools_sql);
-mysqli_stmt_bind_param($stmt, "i", $teacher_id);
-mysqli_stmt_execute($stmt);
-$enrolled_schools = mysqli_stmt_get_result($stmt);
-$school_count = mysqli_num_rows($enrolled_schools);
+// Teaching Slots Based Stats
+$slot_stats = [
+    'upcoming_slots' => 0,
+    'completed_sessions' => 0,
+    'pending_verification' => 0,
+    'total_schools' => 0
+];
 
-// Get primary school name
-$primary_school_name = "";
-mysqli_data_seek($enrolled_schools, 0);
-while ($school = mysqli_fetch_assoc($enrolled_schools)) {
-  if ($school['is_primary']) {
-    $primary_school_name = $school['school_name'];
-    break;
-  }
+// Check if teaching_sessions table exists
+$table_check = mysqli_query($conn, "SHOW TABLES LIKE 'teaching_sessions'");
+$slots_enabled = mysqli_num_rows($table_check) > 0;
+
+if ($slots_enabled) {
+    // Upcoming booked slots
+    $upcoming_sql = "SELECT COUNT(*) as cnt FROM slot_teacher_enrollments ste
+                     JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+                     WHERE ste.teacher_id = ? AND ste.enrollment_status = 'confirmed'
+                     AND sts.slot_date >= CURDATE() AND sts.slot_status NOT IN ('completed', 'cancelled')";
+    $stmt = mysqli_prepare($conn, $upcoming_sql);
+    mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+    mysqli_stmt_execute($stmt);
+    $slot_stats['upcoming_slots'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+    // Completed sessions (approved)
+    $completed_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions 
+                      WHERE teacher_id = ? AND session_status = 'approved'";
+    $stmt = mysqli_prepare($conn, $completed_sql);
+    mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+    mysqli_stmt_execute($stmt);
+    $slot_stats['completed_sessions'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+    // Pending verification
+    $pending_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions 
+                    WHERE teacher_id = ? AND session_status = 'photo_submitted'";
+    $stmt = mysqli_prepare($conn, $pending_sql);
+    mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+    mysqli_stmt_execute($stmt);
+    $slot_stats['pending_verification'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
+
+    // Total unique schools from bookings
+    $schools_sql = "SELECT COUNT(DISTINCT sts.school_id) as cnt FROM slot_teacher_enrollments ste
+                    JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+                    WHERE ste.teacher_id = ?";
+    $stmt = mysqli_prepare($conn, $schools_sql);
+    mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+    mysqli_stmt_execute($stmt);
+    $slot_stats['total_schools'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'] ?? 0;
 }
-mysqli_data_seek($enrolled_schools, 0);
 
-// Get stats filtered by teacher's enrolled schools
-$student_count_sql = "SELECT COUNT(1) as cnt FROM student 
-                      WHERE school_id IN (SELECT school_id FROM teacher_schools WHERE teacher_id = ?)";
-$stmt = mysqli_prepare($conn, $student_count_sql);
-mysqli_stmt_bind_param($stmt, "i", $teacher_id);
-mysqli_stmt_execute($stmt);
-$student_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
-
-$exam_count_sql = "SELECT COUNT(1) as cnt FROM exm_list 
-                   WHERE school_id IN (SELECT school_id FROM teacher_schools WHERE teacher_id = ?)";
-$stmt = mysqli_prepare($conn, $exam_count_sql);
-mysqli_stmt_bind_param($stmt, "i", $teacher_id);
-mysqli_stmt_execute($stmt);
-$exam_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
-
-$result_count_sql = "SELECT COUNT(1) as cnt FROM atmpt_list a 
-                     INNER JOIN exm_list e ON a.exid = e.exid 
-                     WHERE e.school_id IN (SELECT school_id FROM teacher_schools WHERE teacher_id = ?)";
-$stmt = mysqli_prepare($conn, $result_count_sql);
-mysqli_stmt_bind_param($stmt, "i", $teacher_id);
-mysqli_stmt_execute($stmt);
-$result_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
-
-$message_count_sql = "SELECT COUNT(1) as cnt FROM message";
-$message_count = mysqli_fetch_assoc(mysqli_query($conn, $message_count_sql))['cnt'];
-
-// Objective exam stats
+// Objective exam stats (teacher-owned, not school-based)
 $obj_stats = [
     'total_exams' => 0,
     'pending_grading' => 0,
@@ -161,9 +161,15 @@ $obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cn
         </a>
       </li>
       <li>
-        <a href="teaching_activity.php">
-          <i class='bx bx-map-pin'></i>
-          <span class="links_name">Teaching Activity</span>
+        <a href="browse_slots.php">
+          <i class='bx bx-calendar-check'></i>
+          <span class="links_name">Teaching Slots</span>
+        </a>
+      </li>
+      <li>
+        <a href="my_slots.php">
+          <i class='bx bx-calendar'></i>
+          <span class="links_name">My Bookings</span>
         </a>
       </li>
       <li>
@@ -191,14 +197,6 @@ $obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cn
       <div class="sidebar-button">
         <i class='bx bx-menu sidebarBtn'></i>
         <span class="dashboard">Teacher's Dashboard</span>
-        <?php if ($primary_school_name): ?>
-          <span style="font-size: 12px; color: #666; margin-left: 15px; padding: 4px 10px; background: #e3f2fd; border-radius: 12px;">
-            <i class='bx bx-building-house' style="margin-right: 4px;"></i><?php echo htmlspecialchars($primary_school_name); ?>
-            <?php if ($school_count > 1): ?>
-              <span style="color: #1976d2; font-weight: 500;">(+<?php echo ($school_count - 1); ?> more)</span>
-            <?php endif; ?>
-          </span>
-        <?php endif; ?>
       </div>
       <div class="profile-details">
         <img src="<?php echo $_SESSION['img']; ?>" alt="pro">
@@ -207,140 +205,169 @@ $obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cn
     </nav>
 
     <div class="home-content">
+      <!-- Teaching Slots Stats -->
       <div class="overview-boxes">
-        <div class="box">
+        <div class="box" onclick="window.location.href='my_slots.php'" style="cursor: pointer;">
           <div class="right-side">
-            <div class="box-topic">Students</div>
-            <div class="number"><?php echo $student_count; ?></div>
+            <div class="box-topic">Upcoming Slots</div>
+            <div class="number"><?php echo $slot_stats['upcoming_slots']; ?></div>
             <div class="brief">
-              <span class="text">Students in your schools</span>
+              <span class="text">Booked teaching slots</span>
             </div>
           </div>
-          <i class='bx bx-user ico'></i>
+          <i class='bx bx-calendar-check ico'></i>
         </div>
         <div class="box">
           <div class="right-side">
-            <div class="box-topic">MCQ Exams</div>
-            <div class="number"><?php echo $exam_count; ?></div>
+            <div class="box-topic">Schools Visited</div>
+            <div class="number"><?php echo $slot_stats['total_schools']; ?></div>
             <div class="brief">
-              <span class="text">MCQ exams created</span>
+              <span class="text">Unique schools</span>
             </div>
           </div>
-          <i class='bx bx-book-content ico two'></i>
+          <i class='bx bx-building-house ico two'></i>
         </div>
         <div class="box">
+          <div class="right-side">
+            <div class="box-topic">Completed Sessions</div>
+            <div class="number"><?php echo $slot_stats['completed_sessions']; ?></div>
+            <div class="brief">
+              <span class="text">Verified sessions</span>
+            </div>
+          </div>
+          <i class='bx bx-check-circle ico three'></i>
+        </div>
+        <div class="box">
+          <div class="right-side">
+            <div class="box-topic">Pending Review</div>
+            <div class="number"><?php echo $slot_stats['pending_verification']; ?></div>
+            <div class="brief">
+              <span class="text">Awaiting verification</span>
+            </div>
+          </div>
+          <i class='bx bx-time-five ico four'></i>
+        </div>
+      </div>
+
+      <!-- Exam Stats Row -->
+      <div class="overview-boxes" style="margin-top: 15px;">
+        <div class="box" onclick="window.location.href='objective_exams.php'" style="cursor: pointer;">
           <div class="right-side">
             <div class="box-topic">Objective Exams</div>
             <div class="number"><?php echo $obj_stats['total_exams']; ?></div>
             <div class="brief">
-              <span class="text">Objective exams created</span>
+              <span class="text">Exams created</span>
             </div>
           </div>
-          <i class='bx bx-edit ico three'></i>
+          <i class='bx bx-edit ico'></i>
         </div>
-        <div class="box">
-          <div class="right-side">
-            <div class="box-topic">MCQ Results</div>
-            <div class="number"><?php echo $result_count; ?></div>
-            <div class="brief">
-              <span class="text">MCQ submissions</span>
-            </div>
-          </div>
-          <i class='bx bx-bar-chart-alt-2 ico four'></i>
-        </div>
-      </div>
-
-      <!-- Objective Exam Grading Status -->
-      <?php if ($obj_stats['pending_grading'] > 0 || $obj_stats['processing'] > 0 || $obj_stats['graded'] > 0): ?>
-      <div class="overview-boxes" style="margin-top: 15px;">
         <?php if ($obj_stats['pending_grading'] > 0): ?>
         <div class="box" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%); border-left: 4px solid #ff9800; cursor: pointer;" onclick="window.location.href='grade_objective.php'">
           <div class="right-side">
             <div class="box-topic" style="color: #e65100;">Pending Grading</div>
             <div class="number" style="color: #ff9800;"><?php echo $obj_stats['pending_grading']; ?></div>
             <div class="brief">
-              <span class="text" style="color: #e65100;">Objective exams need grading</span>
+              <span class="text" style="color: #e65100;">Needs grading</span>
             </div>
           </div>
           <i class='bx bx-time-five' style="color: #ff9800; font-size: 48px;"></i>
         </div>
         <?php endif; ?>
-        
         <?php if ($obj_stats['processing'] > 0): ?>
         <div class="box" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); border-left: 4px solid #2196F3;">
           <div class="right-side">
             <div class="box-topic" style="color: #1565c0;">Processing</div>
             <div class="number" style="color: #2196F3;"><?php echo $obj_stats['processing']; ?></div>
             <div class="brief">
-              <span class="text" style="color: #1565c0;">Submissions being processed</span>
+              <span class="text" style="color: #1565c0;">Being processed</span>
             </div>
           </div>
           <i class='bx bx-loader-alt bx-spin' style="color: #2196F3; font-size: 48px;"></i>
         </div>
         <?php endif; ?>
-        
         <?php if ($obj_stats['graded'] > 0): ?>
         <div class="box" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%); border-left: 4px solid #17684f; cursor: pointer;" onclick="window.location.href='view_objective_results.php'">
           <div class="right-side">
             <div class="box-topic" style="color: #17684f;">Graded</div>
             <div class="number" style="color: #17684f;"><?php echo $obj_stats['graded']; ?></div>
             <div class="brief">
-              <span class="text" style="color: #17684f;">Completed objective exams</span>
+              <span class="text" style="color: #17684f;">Completed</span>
             </div>
           </div>
           <i class='bx bx-check-double' style="color: #17684f; font-size: 48px;"></i>
         </div>
         <?php endif; ?>
       </div>
+
+      <!-- Quick Actions -->
+      <?php if ($slot_stats['upcoming_slots'] == 0): ?>
+      <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 10px; margin-top: 20px; text-align: center;">
+        <h3 style="color: #1565c0; margin-bottom: 10px;">📅 No Upcoming Slots</h3>
+        <p style="color: #1976d2; margin-bottom: 15px;">Browse available teaching slots and book your sessions!</p>
+        <a href="browse_slots.php" style="display: inline-block; background: #1976d2; color: white; padding: 10px 25px; border-radius: 25px; text-decoration: none; font-weight: 500;">Browse Slots</a>
+      </div>
       <?php endif; ?>
 
       <div class="stat-boxes">
         <div class="recent-stat box">
-          <div class="title">Recent MCQ Results</div>
+          <div class="title">Upcoming Teaching Sessions</div>
           <table id="res">
             <thead>
               <tr>
-
-                <th id="res" style="width:20%">Date</th>
-                <th id="res" style="width:35%">Name</th>
-                <th id="res" style="width:25%">Exam name</th>
-                <th id="res" style="width:20%">Percentage</th>
+                <th id="res" style="width:25%">Date</th>
+                <th id="res" style="width:35%">School</th>
+                <th id="res" style="width:20%">Time</th>
+                <th id="res" style="width:20%">Status</th>
               </tr>
             </thead>
             <tbody>
               <?php
-              $sql = "SELECT * FROM atmpt_list ORDER BY subtime DESC LIMIT 8";
-              $result = mysqli_query($conn, $sql);
-              if (mysqli_num_rows($result) > 0) {
-                while ($row = mysqli_fetch_assoc($result)) {
+              if ($slots_enabled) {
+                $upcoming_sessions_sql = "SELECT sts.slot_date, sts.start_time, sts.end_time, s.school_name, ts.session_status
+                                          FROM slot_teacher_enrollments ste
+                                          JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+                                          JOIN schools s ON sts.school_id = s.school_id
+                                          LEFT JOIN teaching_sessions ts ON ts.slot_id = sts.slot_id AND ts.teacher_id = ste.teacher_id
+                                          WHERE ste.teacher_id = ? AND ste.enrollment_status = 'confirmed'
+                                          AND sts.slot_date >= CURDATE()
+                                          ORDER BY sts.slot_date ASC, sts.start_time ASC
+                                          LIMIT 5";
+                $stmt = mysqli_prepare($conn, $upcoming_sessions_sql);
+                mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+                mysqli_stmt_execute($stmt);
+                $upcoming_result = mysqli_stmt_get_result($stmt);
+                
+                if (mysqli_num_rows($upcoming_result) > 0) {
+                  while ($row = mysqli_fetch_assoc($upcoming_result)) {
+                    $status = $row['session_status'] ?? 'not_started';
+                    $status_badge = match($status) {
+                      'photo_submitted' => '<span style="background:#fff3e0;color:#e65100;padding:3px 8px;border-radius:12px;font-size:11px;">Pending</span>',
+                      'approved' => '<span style="background:#e8f5e9;color:#17684f;padding:3px 8px;border-radius:12px;font-size:11px;">Approved</span>',
+                      'rejected' => '<span style="background:#ffebee;color:#c62828;padding:3px 8px;border-radius:12px;font-size:11px;">Rejected</span>',
+                      default => '<span style="background:#e3f2fd;color:#1565c0;padding:3px 8px;border-radius:12px;font-size:11px;">Scheduled</span>'
+                    };
               ?>
                   <tr>
-                    <td id="res"><?php $dptime = $row['subtime'];
-                                  $dptime = date("M d, Y", strtotime($dptime));
-                                  echo $dptime; ?></td>
-                    <td id="res"><?php $uname = $row['uname'];
-                                  $sql_name = "SELECT * FROM student WHERE uname='$uname'";
-                                  $result_name = mysqli_query($conn, $sql_name);
-                                  $row_name = mysqli_fetch_assoc($result_name);
-                                  echo $row_name['fname']; ?></td>
-                    <td id="res"><?php $exid = $row['exid'];
-                                  $sql_exname = "SELECT * FROM exm_list WHERE exid='$exid'";
-                                  $result_exname = mysqli_query($conn, $sql_exname);
-                                  $row_exname = mysqli_fetch_assoc($result_exname);
-                                  echo $row_exname['exname']; ?></td>
-                    <td id="res"><?php echo $row['ptg']; ?>%</td>
+                    <td id="res"><?php echo date("M d, Y", strtotime($row['slot_date'])); ?></td>
+                    <td id="res"><?php echo htmlspecialchars($row['school_name']); ?></td>
+                    <td id="res"><?php echo date("h:i A", strtotime($row['start_time'])); ?></td>
+                    <td id="res"><?php echo $status_badge; ?></td>
                   </tr>
               <?php
+                  }
+                } else {
+                  echo '<tr><td colspan="4" style="text-align:center;color:#666;">No upcoming sessions. <a href="browse_slots.php">Browse slots</a></td></tr>';
                 }
+              } else {
+                echo '<tr><td colspan="4" style="text-align:center;color:#666;">Teaching slots not enabled.</td></tr>';
               }
               ?>
             </tbody>
           </table>
-          <div class="button" style="">
-            <a href="results.php">See All</a>
+          <div class="button">
+            <a href="my_slots.php">See All Bookings</a>
           </div>
         </div>
-
       </div>
     </div>
   </section>

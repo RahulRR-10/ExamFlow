@@ -2,19 +2,24 @@
 session_start();
 if (!isset($_SESSION["fname"])) {
   header("Location: ../login_student.php");
+  exit;
 }
 include '../config.php';
-require_once '../utils/message_utils.php';
-error_reporting(0);
 
-// Get messages only for the student's school
-$school_id = $_SESSION['school_id'] ?? 0;
-$sql = "SELECT * FROM message WHERE school_id = $school_id OR school_id IS NULL ORDER BY date DESC";
+// Check if message_utils.php exists before requiring it
+if (file_exists('../utils/message_utils.php')) {
+    require_once '../utils/message_utils.php';
+}
+
+// Get all messages (message table doesn't have school_id column)
+$sql = "SELECT * FROM message ORDER BY date DESC";
 $result = mysqli_query($conn, $sql);
 
-// Mark all messages as read for this user
-$uname = $_SESSION['uname'];
-markAllMessagesAsRead($uname, $conn);
+// Mark all messages as read for this user (only if function exists)
+if (isset($_SESSION['uname']) && function_exists('markAllMessagesAsRead')) {
+    $uname = $_SESSION['uname'];
+    markAllMessagesAsRead($uname, $conn);
+}
 
 ?>
 <!DOCTYPE html>

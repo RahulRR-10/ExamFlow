@@ -4,6 +4,7 @@ require_once '../utils/admin_auth.php';
 requireAdminAuth();
 
 include '../config.php';
+require_once '../utils/teaching_slots_compat.php';
 
 $admin_id = $_SESSION['admin_id'];
 $admin_name = $_SESSION['admin_fname'];
@@ -12,35 +13,36 @@ $admin_name = $_SESSION['admin_fname'];
 $stats = [
     'pending' => 0,
     'today' => 0,
-    'mismatched' => 0,
+    'distance_issues' => 0,
     'my_today' => 0,
     'total_approved' => 0,
-    'total_rejected' => 0
+    'total_rejected' => 0,
+    'total_slots' => 0,
+    'upcoming_slots' => 0
 ];
 
-// Check if teaching_activity_submissions table exists
-$table_check = mysqli_query($conn, "SHOW TABLES LIKE 'teaching_activity_submissions'");
-$table_exists = mysqli_num_rows($table_check) > 0;
+// Check if teaching_sessions table exists
+$table_exists = isTeachingSlotsEnabled($conn);
 
 if ($table_exists) {
-    // Pending verifications
-    $pending_sql = "SELECT COUNT(*) as cnt FROM teaching_activity_submissions WHERE verification_status = 'pending'";
+    // Pending session reviews (photo submitted but not verified)
+    $pending_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions WHERE session_status = 'photo_submitted'";
     $result = mysqli_query($conn, $pending_sql);
     if ($result) $stats['pending'] = mysqli_fetch_assoc($result)['cnt'];
 
     // Today's submissions
-    $today_sql = "SELECT COUNT(*) as cnt FROM teaching_activity_submissions WHERE DATE(upload_date) = CURDATE()";
+    $today_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions WHERE DATE(photo_uploaded_at) = CURDATE()";
     $result = mysqli_query($conn, $today_sql);
     if ($result) $stats['today'] = mysqli_fetch_assoc($result)['cnt'];
 
-    // Location mismatches
-    $mismatch_sql = "SELECT COUNT(*) as cnt FROM teaching_activity_submissions 
-                     WHERE verification_status = 'pending' AND location_match_status = 'mismatched'";
-    $result = mysqli_query($conn, $mismatch_sql);
-    if ($result) $stats['mismatched'] = mysqli_fetch_assoc($result)['cnt'];
+    // Distance issues (>500m from school)
+    $distance_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions 
+                     WHERE session_status = 'photo_submitted' AND distance_from_school > 500";
+    $result = mysqli_query($conn, $distance_sql);
+    if ($result) $stats['distance_issues'] = mysqli_fetch_assoc($result)['cnt'];
 
     // My verifications today
-    $my_sql = "SELECT COUNT(*) as cnt FROM teaching_activity_submissions 
+    $my_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions 
                WHERE verified_by = ? AND DATE(verified_at) = CURDATE()";
     $stmt = mysqli_prepare($conn, $my_sql);
     mysqli_stmt_bind_param($stmt, "i", $admin_id);
@@ -49,18 +51,32 @@ if ($table_exists) {
     if ($result) $stats['my_today'] = mysqli_fetch_assoc($result)['cnt'];
 
     // Total approved
-    $approved_sql = "SELECT COUNT(*) as cnt FROM teaching_activity_submissions WHERE verification_status = 'approved'";
+    $approved_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions WHERE session_status = 'approved'";
     $result = mysqli_query($conn, $approved_sql);
     if ($result) $stats['total_approved'] = mysqli_fetch_assoc($result)['cnt'];
 
     // Total rejected
-    $rejected_sql = "SELECT COUNT(*) as cnt FROM teaching_activity_submissions WHERE verification_status = 'rejected'";
+    $rejected_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions WHERE session_status = 'rejected'";
     $result = mysqli_query($conn, $rejected_sql);
     if ($result) $stats['total_rejected'] = mysqli_fetch_assoc($result)['cnt'];
+
+    // Total teaching slots
+    $slots_sql = "SELECT COUNT(*) as cnt FROM school_teaching_slots";
+    $result = mysqli_query($conn, $slots_sql);
+    if ($result) $stats['total_slots'] = mysqli_fetch_assoc($result)['cnt'];
+
+    // Upcoming slots
+    $upcoming_sql = "SELECT COUNT(*) as cnt FROM school_teaching_slots WHERE slot_date >= CURDATE() AND slot_status NOT IN ('completed', 'cancelled')";
+    $result = mysqli_query($conn, $upcoming_sql);
+    if ($result) $stats['upcoming_slots'] = mysqli_fetch_assoc($result)['cnt'];
 }
 
 // Get recent audit log for this admin
-$audit_logs = getAdminAuditLog($conn, $admin_id, 10);
+if (function_exists('getAdminAuditLog')) {
+    $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
+} else {
+    $audit_logs = [];
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -75,14 +91,17 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
     <div class="main-content">
         <div class="dashboard-header">
             <h1>Welcome, <?= htmlspecialchars($admin_name) ?> 👋</h1>
-            <p class="subtitle">Teaching Activity Verification Dashboard</p>
+            <p class="subtitle">Teaching Slots & Session Verification Dashboard</p>
         </div>
         
         <?php if (!$table_exists): ?>
         <div class="alert alert-warning">
             <h3>⚠️ Setup Required</h3>
-            <p>The teaching activity verification tables have not been created yet.</p>
-            <p>Please run <code>db/migrate_teaching_verification.sql</code> to set up the required tables.</p>
+            <p>The teaching slots tables have not been created yet.</p>
+            <p>Please run <code>db/migrate_teaching_slots.sql</code> to set up the required tables.</p>
+            <p style="margin-top: 10px;">
+                <a href="db_health_check.php" class="btn btn-primary btn-sm">Run Health Check</a>
+            </p>
         </div>
         <?php endif; ?>
         
@@ -91,21 +110,21 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
                 <div class="stat-icon">📋</div>
                 <div class="stat-info">
                     <h3><?= $stats['pending'] ?></h3>
-                    <p>Pending Verifications</p>
+                    <p>Pending Reviews</p>
                 </div>
                 <?php if ($table_exists): ?>
-                <a href="pending_verifications.php" class="stat-link">View All →</a>
+                <a href="pending_sessions.php" class="stat-link">View All →</a>
                 <?php endif; ?>
             </div>
             
             <div class="stat-card warning">
                 <div class="stat-icon">⚠️</div>
                 <div class="stat-info">
-                    <h3><?= $stats['mismatched'] ?></h3>
-                    <p>Location Mismatches</p>
+                    <h3><?= $stats['distance_issues'] ?></h3>
+                    <p>Distance Issues</p>
                 </div>
                 <?php if ($table_exists): ?>
-                <a href="pending_verifications.php?filter=mismatched" class="stat-link">Review →</a>
+                <a href="pending_sessions.php?filter=distance" class="stat-link">Review →</a>
                 <?php endif; ?>
             </div>
             
@@ -122,6 +141,43 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
                 <div class="stat-info">
                     <h3><?= $stats['my_today'] ?></h3>
                     <p>Verified by Me Today</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Slot Stats Row -->
+        <div class="stats-grid" style="margin-top: 20px;">
+            <div class="stat-card">
+                <div class="stat-icon">📅</div>
+                <div class="stat-info">
+                    <h3><?= $stats['total_slots'] ?></h3>
+                    <p>Total Slots</p>
+                </div>
+                <a href="teaching_slots.php" class="stat-link">Manage →</a>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-icon">⏰</div>
+                <div class="stat-info">
+                    <h3><?= $stats['upcoming_slots'] ?></h3>
+                    <p>Upcoming Slots</p>
+                </div>
+                <a href="slot_dashboard.php" class="stat-link">View →</a>
+            </div>
+            
+            <div class="stat-card success">
+                <div class="stat-icon">✓</div>
+                <div class="stat-info">
+                    <h3><?= $stats['total_approved'] ?></h3>
+                    <p>Sessions Approved</p>
+                </div>
+            </div>
+            
+            <div class="stat-card danger">
+                <div class="stat-icon">✗</div>
+                <div class="stat-info">
+                    <h3><?= $stats['total_rejected'] ?></h3>
+                    <p>Sessions Rejected</p>
                 </div>
             </div>
         </div>
@@ -173,20 +229,21 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
         </div>
         
         <?php if ($table_exists): ?>
-        <!-- Recent Pending Submissions -->
+        <!-- Recent Pending Sessions -->
         <div class="card full-width">
             <div class="card-header">
-                <h2>📷 Recent Pending Submissions</h2>
-                <a href="pending_verifications.php" class="btn btn-primary btn-sm">View All</a>
+                <h2>📷 Recent Pending Sessions</h2>
+                <a href="pending_sessions.php" class="btn btn-primary btn-sm">View All</a>
             </div>
             <div class="card-body">
                 <?php
-                $recent_sql = "SELECT tas.*, t.fname as teacher_name, s.school_name
-                               FROM teaching_activity_submissions tas
-                               JOIN teacher t ON tas.teacher_id = t.id
-                               JOIN schools s ON tas.school_id = s.school_id
-                               WHERE tas.verification_status = 'pending'
-                               ORDER BY tas.upload_date DESC
+                $recent_sql = "SELECT ts.*, t.fname as teacher_name, s.school_name, sts.slot_date, sts.start_time, sts.end_time
+                               FROM teaching_sessions ts
+                               JOIN teachers t ON ts.teacher_id = t.id
+                               JOIN schools s ON ts.school_id = s.school_id
+                               JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
+                               WHERE ts.session_status = 'photo_submitted'
+                               ORDER BY ts.photo_uploaded_at DESC
                                LIMIT 5";
                 $recent = mysqli_query($conn, $recent_sql);
                 
@@ -197,8 +254,8 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
                         <tr>
                             <th>Teacher</th>
                             <th>School</th>
-                            <th>Activity Date</th>
-                            <th>Location</th>
+                            <th>Session Date</th>
+                            <th>Distance</th>
                             <th>Uploaded</th>
                             <th>Action</th>
                         </tr>
@@ -208,19 +265,21 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
                         <tr>
                             <td><?= htmlspecialchars($row['teacher_name']) ?></td>
                             <td><?= htmlspecialchars($row['school_name']) ?></td>
-                            <td><?= date('M d, Y', strtotime($row['activity_date'])) ?></td>
+                            <td><?= date('M d, Y', strtotime($row['slot_date'])) ?></td>
                             <td>
-                                <?php if ($row['location_match_status'] === 'mismatched'): ?>
-                                    <span class="badge badge-warning">⚠️ Mismatch</span>
-                                <?php elseif ($row['location_match_status'] === 'matched'): ?>
-                                    <span class="badge badge-success">✓ Matched</span>
+                                <?php if ($row['distance_from_school'] !== null): ?>
+                                    <?php if ($row['distance_from_school'] > 500): ?>
+                                        <span class="badge badge-warning">⚠️ <?= number_format($row['distance_from_school']) ?>m</span>
+                                    <?php else: ?>
+                                        <span class="badge badge-success">✓ <?= number_format($row['distance_from_school']) ?>m</span>
+                                    <?php endif; ?>
                                 <?php else: ?>
-                                    <span class="badge badge-info">Unknown</span>
+                                    <span class="badge badge-info">No GPS</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= date('M d, H:i', strtotime($row['upload_date'])) ?></td>
+                            <td><?= date('M d, H:i', strtotime($row['photo_uploaded_at'])) ?></td>
                             <td>
-                                <a href="verify_submission.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-primary">
+                                <a href="review_session.php?id=<?= $row['session_id'] ?>" class="btn btn-sm btn-primary">
                                     Review
                                 </a>
                             </td>
@@ -229,7 +288,7 @@ $audit_logs = getAdminAuditLog($conn, $admin_id, 10);
                     </tbody>
                 </table>
                 <?php else: ?>
-                    <p class="text-muted text-center">No pending submissions to review.</p>
+                    <p class="text-muted text-center">No pending sessions to review. 🎉</p>
                 <?php endif; ?>
             </div>
         </div>

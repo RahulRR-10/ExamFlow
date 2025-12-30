@@ -19,10 +19,15 @@
 require_once __DIR__ . '/env_loader.php';
 loadEnv(__DIR__ . '/../.env');
 
-// Groq API Configuration
-define('GROQ_API_KEY', env('GROQ_API_KEY', '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'));
+// Groq API Configuration - MUST be set in .env file
+define('GROQ_API_KEY', env('GROQ_API_KEY', ''));
 define('GROQ_MODEL', env('GROQ_MODEL', 'llama-3.3-70b-versatile'));
 define('GROQ_API_URL', env('GROQ_API_URL', 'https://api.groq.com/openai/v1/chat/completions'));
+
+// Warn if API key is not configured
+if (empty(GROQ_API_KEY)) {
+    error_log("WARNING: GROQ_API_KEY not configured in .env file");
+}
 
 /**
  * GroqGrader class for AI-based answer evaluation

@@ -6,11 +6,12 @@ if (!isset($_SESSION["fname"])) {
     exit;
 }
 include '../config.php';
+require_once '../utils/enrollment_utils.php';
 error_reporting(0);
 
 $teacher_id = $_SESSION['user_id'];
 
-// Get schools the teacher is enrolled in
+// Get schools the teacher is enrolled in (with unenrollment eligibility)
 $enrolled_sql = "SELECT s.*, ts.enrolled_at, ts.is_primary 
                  FROM schools s 
                  INNER JOIN teacher_schools ts ON s.school_id = ts.school_id 
@@ -20,6 +21,14 @@ $stmt = mysqli_prepare($conn, $enrolled_sql);
 mysqli_stmt_bind_param($stmt, "i", $teacher_id);
 mysqli_stmt_execute($stmt);
 $enrolled_result = mysqli_stmt_get_result($stmt);
+
+// Store enrolled schools with unenroll status
+$enrolled_schools = [];
+while ($school = mysqli_fetch_assoc($enrolled_result)) {
+    $school['unenroll_check'] = canTeacherUnenroll($conn, $teacher_id, $school['school_id']);
+    $school['stats'] = getTeacherSchoolStats($conn, $teacher_id, $school['school_id']);
+    $enrolled_schools[] = $school;
+}
 
 // Get available schools (not enrolled)
 $available_sql = "SELECT s.* FROM schools s 
@@ -218,6 +227,75 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
             display: flex;
             gap: 10px;
         }
+
+        .school-stats {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+            flex-wrap: wrap;
+        }
+
+        .stat-badge {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .stat-badge i {
+            font-size: 12px;
+        }
+
+        .stat-badge.upcoming {
+            background: #e3f2fd;
+            color: #1565c0;
+            border: 1px solid #90caf9;
+        }
+
+        .stat-badge.pending {
+            background: #fff3e0;
+            color: #e65100;
+            border: 1px solid #ffcc80;
+        }
+
+        .btn-disabled {
+            background: #bdc3c7 !important;
+            color: #7f8c8d !important;
+            cursor: not-allowed !important;
+            opacity: 0.8;
+        }
+
+        .btn-disabled:hover {
+            background: #bdc3c7 !important;
+            transform: none !important;
+        }
+
+        .unenroll-reasons {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .unenroll-reasons strong {
+            color: #856404;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .unenroll-reasons ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #856404;
+        }
+
+        .unenroll-reasons li {
+            margin-bottom: 3px;
+        }
     </style>
 </head>
 
@@ -271,9 +349,15 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
                 </a>
             </li>
             <li>
-                <a href="teaching_activity.php">
-                    <i class='bx bx-map-pin'></i>
-                    <span class="links_name">Teaching Activity</span>
+                <a href="browse_slots.php">
+                    <i class='bx bx-calendar-check'></i>
+                    <span class="links_name">Teaching Slots</span>
+                </a>
+            </li>
+            <li>
+                <a href="my_slots.php">
+                    <i class='bx bx-calendar'></i>
+                    <span class="links_name">My Bookings</span>
                 </a>
             </li>
             <li>
@@ -319,12 +403,21 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
                     <div class="alert alert-error"><?php echo htmlspecialchars($error_msg); ?></div>
                 <?php endif; ?>
 
-                <!-- Enrolled Schools Section -->
-                <h2 class="section-title"><i class='bx bx-check-circle'></i> My Schools</h2>
+                <!-- Info Box -->
+                <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 15px 20px; border-radius: 10px; margin-bottom: 20px; border-left: 4px solid #1976d2;">
+                    <p style="margin: 0; color: #1565c0; font-size: 14px;">
+                        <i class='bx bx-info-circle' style="margin-right: 8px;"></i>
+                        <strong>School Enrollment for Exams:</strong> Enroll in schools to create exams for their students.
+                        <br><span style="margin-left: 24px; color: #1976d2;">For teaching sessions, <a href="browse_slots.php" style="color: #0d47a1; font-weight: 600;">browse available teaching slots</a> instead.</span>
+                    </p>
+                </div>
 
-                <?php if (mysqli_num_rows($enrolled_result) > 0): ?>
+                <!-- Enrolled Schools Section -->
+                <h2 class="section-title"><i class='bx bx-check-circle'></i> Schools I Create Exams For</h2>
+
+                <?php if (count($enrolled_schools) > 0): ?>
                     <div class="school-grid">
-                        <?php while ($school = mysqli_fetch_assoc($enrolled_result)): ?>
+                        <?php foreach ($enrolled_schools as $school): ?>
                             <div class="school-card <?php echo $school['is_primary'] ? 'primary' : 'enrolled'; ?>">
                                 <?php if ($school['is_primary']): ?>
                                     <span class="primary-badge"><i class='bx bx-star'></i> Primary School</span>
@@ -347,6 +440,21 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
                                 <div class="school-info">
                                     <i class='bx bx-calendar'></i> Enrolled: <?php echo date('M d, Y', strtotime($school['enrolled_at'])); ?>
                                 </div>
+                                
+                                <?php if ($school['stats']['upcoming_slots'] > 0 || $school['stats']['pending_sessions'] > 0): ?>
+                                <div class="school-stats">
+                                    <?php if ($school['stats']['upcoming_slots'] > 0): ?>
+                                    <span class="stat-badge upcoming" title="Upcoming teaching slots">
+                                        <i class='bx bx-calendar-check'></i> <?php echo $school['stats']['upcoming_slots']; ?> upcoming
+                                    </span>
+                                    <?php endif; ?>
+                                    <?php if ($school['stats']['pending_sessions'] > 0): ?>
+                                    <span class="stat-badge pending" title="Sessions pending review">
+                                        <i class='bx bx-time'></i> <?php echo $school['stats']['pending_sessions']; ?> pending
+                                    </span>
+                                    <?php endif; ?>
+                                </div>
+                                <?php endif; ?>
 
                                 <div class="card-actions">
                                     <?php if (!$school['is_primary']): ?>
@@ -356,14 +464,27 @@ $error_msg = isset($_GET['error']) ? $_GET['error'] : '';
                                             <i class='bx bx-star'></i> Set Primary
                                         </a>
                                     <?php endif; ?>
+                                    
+                                    <?php if ($school['unenroll_check']['can_unenroll']): ?>
                                     <a href="enroll_school.php?action=leave&school_id=<?php echo $school['school_id']; ?>"
                                         class="btn btn-leave"
                                         onclick="return confirm('Are you sure you want to leave this school?');">
                                         <i class='bx bx-exit'></i> Leave
                                     </a>
+                                    <?php else: ?>
+                                    <span class="btn btn-leave btn-disabled" 
+                                          title="<?php echo htmlspecialchars(implode('; ', $school['unenroll_check']['reasons'])); ?>">
+                                        <i class='bx bx-lock'></i> Cannot Leave
+                                    </span>
+                                    <div class="unenroll-reasons">
+                                        <?php foreach ($school['unenroll_check']['reasons'] as $reason): ?>
+                                        <small><i class='bx bx-info-circle'></i> <?php echo htmlspecialchars($reason); ?></small>
+                                        <?php endforeach; ?>
+                                    </div>
+                                    <?php endif; ?>
                                 </div>
                             </div>
-                        <?php endwhile; ?>
+                        <?php endforeach; ?>
                     </div>
                 <?php else: ?>
                     <div class="empty-state">

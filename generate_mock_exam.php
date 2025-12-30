@@ -5,9 +5,14 @@ include('config.php');
 require_once __DIR__ . '/utils/env_loader.php';
 loadEnv(__DIR__ . '/.env');
 
-// Groq API configuration
-$grok_api_key = env('GROQ_API_KEY', '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');
-$grok_model = "llama-3.3-70b-versatile";
+// Groq API configuration - MUST be set in .env file
+$grok_api_key = env('GROQ_API_KEY', '');
+$grok_model = env('GROQ_MODEL', 'llama-3.3-70b-versatile');
+
+// Check if API key is configured
+if (empty($grok_api_key)) {
+    error_log("GROQ_API_KEY not configured in .env file");
+}
 
 
 

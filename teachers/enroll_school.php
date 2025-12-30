@@ -6,6 +6,7 @@ if (!isset($_SESSION["fname"])) {
     exit;
 }
 include '../config.php';
+require_once '../utils/enrollment_utils.php';
 
 $teacher_id = $_SESSION['user_id'];
 $action = isset($_GET['action']) ? $_GET['action'] : '';
@@ -74,6 +75,14 @@ switch ($action) {
 
         if (mysqli_num_rows($check_result) == 0) {
             header("Location: school_management.php?error=You are not enrolled in this school");
+            exit;
+        }
+
+        // Check if teacher can unenroll (Phase 7: Controlled Unenrollment)
+        $unenroll_check = canTeacherUnenroll($conn, $teacher_id, $school_id);
+        if (!$unenroll_check['can_unenroll']) {
+            $error_msg = "Cannot leave school: " . implode("; ", $unenroll_check['reasons']);
+            header("Location: school_management.php?error=" . urlencode($error_msg));
             exit;
         }
 

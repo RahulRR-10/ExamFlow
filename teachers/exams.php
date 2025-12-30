@@ -116,9 +116,15 @@ if ($filter_school > 0) {
         </a>
       </li>
       <li>
-        <a href="teaching_activity.php">
-          <i class='bx bx-map-pin'></i>
-          <span class="links_name">Teaching Activity</span>
+        <a href="browse_slots.php">
+          <i class='bx bx-calendar-check'></i>
+          <span class="links_name">Teaching Slots</span>
+        </a>
+      </li>
+      <li>
+        <a href="my_slots.php">
+          <i class='bx bx-calendar'></i>
+          <span class="links_name">My Bookings</span>
         </a>
       </li>
       <li>
