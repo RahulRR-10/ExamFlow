@@ -502,7 +502,7 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
                         <?php if ($is_booked): ?>
                         <a href="my_slots.php" class="btn btn-secondary btn-sm">View Booking</a>
                         <?php elseif ($can_book): ?>
-                        <button class="btn btn-success btn-sm" onclick="confirmBooking(<?= $slot['slot_id'] ?>, '<?= htmlspecialchars($slot['school_name']) ?>', '<?= date('M j, Y', strtotime($slot['slot_date'])) ?>', '<?= date('h:i A', strtotime($slot['start_time'])) ?> - <?= date('h:i A', strtotime($slot['end_time'])) ?>')">
+                        <button class="btn btn-success btn-sm" onclick="confirmBooking(<?= $slot['slot_id'] ?>, '<?= htmlspecialchars(addslashes($slot['school_name']), ENT_QUOTES) ?>', '<?= date('M j, Y', strtotime($slot['slot_date'])) ?>', '<?= date('h:i A', strtotime($slot['start_time'])) ?> - <?= date('h:i A', strtotime($slot['end_time'])) ?>')">
                             Book This Slot
                         </button>
                         <?php else: ?>
@@ -541,9 +541,11 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
         // Sidebar toggle
         let sidebar = document.querySelector(".sidebar");
         let sidebarBtn = document.querySelector(".sidebarBtn");
-        sidebarBtn.onclick = function() {
-            sidebar.classList.toggle("active");
-        };
+        if (sidebarBtn) {
+            sidebarBtn.onclick = function() {
+                sidebar.classList.toggle("active");
+            };
+        }
         
         function applyFilters() {
             const school = document.getElementById('filter-school').value;
@@ -565,6 +567,7 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
         }
         
         function confirmBooking(slotId, schoolName, date, time) {
+            console.log('Booking clicked:', slotId, schoolName, date, time);
             document.getElementById('bookSlotId').value = slotId;
             document.getElementById('bookingDetails').innerHTML = 
                 `You are about to book a teaching slot at:<br><br>
@@ -573,6 +576,7 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
                 🕐 ${time}<br><br>
                 Are you sure you want to proceed?`;
             document.getElementById('bookingModal').classList.add('active');
+            console.log('Modal should be visible now');
         }
         
         function closeModal() {
