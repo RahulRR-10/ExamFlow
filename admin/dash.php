@@ -239,7 +239,7 @@ if (function_exists('getAdminAuditLog')) {
                 <?php
                 $recent_sql = "SELECT ts.*, t.fname as teacher_name, s.school_name, sts.slot_date, sts.start_time, sts.end_time
                                FROM teaching_sessions ts
-                               JOIN teachers t ON ts.teacher_id = t.id
+                               JOIN teacher t ON ts.teacher_id = t.id
                                JOIN schools s ON ts.school_id = s.school_id
                                JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
                                WHERE ts.session_status = 'photo_submitted'
