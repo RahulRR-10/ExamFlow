@@ -67,32 +67,34 @@ function getAuditLogTable($conn) {
  * @param array|string $details Action details
  * @return bool Success status
  */
-function logAdminAction($conn, $admin_id, $action_type, $target_table = null, $target_id = null, $details = null) {
-    $table = getAuditLogTable($conn);
-    
-    if (!$table) {
-        // No audit table available, log to error_log instead
-        error_log("AUDIT: Admin $admin_id - $action_type on $target_table:$target_id - " . json_encode($details));
-        return true;
+if (!function_exists('logAdminAction')) {
+    function logAdminAction($conn, $admin_id, $action_type, $target_table = null, $target_id = null, $details = null) {
+        $table = getAuditLogTable($conn);
+        
+        if (!$table) {
+            // No audit table available, log to error_log instead
+            error_log("AUDIT: Admin $admin_id - $action_type on $target_table:$target_id - " . json_encode($details));
+            return true;
+        }
+        
+        $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+        $details_json = is_array($details) ? json_encode($details) : ($details ?: '{}');
+        
+        if ($table === 'admin_audit_log') {
+            $sql = "INSERT INTO admin_audit_log (admin_id, action_type, target_table, target_id, action_details, ip_address) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "ississ", $admin_id, $action_type, $target_table, $target_id, $details_json, $ip_address);
+        } else {
+            // Generic audit_log table structure
+            $sql = "INSERT INTO audit_log (action, performed_by, details, created_at) 
+                    VALUES (?, ?, ?, NOW())";
+            $stmt = mysqli_prepare($conn, $sql);
+            mysqli_stmt_bind_param($stmt, "sis", $action_type, $admin_id, $details_json);
+        }
+        
+        return mysqli_stmt_execute($stmt);
     }
-    
-    $ip_address = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
-    $details_json = is_array($details) ? json_encode($details) : ($details ?: '{}');
-    
-    if ($table === 'admin_audit_log') {
-        $sql = "INSERT INTO admin_audit_log (admin_id, action_type, target_table, target_id, action_details, ip_address) 
-                VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ississ", $admin_id, $action_type, $target_table, $target_id, $details_json, $ip_address);
-    } else {
-        // Generic audit_log table structure
-        $sql = "INSERT INTO audit_log (action, performed_by, details, created_at) 
-                VALUES (?, ?, ?, NOW())";
-        $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "sis", $action_type, $admin_id, $details_json);
-    }
-    
-    return mysqli_stmt_execute($stmt);
 }
 
 /**
