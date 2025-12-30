@@ -160,530 +160,122 @@ LEFT JOIN teacher t ON JSON_UNQUOTE(JSON_EXTRACT(al.action_details, '$.teacher_i
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Force Unenroll Teacher - Admin</title>
-    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <title>Force Unenroll Teacher | Admin | ExamFlow</title>
+    <link rel="stylesheet" href="css/style.css?v=2.0">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f5f6fa;
-            min-height: 100vh;
-        }
-
-        .sidebar {
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100%;
-            width: 260px;
-            background: linear-gradient(180deg, #1a2a6c, #2d4a7c);
-            padding: 15px;
-            z-index: 100;
-        }
-
-        .sidebar .logo-details {
-            display: flex;
-            align-items: center;
-            padding: 15px 10px;
-            margin-bottom: 20px;
-        }
-
-        .sidebar .logo-details i {
-            font-size: 28px;
-            color: #ffc107;
-            margin-right: 10px;
-        }
-
-        .sidebar .logo-details .logo_name {
-            color: #fff;
-            font-size: 20px;
-            font-weight: 600;
-        }
-
-        .sidebar .nav-links {
-            list-style: none;
-        }
-
-        .sidebar .nav-links li {
-            margin-bottom: 5px;
-        }
-
-        .sidebar .nav-links li a {
-            display: flex;
-            align-items: center;
-            padding: 12px 15px;
-            color: rgba(255, 255, 255, 0.8);
-            text-decoration: none;
-            border-radius: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar .nav-links li a:hover,
-        .sidebar .nav-links li a.active {
-            background: rgba(255, 255, 255, 0.1);
-            color: #fff;
-        }
-
-        .sidebar .nav-links li a i {
-            min-width: 35px;
-            font-size: 20px;
-        }
-
-        .main-content {
-            margin-left: 260px;
-            padding: 30px;
-        }
-
-        .page-header {
-            background: linear-gradient(135deg, #dc3545, #c82333);
-            color: #fff;
-            padding: 30px;
-            border-radius: 12px;
-            margin-bottom: 30px;
-        }
-
-        .page-header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
-        }
-
-        .page-header p {
-            opacity: 0.9;
-            font-size: 14px;
-        }
-
         .warning-box {
-            background: #fff3cd;
-            border: 1px solid #ffc107;
-            border-left: 4px solid #ffc107;
-            padding: 15px 20px;
-            border-radius: 6px;
+            background: #fee2e2;
+            border: 1px solid #fca5a5;
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 25px;
             display: flex;
-            align-items: flex-start;
             gap: 15px;
-        }
-
-        .warning-box i {
-            font-size: 24px;
-            color: #856404;
-        }
-
-        .warning-box p {
-            color: #856404;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .card {
-            background: #fff;
-            border-radius: 12px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-            margin-bottom: 25px;
-            overflow: hidden;
-        }
-
-        .card-header {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .card-header h2 {
-            font-size: 18px;
-            color: #333;
-        }
-
-        .card-header i {
-            font-size: 22px;
-            color: #dc3545;
-        }
-
-        .card-body {
-            padding: 20px;
-        }
-
-        .alert {
-            padding: 15px 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .alert-success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-
-        .alert-error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        .form-group label .required {
-            color: #dc3545;
-        }
-
-        .form-control {
-            width: 100%;
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        .form-control:focus {
-            outline: none;
-            border-color: #dc3545;
-        }
-
-        textarea.form-control {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-decoration: none;
-        }
-
-        .btn-danger {
-            background: #dc3545;
-            color: #fff;
-        }
-
-        .btn-danger:hover {
-            background: #c82333;
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: #fff;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        .enrollment-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        .enrollment-table th,
-        .enrollment-table td {
-            padding: 12px 15px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        .enrollment-table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #333;
-            font-size: 13px;
-        }
-
-        .enrollment-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 4px 10px;
-            border-radius: 12px;
-            font-size: 11px;
-            font-weight: 600;
-        }
-
-        .badge-danger {
-            background: #fee2e2;
-            color: #dc2626;
-        }
-
-        .badge-warning {
-            background: #fff3e0;
-            color: #e65100;
-        }
-
-        .badge-success {
-            background: #d4edda;
-            color: #28a745;
-        }
-
-        .badge-info {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-
-        .obligations {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-        }
-
-        .obligation-badge {
-            font-size: 10px;
-            padding: 3px 8px;
-            border-radius: 10px;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .obligation-badge.slots {
-            background: #e3f2fd;
-            color: #1565c0;
-        }
-
-        .obligation-badge.photos {
-            background: #fff3e0;
-            color: #e65100;
-        }
-
-        .obligation-badge.reviews {
-            background: #fce4ec;
-            color: #c2185b;
-        }
-
-        .action-btn {
-            padding: 6px 12px;
-            font-size: 12px;
-            border-radius: 6px;
-        }
-
-        .audit-list {
-            list-style: none;
-        }
-
-        .audit-item {
-            display: flex;
             align-items: flex-start;
-            gap: 15px;
-            padding: 15px 0;
-            border-bottom: 1px solid #eee;
         }
-
-        .audit-item:last-child {
-            border-bottom: none;
-        }
-
-        .audit-icon {
-            width: 40px;
-            height: 40px;
-            background: #fee2e2;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .audit-icon i {
-            color: #dc3545;
-            font-size: 18px;
-        }
-
-        .audit-content {
-            flex: 1;
-        }
-
-        .audit-content strong {
-            color: #333;
-        }
-
-        .audit-content .timestamp {
-            font-size: 12px;
-            color: #888;
-            margin-top: 5px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-        }
-
-        .empty-state i {
-            font-size: 48px;
+        .warning-box i { font-size: 24px; color: #dc2626; }
+        .warning-box p { color: #991b1b; }
+        
+        .enrollment-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 20px;
             margin-bottom: 15px;
-            display: block;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            border-left: 4px solid var(--primary-color);
         }
-
-        /* Modal */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
+        .enrollment-card.has-obligations { border-left-color: var(--danger-color); }
+        
+        .enrollment-header {
             display: flex;
-        }
-
-        .modal-content {
-            background: #fff;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 500px;
-            max-height: 90vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            padding: 20px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
         }
-
-        .modal-header h3 {
-            font-size: 18px;
-            color: #333;
+        .enrollment-header h3 { font-size: 16px; margin-bottom: 5px; }
+        .enrollment-header .school-name { color: var(--text-muted); font-size: 14px; }
+        
+        .obligation-badges { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0; }
+        .obligation-badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
         }
-
-        .modal-close {
-            background: none;
-            border: none;
-            font-size: 24px;
-            cursor: pointer;
-            color: #888;
-        }
-
-        .modal-body {
-            padding: 20px;
-        }
-
-        .modal-footer {
-            padding: 15px 20px;
-            border-top: 1px solid #eee;
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-        }
-
-        .teacher-info {
-            background: #f8f9fa;
-            padding: 15px;
+        .obligation-badge.warning { background: #fef3c7; color: #92400e; }
+        .obligation-badge.danger { background: #fee2e2; color: #991b1b; }
+        .obligation-badge.info { background: #dbeafe; color: #1e40af; }
+        
+        .unenroll-form { margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color); }
+        .unenroll-form textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
             border-radius: 8px;
-            margin-bottom: 20px;
+            resize: vertical;
+            min-height: 80px;
+            font-family: inherit;
         }
-
-        .teacher-info p {
-            margin-bottom: 5px;
-            font-size: 14px;
-        }
-
-        .teacher-info strong {
-            color: #333;
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-
-        .filter-bar select {
-            padding: 10px 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-        }
-
-        .tabs {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #eee;
-            padding-bottom: 10px;
-        }
-
+        .unenroll-form .form-actions { display: flex; gap: 10px; margin-top: 10px; }
+        
+        .tab-container { margin-top: 25px; }
+        .tab-buttons { display: flex; gap: 5px; margin-bottom: 0; }
         .tab-btn {
-            padding: 10px 20px;
-            background: none;
+            padding: 12px 20px;
             border: none;
-            font-size: 14px;
-            font-weight: 600;
-            color: #666;
+            background: #f0f0f0;
+            font-weight: 500;
+            color: var(--text-muted);
             cursor: pointer;
             border-radius: 8px 8px 0 0;
             transition: all 0.3s;
         }
-
-        .tab-btn.active {
-            color: #dc3545;
-            background: #fee2e2;
+        .tab-btn.active { color: var(--primary-color); background: var(--card-bg); }
+        .tab-content { display: none; background: var(--card-bg); padding: 20px; border-radius: 0 8px 8px 8px; }
+        .tab-content.active { display: block; }
+        
+        .audit-entry {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
         }
-
-        .tab-content {
-            display: none;
+        .audit-entry:last-child { border-bottom: none; }
+        .audit-entry .time { font-size: 12px; color: var(--text-muted); }
+        .audit-entry .action { font-weight: 500; margin: 5px 0; }
+        .audit-entry .details { font-size: 13px; color: #666; }
+        
+        .filters-bar {
+            background: var(--card-bg);
+            padding: 15px 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
         }
-
-        .tab-content.active {
-            display: block;
+        .filters-bar select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
         }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        .empty-state i { font-size: 48px; margin-bottom: 15px; opacity: 0.5; }
     </style>
 </head>
 
 <body>
-    <div class="sidebar">
-        <div class="logo-details">
-            <i class='bx bx-shield-quarter'></i>
-            <span class="logo_name">Admin Panel</span>
-        </div>
-        <ul class="nav-links">
-            <?php include 'includes/nav.php'; ?>
-        </ul>
-    </div>
+    <?php include 'includes/nav.php'; ?>
 
     <div class="main-content">
         <div class="page-header">
             <h1><i class='bx bx-user-x'></i> Force Unenroll Teacher</h1>
-            <p>Remove teachers from schools even when they have pending obligations</p>
+            <p class="subtitle">Remove teachers from schools even when they have pending obligations</p>
         </div>
 
         <div class="warning-box">
