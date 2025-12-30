@@ -15,6 +15,7 @@ requireAdminAuth();
 
 include '../config.php';
 require_once '../utils/duration_validator.php';
+require_once '../utils/session_validator.php';
 
 $admin_id = $_SESSION['admin_id'];
 $message = '';
@@ -28,6 +29,32 @@ if ($session_id <= 0) {
     exit;
 }
 
+// Get session details first (needed for validation during POST handling)
+$session_sql = "SELECT ts.*, 
+                t.fname as teacher_name, t.email as teacher_email, t.subject,
+                s.school_name, s.full_address, s.gps_latitude as school_lat, s.gps_longitude as school_lng,
+                s.allowed_radius, s.contact_person, s.contact_phone,
+                sts.slot_date, sts.start_time, sts.end_time, sts.description as slot_desc,
+                sts.teachers_required, sts.teachers_enrolled,
+                a.fname as verified_by_name
+                FROM teaching_sessions ts
+                JOIN teacher t ON ts.teacher_id = t.id
+                JOIN schools s ON ts.school_id = s.school_id
+                JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
+                LEFT JOIN admin a ON ts.verified_by = a.id
+                WHERE ts.session_id = ?";
+$stmt = mysqli_prepare($conn, $session_sql);
+mysqli_stmt_bind_param($stmt, "i", $session_id);
+mysqli_stmt_execute($stmt);
+$session = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+
+if (!$session) {
+    header("Location: pending_sessions.php?error=Session not found");
+    exit;
+}
+
+$allowed_radius = $session['allowed_radius'] ?? 500;
+
 // Handle approval/rejection actions
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -39,6 +66,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     mysqli_stmt_execute($status_check);
     $result = mysqli_stmt_get_result($status_check);
     $current_status = mysqli_fetch_assoc($result)['session_status'] ?? '';
+    
+    // Run validation for approve actions
+    if ($action === 'approve_start' || $action === 'approve') {
+        require_once '../utils/session_validator.php';
+        $preValidator = new SessionValidator($conn);
+        $slot_data = [
+            'slot_date' => $session['slot_date'],
+            'start_time' => $session['start_time'],
+            'end_time' => $session['end_time']
+        ];
+        $school_data = [
+            'school_lat' => $session['school_lat'],
+            'school_lng' => $session['school_lng'],
+            'allowed_radius' => $allowed_radius
+        ];
+        $pre_check = $preValidator->checkAutoReject($session, $slot_data, $school_data);
+        
+        if ($pre_check['reject']) {
+            $error = "Cannot approve: " . $pre_check['reason'];
+            // Continue to display page, but don't process the action
+            $action = '';
+        }
+    }
     
     if ($action === 'approve_start') {
         // Approve start photo only - transition to start_approved
@@ -136,31 +186,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Get session details with dual photo fields
-$session_sql = "SELECT ts.*, 
-                t.fname as teacher_name, t.email as teacher_email, t.subject,
-                s.school_name, s.full_address, s.gps_latitude as school_lat, s.gps_longitude as school_lng,
-                s.allowed_radius, s.contact_person, s.contact_phone,
-                sts.slot_date, sts.start_time, sts.end_time, sts.description as slot_desc,
-                sts.teachers_required, sts.teachers_enrolled,
-                a.fname as verified_by_name
-                FROM teaching_sessions ts
-                JOIN teacher t ON ts.teacher_id = t.id
-                JOIN schools s ON ts.school_id = s.school_id
-                JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
-                LEFT JOIN admin a ON ts.verified_by = a.id
-                WHERE ts.session_id = ?";
+// Re-fetch session data (may have been modified by POST action)
 $stmt = mysqli_prepare($conn, $session_sql);
 mysqli_stmt_bind_param($stmt, "i", $session_id);
 mysqli_stmt_execute($stmt);
 $session = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
-
-if (!$session) {
-    header("Location: pending_sessions.php?error=Session not found");
-    exit;
-}
-
-$allowed_radius = $session['allowed_radius'] ?? 500;
 
 // Verify distances for both photos
 $start_distance = $session['start_distance_from_school'];
@@ -199,6 +229,26 @@ if ($session['start_photo_taken_at'] && $session['end_photo_taken_at']) {
     ];
     $duration_status = $duration_info['status'];
 }
+
+// Comprehensive Session Validation using SessionValidator
+$sessionValidator = new SessionValidator($conn);
+$slot_data = [
+    'slot_date' => $session['slot_date'],
+    'start_time' => $session['start_time'],
+    'end_time' => $session['end_time']
+];
+$school_data = [
+    'school_lat' => $session['school_lat'],
+    'school_lng' => $session['school_lng'],
+    'allowed_radius' => $allowed_radius
+];
+$validation_result = $sessionValidator->validateSession($session, $slot_data, $school_data);
+
+// Check auto-reject conditions
+$auto_reject_check = $sessionValidator->checkAutoReject($session, $slot_data, $school_data);
+
+// Check auto-approve conditions
+$auto_approve_check = $sessionValidator->checkAutoApprove($session, $slot_data, $school_data);
 
 // Helper function for status classes
 function getStatusClass($status) {
@@ -630,6 +680,39 @@ $is_finalized = in_array($session['session_status'], ['approved', 'rejected']);
         .status-pill.approved { background: #dcfce7; color: #166534; }
         .status-pill.rejected { background: #fee2e2; color: #991b1b; }
         .status-pill.partial { background: #fed7aa; color: #9a3412; }
+        
+        /* Validation Details */
+        .validation-details { margin-top: 8px; }
+        .validation-group { margin-bottom: 12px; }
+        .validation-group h4 {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .validation-group.errors h4 { color: #991b1b; }
+        .validation-group.warnings h4 { color: #92400e; }
+        .validation-group.info h4 { color: #1e40af; }
+        .validation-group ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 12px;
+        }
+        .validation-group ul li {
+            padding: 4px 0 4px 16px;
+            position: relative;
+        }
+        .validation-group ul li::before {
+            content: '•';
+            position: absolute;
+            left: 4px;
+        }
+        .validation-group.errors ul li { color: #dc2626; }
+        .validation-group.warnings ul li { color: #d97706; }
+        .validation-group.info ul li { color: #6b7280; }
     </style>
 </head>
 <body>
@@ -971,6 +1054,77 @@ $is_finalized = in_array($session['session_status'], ['approved', 'rejected']);
                                 </span>
                                 <span>Duration meets minimum (<?= MIN_DURATION_PERCENT ?>%)</span>
                             </div>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Validation Summary Card -->
+                <div class="panel-card">
+                    <div class="panel-header">
+                        <h3><i class='bx bx-shield-quarter'></i> Validation Analysis</h3>
+                    </div>
+                    <div class="panel-body">
+                        <?php 
+                        // Show auto-reject warning if applicable
+                        if ($auto_reject_check['reject']): 
+                        ?>
+                        <div class="alert alert-danger" style="margin-bottom: 12px;">
+                            <i class='bx bx-error-circle'></i>
+                            <strong>Auto-Reject Condition Met</strong><br>
+                            <?= htmlspecialchars($auto_reject_check['reason']) ?>
+                        </div>
+                        <?php elseif ($auto_approve_check['approve']): ?>
+                        <div class="alert alert-success" style="margin-bottom: 12px;">
+                            <i class='bx bx-check-circle'></i>
+                            <strong>Eligible for Auto-Approval</strong><br>
+                            All validation criteria passed.
+                        </div>
+                        <?php elseif ($validation_result['requiresManualReview']): ?>
+                        <div class="alert alert-info" style="margin-bottom: 12px;">
+                            <i class='bx bx-user-check'></i>
+                            <strong>Manual Review Required</strong><br>
+                            Some validations require admin judgment.
+                        </div>
+                        <?php endif; ?>
+                        
+                        <!-- Validation Details -->
+                        <div class="validation-details">
+                            <?php if (!empty($validation_result['errors'])): ?>
+                            <div class="validation-group errors">
+                                <h4><i class='bx bx-x-circle'></i> Errors</h4>
+                                <ul>
+                                    <?php foreach ($validation_result['errors'] as $err): ?>
+                                    <li><?= htmlspecialchars($err) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($validation_result['warnings'])): ?>
+                            <div class="validation-group warnings">
+                                <h4><i class='bx bx-error'></i> Warnings</h4>
+                                <ul>
+                                    <?php foreach ($validation_result['warnings'] as $warn): ?>
+                                    <li><?= htmlspecialchars($warn) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($validation_result['info'])): ?>
+                            <div class="validation-group info">
+                                <h4><i class='bx bx-info-circle'></i> Details</h4>
+                                <ul>
+                                    <?php foreach ($validation_result['info'] as $info): ?>
+                                    <li><?= htmlspecialchars($info) ?></li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </div>
+                            <?php endif; ?>
+                            
+                            <?php if (empty($validation_result['errors']) && empty($validation_result['warnings']) && empty($validation_result['info'])): ?>
+                            <p style="color: #6b7280; text-align: center;">No validation data available yet.</p>
                             <?php endif; ?>
                         </div>
                     </div>
