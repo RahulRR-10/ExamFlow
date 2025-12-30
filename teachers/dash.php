@@ -299,15 +299,6 @@ $obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cn
         <?php endif; ?>
       </div>
 
-      <!-- Quick Actions -->
-      <?php if ($slot_stats['upcoming_slots'] == 0): ?>
-      <div style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%); padding: 20px; border-radius: 10px; margin-top: 20px; text-align: center;">
-        <h3 style="color: #1565c0; margin-bottom: 10px;">📅 No Upcoming Slots</h3>
-        <p style="color: #1976d2; margin-bottom: 15px;">Browse available teaching slots and book your sessions!</p>
-        <a href="browse_slots.php" style="display: inline-block; background: #1976d2; color: white; padding: 10px 25px; border-radius: 25px; text-decoration: none; font-weight: 500;">Browse Slots</a>
-      </div>
-      <?php endif; ?>
-
       <div class="stat-boxes">
         <div class="recent-stat box">
           <div class="title">Upcoming Teaching Sessions</div>
@@ -364,7 +355,7 @@ $obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cn
               ?>
             </tbody>
           </table>
-          <div class="button">
+          <div class="button" style="margin-top: 15px;">
             <a href="my_slots.php">See All Bookings</a>
           </div>
         </div>
