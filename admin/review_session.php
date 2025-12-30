@@ -225,8 +225,10 @@ if ($session['start_photo_taken_at'] && $session['end_photo_taken_at']) {
         'expected' => $expected_mins,
         'verified' => DurationValidator::verifyDuration($actual_mins, $expected_mins),
         'meets_minimum' => DurationValidator::meetsMinimumDuration($actual_mins, $expected_mins),
-        'status' => DurationValidator::getDurationStatus($actual_mins, $expected_mins)
+        'status_details' => DurationValidator::getDurationStatus($actual_mins, $expected_mins)
     ];
+    // Extract string status from the status details array
+    $duration_info['status'] = $duration_info['status_details']['status'] ?? 'unknown';
     $duration_status = $duration_info['status'];
 }
 
@@ -884,12 +886,14 @@ $is_finalized = in_array($session['session_status'], ['approved', 'rejected']);
                         <span class="duration-status <?= $duration_info['status'] ?>">
                             <?php 
                             $status_icons = [
-                                'excellent' => '✓ Excellent',
-                                'good' => '✓ Good',
-                                'warning' => '! Warning',
-                                'short' => '✗ Too Short'
+                                'verified' => '✓ Verified',
+                                'extended' => '✓ Extended',
+                                'short' => '⚠ Slightly Short',
+                                'warning' => '⚠ Warning',
+                                'rejected' => '✗ Auto-Rejected',
+                                'invalid' => '✗ Invalid'
                             ];
-                            echo $status_icons[$duration_info['status']] ?? $duration_info['status'];
+                            echo $status_icons[$duration_info['status']] ?? ucfirst($duration_info['status']);
                             ?>
                             - <?= $duration_info['verified'] ? 'Within tolerance' : 'Outside tolerance' ?>
                         </span>

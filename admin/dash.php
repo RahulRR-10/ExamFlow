@@ -30,14 +30,15 @@ if ($table_exists) {
     $result = mysqli_query($conn, $pending_sql);
     if ($result) $stats['pending'] = mysqli_fetch_assoc($result)['cnt'];
 
-    // Today's submissions
-    $today_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions WHERE DATE(photo_uploaded_at) = CURDATE()";
+    // Today's submissions (check both start and end photo timestamps)
+    $today_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions WHERE DATE(start_photo_uploaded_at) = CURDATE() OR DATE(end_photo_uploaded_at) = CURDATE()";
     $result = mysqli_query($conn, $today_sql);
     if ($result) $stats['today'] = mysqli_fetch_assoc($result)['cnt'];
 
-    // Distance issues (>500m from school)
+    // Distance issues (>500m from school) - check both start and end distances
     $distance_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions 
-                     WHERE session_status = 'photo_submitted' AND distance_from_school > 500";
+                     WHERE session_status IN ('start_submitted', 'end_submitted', 'photo_submitted') 
+                     AND (start_distance_from_school > 500 OR end_distance_from_school > 500)";
     $result = mysqli_query($conn, $distance_sql);
     if ($result) $stats['distance_issues'] = mysqli_fetch_assoc($result)['cnt'];
 
@@ -312,13 +313,14 @@ if ($table_exists) {
             </div>
             <div class="card-body">
                 <?php
-                $recent_sql = "SELECT ts.*, t.fname as teacher_name, s.school_name, sts.slot_date, sts.start_time, sts.end_time
+                $recent_sql = "SELECT ts.*, t.fname as teacher_name, s.school_name, sts.slot_date, sts.start_time, sts.end_time,
+                               COALESCE(ts.end_photo_uploaded_at, ts.start_photo_uploaded_at) as latest_upload
                                FROM teaching_sessions ts
                                JOIN teacher t ON ts.teacher_id = t.id
                                JOIN schools s ON ts.school_id = s.school_id
                                JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
-                               WHERE ts.session_status = 'photo_submitted'
-                               ORDER BY ts.photo_uploaded_at DESC
+                               WHERE ts.session_status IN ('start_submitted', 'end_submitted', 'photo_submitted')
+                               ORDER BY latest_upload DESC
                                LIMIT 5";
                 $recent = mysqli_query($conn, $recent_sql);
                 
@@ -342,17 +344,19 @@ if ($table_exists) {
                             <td><?= htmlspecialchars($row['school_name']) ?></td>
                             <td><?= date('M d, Y', strtotime($row['slot_date'])) ?></td>
                             <td>
-                                <?php if ($row['distance_from_school'] !== null): ?>
-                                    <?php if ($row['distance_from_school'] > 500): ?>
-                                        <span class="badge badge-warning"><i class='bx bx-error'></i> <?= number_format($row['distance_from_school']) ?>m</span>
+                                <?php 
+                                $distance = $row['start_distance_from_school'] ?? $row['end_distance_from_school'] ?? null;
+                                if ($distance !== null): ?>
+                                    <?php if ($distance > 500): ?>
+                                        <span class="badge badge-warning"><i class='bx bx-error'></i> <?= number_format($distance) ?>m</span>
                                     <?php else: ?>
-                                        <span class="badge badge-success">✓ <?= number_format($row['distance_from_school']) ?>m</span>
+                                        <span class="badge badge-success">✓ <?= number_format($distance) ?>m</span>
                                     <?php endif; ?>
                                 <?php else: ?>
                                     <span class="badge badge-info">No GPS</span>
                                 <?php endif; ?>
                             </td>
-                            <td><?= date('M d, H:i', strtotime($row['photo_uploaded_at'])) ?></td>
+                            <td><?= $row['latest_upload'] ? date('M d, H:i', strtotime($row['latest_upload'])) : 'N/A' ?></td>
                             <td>
                                 <a href="review_session.php?id=<?= $row['session_id'] ?>" class="btn btn-sm btn-primary">
                                     Review
@@ -364,6 +368,64 @@ if ($table_exists) {
                 </table>
                 <?php else: ?>
                     <p class="text-muted text-center">No pending sessions to review. <i class='bx bx-party'></i></p>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Recent Auto-Rejected Sessions -->
+        <div class="card">
+            <div class="card-header">
+                <h2>Recent Auto-Rejected Sessions</h2>
+            </div>
+            <div class="card-body">
+                <?php
+                $rejected_sql = "SELECT ts.*, t.fname as teacher_name, s.school_name, sts.slot_date, sts.start_time, sts.end_time,
+                               COALESCE(ts.end_photo_uploaded_at, ts.start_photo_uploaded_at) as latest_upload
+                               FROM teaching_sessions ts
+                               JOIN teacher t ON ts.teacher_id = t.id
+                               JOIN schools s ON ts.school_id = s.school_id
+                               JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
+                               WHERE ts.session_status = 'rejected' AND ts.admin_remarks LIKE 'Auto-rejected:%'
+                               ORDER BY ts.verified_at DESC
+                               LIMIT 5";
+                $rejected = mysqli_query($conn, $rejected_sql);
+                
+                if ($rejected && mysqli_num_rows($rejected) > 0):
+                ?>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Teacher</th>
+                            <th>School</th>
+                            <th>Session Date</th>
+                            <th>Reason</th>
+                            <th>Rejected At</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php while ($row = mysqli_fetch_assoc($rejected)): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($row['teacher_name']) ?></td>
+                            <td><?= htmlspecialchars($row['school_name']) ?></td>
+                            <td><?= date('M d, Y', strtotime($row['slot_date'])) ?></td>
+                            <td>
+                                <span class="badge badge-danger" title="<?= htmlspecialchars($row['admin_remarks']) ?>">
+                                    <?= htmlspecialchars(substr($row['admin_remarks'], 0, 50)) ?><?= strlen($row['admin_remarks']) > 50 ? '...' : '' ?>
+                                </span>
+                            </td>
+                            <td><?= $row['verified_at'] ? date('M d, H:i', strtotime($row['verified_at'])) : 'N/A' ?></td>
+                            <td>
+                                <a href="review_session.php?id=<?= $row['session_id'] ?>" class="btn btn-sm btn-secondary">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        <?php endwhile; ?>
+                    </tbody>
+                </table>
+                <?php else: ?>
+                    <p class="text-muted text-center">No auto-rejected sessions. <i class='bx bx-check-circle'></i></p>
                 <?php endif; ?>
             </div>
         </div>

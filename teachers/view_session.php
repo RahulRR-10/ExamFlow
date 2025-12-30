@@ -17,6 +17,7 @@ $teacher_id = $_SESSION['user_id'];
 $message = '';
 $error = '';
 $warnings = [];
+$severe_issues = []; // Track issues that would trigger auto-rejection
 
 // Support both ?id= and ?session= parameters
 $session_id = intval($_GET['id'] ?? $_GET['session'] ?? 0);
@@ -130,6 +131,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                         $allowed_radius = $session['allowed_radius'] ?? 500;
                         if ($distance > $allowed_radius) {
                             $warnings[] = "Photo location is " . round($distance) . "m from school (allowed: {$allowed_radius}m)";
+                            // Auto-reject if distance exceeds 2x allowed radius
+                            if ($distance > ($allowed_radius * 2)) {
+                                $severe_issues[] = "Location too far from school (auto-rejected)";
+                            }
                         }
                     }
                 } else {
@@ -151,7 +156,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                 
                 if ($upload_type === 'start') {
                     // Update start photo fields
-                    $new_status = 'start_submitted';
+                    // Set status to 'rejected' if severe issues detected (e.g., location way off)
+                    $new_status = !empty($severe_issues) ? 'rejected' : 'start_submitted';
+                    $admin_remarks = !empty($severe_issues) ? "Auto-rejected: " . implode("; ", $severe_issues) : null;
+                    
                     $update_sql = "UPDATE teaching_sessions SET 
                                   start_photo_path = ?,
                                   start_photo_uploaded_at = NOW(),
@@ -159,11 +167,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                                   start_gps_longitude = ?,
                                   start_photo_taken_at = ?,
                                   start_distance_from_school = ?,
-                                  session_status = ?
+                                  session_status = ?,
+                                  admin_remarks = COALESCE(?, admin_remarks),
+                                  verified_at = " . (!empty($severe_issues) ? "NOW()" : "verified_at") . "
                                   WHERE session_id = ?";
                     $stmt = mysqli_prepare($conn, $update_sql);
-                    mysqli_stmt_bind_param($stmt, "sddsdsi", 
-                        $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance, $new_status, $session_id);
+                    mysqli_stmt_bind_param($stmt, "sddsdsssi", 
+                        $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance, $new_status, $admin_remarks, $session_id);
                 } else {
                     // End photo - calculate duration
                     $actual_duration = null;
@@ -184,13 +194,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                         // Add warning if duration is too short
                         if ($actual_duration < 0) {
                             $warnings[] = "End photo appears to be taken before start photo.";
+                            $severe_issues[] = "End photo taken before start photo (auto-rejected)";
                         } elseif (!DurationValidator::meetsMinimumDuration($actual_duration, $expected_duration)) {
                             $warnings[] = "Session duration (" . DurationValidator::formatDuration($actual_duration) . 
                                         ") is below expected (" . DurationValidator::formatDuration($expected_duration) . ")";
+                            // Auto-reject if less than 50%
+                            if ($expected_duration > 0 && ($actual_duration / $expected_duration * 100) < 50) {
+                                $severe_issues[] = "Duration too short - less than 50% of expected (auto-rejected)";
+                            }
                         }
                     }
                     
-                    $new_status = 'end_submitted';
+                    // Set status to 'rejected' if severe issues detected, otherwise 'end_submitted'
+                    $new_status = !empty($severe_issues) ? 'rejected' : 'end_submitted';
+                    $admin_remarks = !empty($severe_issues) ? "Auto-rejected: " . implode("; ", $severe_issues) : null;
+                    
                     $update_sql = "UPDATE teaching_sessions SET 
                                   end_photo_path = ?,
                                   end_photo_uploaded_at = NOW(),
@@ -201,18 +219,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                                   actual_duration_minutes = ?,
                                   expected_duration_minutes = ?,
                                   duration_verified = ?,
-                                  session_status = ?
+                                  session_status = ?,
+                                  admin_remarks = COALESCE(?, admin_remarks),
+                                  verified_at = " . (!empty($severe_issues) ? "NOW()" : "verified_at") . "
                                   WHERE session_id = ?";
                     $stmt = mysqli_prepare($conn, $update_sql);
                     $duration_verified_int = $duration_verified ? 1 : 0;
-                    mysqli_stmt_bind_param($stmt, "sddsdiiiis", 
+                    mysqli_stmt_bind_param($stmt, "sddsdiiiissi", 
                         $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance,
-                        $actual_duration, $expected_duration, $duration_verified_int, $new_status, $session_id);
+                        $actual_duration, $expected_duration, $duration_verified_int, $new_status, $admin_remarks, $session_id);
                 }
                 
                 if (mysqli_stmt_execute($stmt)) {
                     $message = ucfirst($upload_type) . " photo uploaded successfully!";
-                    if (!empty($warnings)) {
+                    if (!empty($severe_issues)) {
+                        // Session has been auto-rejected - show clear error message
+                        $error = ucfirst($upload_type) . " photo uploaded, but session has been AUTO-REJECTED: " . implode("; ", $severe_issues);
+                        $message = ''; // Clear any success message
+                    } elseif (!empty($warnings)) {
                         $message .= " However, there are some concerns that admin will review.";
                     }
                     // Refresh session data
