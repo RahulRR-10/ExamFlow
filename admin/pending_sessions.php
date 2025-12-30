@@ -145,7 +145,7 @@ $teachers = mysqli_query($conn, "SELECT id, fname, email FROM teacher ORDER BY f
 <html>
 <head>
     <title>Session Reviews | Admin | ExamFlow</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.0">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         .stats-row {

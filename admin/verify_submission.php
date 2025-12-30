@@ -59,7 +59,7 @@ $error_msg = isset($_GET['error']) ? 'Failed to process verification. Please try
 <html>
 <head>
     <title>Verify Submission #<?= $submission_id ?> | ExamFlow Admin</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=2.0">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
