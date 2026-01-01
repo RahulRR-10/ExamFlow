@@ -60,7 +60,7 @@ $env_vars = [
     'WALLET_PRIVATE_KEY' => env('WALLET_PRIVATE_KEY', ''),
     'SEPOLIA_RPC_URL' => env('SEPOLIA_RPC_URL', ''),
     'INFURA_PROJECT_ID' => env('INFURA_PROJECT_ID', ''),
-    'NFT_CONTRACT_ADDRESS' => env('NFT_CONTRACT_ADDRESS', '0xfE9c584F6360966B949a8804414B07C546a6F69F')
+    'NFT_CONTRACT_ADDRESS' => env('NFT_CONTRACT_ADDRESS', '')
 ];
 
 // Log the configuration 
@@ -121,7 +121,7 @@ if (mysqli_num_rows($nft_result) > 0) {
 // Set up blockchain configuration
 $privateKey = $env_vars['WALLET_PRIVATE_KEY'] ?? '';
 $rpcUrl = $env_vars['SEPOLIA_RPC_URL'] ?? '';
-$contractAddress = $env_vars['NFT_CONTRACT_ADDRESS'] ?? '0xfE9c584F6360966B949a8804414B07C546a6F69F';
+$contractAddress = $env_vars['NFT_CONTRACT_ADDRESS'] ?? '';
 
 if (empty($privateKey) || empty($rpcUrl)) {
     header('Content-Type: application/json');

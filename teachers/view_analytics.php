@@ -5,6 +5,7 @@ if (!isset($_SESSION["user_id"])) {
   exit;
 }
 include '../config.php';
+require_once '../utils/groq_analytics.php';
 error_reporting(0);
 
 // Get exam ID from POST request
@@ -113,6 +114,14 @@ try {
 } catch (Exception $e) {
   file_put_contents($debug_log, date('Y-m-d H:i:s') . " - Exception: " . $e->getMessage() . "\n", FILE_APPEND);
   $analytics_data = ['error' => 'An exception occurred: ' . $e->getMessage()];
+}
+
+// Get AI insights using Groq API
+$ai_insights = null;
+if (!isset($analytics_data['error']) && isset($analytics_data['questions']) && count($analytics_data['questions']) > 0) {
+  $analytics_data['exam_name'] = $exam_data['exname'];
+  $ai_insights = getAIAnalyticsInsights($analytics_data);
+  file_put_contents($debug_log, date('Y-m-d H:i:s') . " - AI Insights: " . ($ai_insights['success'] ? 'Generated successfully' : 'Error: ' . $ai_insights['error']) . "\n", FILE_APPEND);
 }
 
 ?>
@@ -366,6 +375,64 @@ try {
                 </div>
               <?php endforeach; ?>
             </div>
+
+            <?php if ($ai_insights && $ai_insights['success']): ?>
+            <div class="analytics-container" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+              <h3 class="section-title" style="color: white; border-bottom-color: rgba(255,255,255,0.3);">
+                <i class='bx bx-bulb'></i> AI-Powered Insights
+              </h3>
+              
+              <div class="ai-summary" style="background: rgba(255,255,255,0.15); padding: 15px; border-radius: 8px; margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px;"><i class='bx bx-message-square-detail'></i> Summary</h4>
+                <p style="font-size: 1.1em;"><?php echo htmlspecialchars($ai_insights['summary']); ?></p>
+              </div>
+
+              <?php if (!empty($ai_insights['insights'])): ?>
+              <div class="ai-insights" style="margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px;"><i class='bx bx-analyse'></i> Key Insights</h4>
+                <ul style="list-style: none; padding: 0;">
+                  <?php foreach ($ai_insights['insights'] as $insight): ?>
+                    <li style="background: rgba(255,255,255,0.1); padding: 10px 15px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #fff;">
+                      <?php echo htmlspecialchars($insight); ?>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($ai_insights['recommendations'])): ?>
+              <div class="ai-recommendations" style="margin-bottom: 15px;">
+                <h4 style="margin-bottom: 10px;"><i class='bx bx-check-circle'></i> Recommendations</h4>
+                <ul style="list-style: none; padding: 0;">
+                  <?php foreach ($ai_insights['recommendations'] as $rec): ?>
+                    <li style="background: rgba(255,255,255,0.1); padding: 10px 15px; margin-bottom: 8px; border-radius: 6px; border-left: 3px solid #4ade80;">
+                      <?php echo htmlspecialchars($rec); ?>
+                    </li>
+                  <?php endforeach; ?>
+                </ul>
+              </div>
+              <?php endif; ?>
+
+              <?php if (!empty($ai_insights['areas_of_concern'])): ?>
+              <div class="ai-concerns">
+                <h4 style="margin-bottom: 10px;"><i class='bx bx-error-circle'></i> Areas Needing Attention</h4>
+                <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+                  <?php foreach ($ai_insights['areas_of_concern'] as $concern): ?>
+                    <span style="background: rgba(255,255,255,0.2); padding: 5px 12px; border-radius: 20px; font-size: 0.9em;">
+                      <?php echo htmlspecialchars($concern); ?>
+                    </span>
+                  <?php endforeach; ?>
+                </div>
+              </div>
+              <?php endif; ?>
+            </div>
+            <?php elseif ($ai_insights && !$ai_insights['success']): ?>
+            <div class="analytics-container" style="background: #fff3cd; border-left: 4px solid #ffc107;">
+              <h3 class="section-title"><i class='bx bx-info-circle'></i> AI Insights Unavailable</h3>
+              <p><?php echo htmlspecialchars($ai_insights['error']); ?></p>
+              <p style="font-size: 0.9em; color: #666;">Make sure GROQ_API_KEY is configured in your .env file to enable AI-powered analytics.</p>
+            </div>
+            <?php endif; ?>
 
             <div class="analytics-container">
               <h3 class="section-title">Data Visualization</h3>
