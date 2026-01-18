@@ -163,6 +163,90 @@ Teachers can book teaching slots at partner schools and submit geotagged photos 
 
 ---
 
+## Dual Photo Verification System
+
+### Enhanced Session Verification
+
+ExamFlow implements a robust dual photo verification system to ensure teachers complete their full teaching sessions:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                     DUAL PHOTO VERIFICATION FLOW                        │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+    ┌───────────────────────────────┴───────────────────────────┐
+    ▼                                                           ▼
+┌─────────────────────┐                             ┌─────────────────────┐
+│   📸 START PHOTO    │                             │    📸 END PHOTO     │
+│   (Arrival)         │         ──────────►         │   (Completion)      │
+│                     │                             │                     │
+│ • GPS coordinates   │                             │ • GPS coordinates   │
+│ • Timestamp         │                             │ • Timestamp         │
+│ • Distance check    │                             │ • Distance check    │
+│ • Device info       │                             │ • Duration calc     │
+└─────────────────────┘                             └─────────────────────┘
+         │                                                   │
+         ▼                                                   ▼
+┌─────────────────────┐                             ┌─────────────────────┐
+│  Status:            │                             │  Status:            │
+│  start_submitted    │                             │  end_submitted      │
+└─────────────────────┘                             └─────────────────────┘
+                                    │
+                                    ▼
+                        ┌───────────────────────┐
+                        │  ADMIN VERIFICATION   │
+                        │                       │
+                        │ • Both photos valid   │
+                        │ • Duration verified   │
+                        │ • Location confirmed  │
+                        └───────────────────────┘
+                                    │
+                                    ▼
+                        ┌───────────────────────┐
+                        │  Status: APPROVED ✓   │
+                        └───────────────────────┘
+```
+
+### Session Status Workflow
+
+| Status | Description |
+|--------|-------------|
+| `pending` | No photos uploaded yet |
+| `start_submitted` | Arrival photo uploaded, awaiting end photo |
+| `start_approved` | Start photo verified, awaiting end photo |
+| `end_submitted` | Both photos uploaded, awaiting final review |
+| `approved` | Fully verified and approved |
+| `rejected` | Rejected at any stage |
+| `partial` | Start approved but end photo missing/invalid |
+
+### Duration Verification
+
+The system automatically validates that teachers stayed for the full session:
+
+- **Expected Duration**: Calculated from slot start/end times
+- **Actual Duration**: Calculated from photo timestamps (end - start)
+- **Tolerance**: Configurable tolerance window (default: 15 minutes)
+- **Compliance Rate**: Percentage of expected duration completed
+
+### Teacher Statistics Dashboard
+
+Admins can monitor teaching activity through comprehensive statistics:
+
+- **Total Sessions**: Number of booked teaching slots
+- **Completed Sessions**: Successfully verified sessions
+- **Completion Rate**: Percentage of sessions approved
+- **Total Teaching Hours**: Cumulative teaching time
+- **Duration Compliance**: Average adherence to expected session length
+- **School Coverage**: Number of different schools taught at
+
+Features include:
+- Filtering by school, subject, and date range
+- Sortable columns for all metrics
+- CSV export for reporting
+- Drill-down to individual teacher details
+
+---
+
 ## System Architecture
 
 ```
@@ -227,8 +311,9 @@ Teachers can book teaching slots at partner schools and submit geotagged photos 
 | `schools` | Partner school information with GPS |
 | `school_teaching_slots` | Available teaching slots |
 | `slot_teacher_enrollments` | Teacher slot bookings |
-| `teaching_sessions` | Session documentation and verification |
+| `teaching_sessions` | Session documentation with dual photo verification |
 | `admin_audit_log` | Admin action history |
+| `teacher_session_stats` | View for aggregated teacher statistics |
 
 ---
 
@@ -273,6 +358,9 @@ Teachers can book teaching slots at partner schools and submit geotagged photos 
    
    # Import schema
    mysql -u root -p db_eval < db/db_eval.sql
+   
+   # Run migrations for full feature support
+   mysql -u root -p db_eval < db/migrate_dual_photo_verification.sql
    ```
 
 3. **Set up environment**
@@ -331,6 +419,10 @@ ETHEREUM_PRIVATE_KEY=your_private_key
 
 # Infura (RPC)
 INFURA_API_KEY=your_infura_key
+
+# Teaching Session Verification (optional)
+DURATION_TOLERANCE_MINUTES=15
+MIN_DURATION_PERCENT=80
 ```
 
 ---
@@ -365,12 +457,14 @@ Set up these cron jobs for background processing:
 - Review AI-graded submissions
 - View analytics and reports
 - Browse and book teaching slots
-- Upload session verification photos
+- Upload dual verification photos (start & end)
+- View session history and statistics
 
 ### Admin
 - Manage schools and teaching slots
 - Review pending session verifications
-- Validate geotagged submissions
+- Validate geotagged submissions (dual photo verification)
+- Monitor teacher statistics and completion rates
 - Access audit logs
 - Generate system reports
 - Force enrollment/unenrollment
@@ -388,9 +482,12 @@ examflow/
 ├── cron/               # Background job processors
 ├── db/                 # Database schemas
 ├── utils/              # Helper utilities
-│   ├── groq_grader.php    # AI grading
-│   ├── ocr_processor.php  # OCR handling
-│   ├── env_loader.php     # Environment config
+│   ├── groq_grader.php       # AI grading
+│   ├── ocr_processor.php     # OCR handling
+│   ├── env_loader.php        # Environment config
+│   ├── exif_extractor.php    # Photo EXIF data extraction
+│   ├── location_validator.php # GPS validation
+│   ├── duration_validator.php # Session duration verification
 │   └── ...
 ├── uploads/            # User uploads
 │   ├── student_answers/   # Objective exam submissions
@@ -418,6 +515,8 @@ examflow/
 | **File Upload** | Type validation and secure storage |
 | **Blockchain** | Immutable credential verification |
 | **Audit Logging** | Complete admin action history |
+| **Dual Photo Verification** | GPS + timestamp validation for teaching sessions |
+| **Duration Compliance** | Automatic session duration verification |
 
 ---
 
@@ -478,4 +577,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 <p align="center">
   <b>ExamFlow: Redefining Academic Assessment with Blockchain Integrity & AI Intelligence</b><br>
   <sub>Built with ❤️ by Team Cerebro</sub>
+</p>
+
+<p>
+  Also added the activity points for volunteers who get 2 activity points for every hour taught
 </p>
