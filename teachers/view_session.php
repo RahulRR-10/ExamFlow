@@ -172,7 +172,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                                   verified_at = " . (!empty($severe_issues) ? "NOW()" : "verified_at") . "
                                   WHERE session_id = ?";
                     $stmt = mysqli_prepare($conn, $update_sql);
-                    mysqli_stmt_bind_param($stmt, "sddsdsssi", 
+                    mysqli_stmt_bind_param($stmt, "sddsdssi", 
                         $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance, $new_status, $admin_remarks, $session_id);
                 } else {
                     // End photo - calculate duration
@@ -225,7 +225,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                                   WHERE session_id = ?";
                     $stmt = mysqli_prepare($conn, $update_sql);
                     $duration_verified_int = $duration_verified ? 1 : 0;
-                    mysqli_stmt_bind_param($stmt, "sddsdiiiissi", 
+                    mysqli_stmt_bind_param($stmt, "sddsdiiissi", 
                         $relative_path, $photo_lat, $photo_lng, $photo_taken_at, $distance,
                         $actual_duration, $expected_duration, $duration_verified_int, $new_status, $admin_remarks, $session_id);
                 }
@@ -925,14 +925,24 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
                         — <?= htmlspecialchars($session['verified_by_name']) ?>, <?= date('M j, Y', strtotime($session['verified_at'])) ?>
                     </p>
                     <?php endif; ?>
+                    <div style="margin-top: 15px;">
+                        <a href="generate_certificate.php?id=<?= $session_id ?>" class="btn btn-success" style="background: linear-gradient(135deg, #166534, #22c55e);">
+                            <i class='bx bx-certification'></i> Generate Blockchain Certificate
+                        </a>
+                    </div>
                 </div>
             </div>
-            <?php elseif ($session['session_status'] === 'end_submitted'): ?>
+            <?php elseif (in_array($session['session_status'], ['end_submitted', 'end_approved'])): ?>
             <div class="alert alert-info">
                 <i class='bx bx-hourglass'></i>
                 <div>
                     <strong>Awaiting Final Review</strong>
                     <p style="margin-top: 5px;">Both photos have been submitted. An admin will review and approve your session soon.</p>
+                    <div style="margin-top: 15px;">
+                        <a href="generate_certificate.php?id=<?= $session_id ?>" class="btn btn-success" style="background: linear-gradient(135deg, #166534, #22c55e);">
+                            <i class='bx bx-certification'></i> Generate Blockchain Certificate
+                        </a>
+                    </div>
                 </div>
             </div>
             <?php endif; ?>

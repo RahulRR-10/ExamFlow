@@ -599,6 +599,11 @@ foreach ($upcoming as $b) {
                             <a href="view_session.php?id=<?= $booking['session_id'] ?>" class="btn btn-secondary btn-sm">
                                 <i class='bx bx-show'></i> View Session Details
                             </a>
+                            <?php if (in_array($booking['session_status'], ['approved', 'end_submitted', 'end_approved'])): ?>
+                            <a href="generate_certificate.php?id=<?= $booking['session_id'] ?>" class="btn btn-success btn-sm" style="background: linear-gradient(135deg, #166534, #22c55e);">
+                                <i class='bx bx-certification'></i> Generate Certificate
+                            </a>
+                            <?php endif; ?>
                         </div>
                         <?php endif; ?>
                     </div>

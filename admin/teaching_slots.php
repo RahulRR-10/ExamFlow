@@ -37,9 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif (strtotime($slot_date) < strtotime(date('Y-m-d'))) {
             $error = 'Slot date cannot be in the past.';
         } else {
-            // Check for overlapping slots
+            // Check for overlapping slots (exclude cancelled slots - they shouldn't block new bookings)
             $overlap_sql = "SELECT COUNT(*) as cnt FROM school_teaching_slots 
                            WHERE school_id = ? AND slot_date = ? 
+                           AND slot_status != 'cancelled'
                            AND ((start_time <= ? AND end_time > ?) OR (start_time < ? AND end_time >= ?))";
             $overlap_stmt = mysqli_prepare($conn, $overlap_sql);
             mysqli_stmt_bind_param($overlap_stmt, "isssss", $school_id, $slot_date, $start_time, $start_time, $end_time, $end_time);
