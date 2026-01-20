@@ -439,6 +439,7 @@ if (isset($_GET['export']) && $_GET['export'] === 'csv') {
             <li><a href="view_objective_results.php" class="active"><i class='bx bx-bar-chart'></i><span class="links_name">Objective Results</span></a></li>
             <li><a href="results.php"><i class='bx bx-bar-chart-alt-2'></i><span class="links_name">MCQ Results</span></a></li>
             <li><a href="messages.php"><i class='bx bx-message'></i><span class="links_name">Messages</span></a></li>
+            <li><a href="upload_material.php"><i class='bx bx-cloud-upload'></i><span class="links_name">Upload Material</span></a></li>
             <li><a href="settings.php"><i class='bx bx-cog'></i><span class="links_name">Settings</span></a></li>
             <li><a href="help.php"><i class='bx bx-help-circle'></i><span class="links_name">Help</span></a></li>
             <li class="log_out"><a href="../logout.php"><i class='bx bx-log-out'></i><span class="links_name">Log out</span></a></li>

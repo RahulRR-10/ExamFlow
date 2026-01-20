@@ -184,6 +184,12 @@ if (!empty($booked_schools)) {
         </a>
       </li>
       <li>
+        <a href="upload_material.php">
+          <i class='bx bx-cloud-upload'></i>
+          <span class="links_name">Upload Material</span>
+        </a>
+      </li>
+      <li>
         <a href="settings.php">
           <i class='bx bx-cog'></i>
           <span class="links_name">Settings</span>

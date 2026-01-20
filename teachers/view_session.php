@@ -646,6 +646,7 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
             <li><a href="school_management.php"><i class='bx bx-building-house'></i><span class="links_name">Schools</span></a></li>
             <li><a href="browse_slots.php"><i class='bx bx-calendar-check'></i><span class="links_name">Teaching Slots</span></a></li>
             <li><a href="my_slots.php" class="active"><i class='bx bx-calendar'></i><span class="links_name">My Bookings</span></a></li>
+            <li><a href="upload_material.php"><i class='bx bx-cloud-upload'></i><span class="links_name">Upload Material</span></a></li>
             <li><a href="settings.php"><i class='bx bx-cog'></i><span class="links_name">Settings</span></a></li>
             <li><a href="help.php"><i class='bx bx-help-circle'></i><span class="links_name">Help</span></a></li>
             <li class="log_out"><a href="../logout.php"><i class='bx bx-log-out-circle'></i><span class="links_name">Log out</span></a></li>

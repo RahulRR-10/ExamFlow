@@ -98,6 +98,12 @@ if (mysqli_num_rows($result) > 0) {
         </a>
       </li>
       <li>
+        <a href="study_material.php">
+          <i class='bx bx-book-open'></i>
+          <span class="links_name">Study Material</span>
+        </a>
+      </li>
+      <li>
         <a href="#" class="active">
           <i class='bx bx-cog'></i>
           <span class="links_name">Settings</span>

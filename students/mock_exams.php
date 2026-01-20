@@ -159,6 +159,12 @@ $completed_result = mysqli_query($conn, $completed_sql);
                 </a>
             </li>
             <li>
+                <a href="study_material.php">
+                    <i class='bx bx-book-open'></i>
+                    <span class="links_name">Study Material</span>
+                </a>
+            </li>
+            <li>
                 <a href="settings.php">
                     <i class='bx bx-cog'></i>
                     <span class="links_name">Settings</span>

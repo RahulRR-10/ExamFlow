@@ -726,6 +726,12 @@ while ($rowd = mysqli_fetch_array($res)) {
       </li>
       <li>
         <a>
+          <i class='bx bx-book-open'></i>
+          <span class="links_name">Study Material</span>
+        </a>
+      </li>
+      <li>
+        <a>
           <i class='bx bx-cog'></i>
           <span class="links_name">Settings</span>
         </a>

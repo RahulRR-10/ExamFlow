@@ -167,6 +167,12 @@ $obj_stats['processing'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cn
         </a>
       </li>
       <li>
+        <a href="upload_material.php">
+          <i class='bx bx-cloud-upload'></i>
+          <span class="links_name">Upload Material</span>
+        </a>
+      </li>
+      <li>
         <a href="settings.php">
           <i class='bx bx-cog'></i>
           <span class="links_name">Settings</span>
