@@ -15,18 +15,15 @@ if (isset($_POST["addexm"])) {
     $school_id = mysqli_real_escape_string($conn, $_POST["school_id"]);
     $teacher_id = $_SESSION['user_id'];
 
-    // Verify teacher is enrolled in this school
-    $verify_sql = "SELECT * FROM teacher_schools 
-                   WHERE teacher_id = ? 
-                   AND school_id = ? 
-                   AND enrollment_status = 'active'";
+    // Verify school exists and is active
+    $verify_sql = "SELECT * FROM schools WHERE school_id = ? AND status = 'active'";
     $verify_stmt = mysqli_prepare($conn, $verify_sql);
-    mysqli_stmt_bind_param($verify_stmt, "ii", $teacher_id, $school_id);
+    mysqli_stmt_bind_param($verify_stmt, "i", $school_id);
     mysqli_stmt_execute($verify_stmt);
     $verify_result = mysqli_stmt_get_result($verify_stmt);
 
     if (mysqli_num_rows($verify_result) == 0) {
-        echo "<script>alert('You are not enrolled in this school.');</script>";
+        echo "<script>alert('Invalid school selected.');</script>";
         header("Location: exams.php");
         exit;
     }

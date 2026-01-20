@@ -547,7 +547,7 @@ while ($rowd = mysqli_fetch_array($res)) {
 
                 console.log('Logging violation:', violationType, 'for exam ID:', examId);
 
-                fetch('debug_log_mock_violation.php', {
+                fetch('log_mock_violation.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

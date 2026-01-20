@@ -29,6 +29,28 @@ if ($slot_id <= 0) {
 mysqli_begin_transaction($conn);
 
 try {
+    // NEW Validation: Check if teacher already has an active slot booking
+    // Teachers can only book one slot at a time (must wait until completed or rejected)
+    $active_booking_sql = "SELECT ste.enrollment_id, ste.enrollment_status, sts.slot_date, sts.start_time, sts.end_time, s.school_name
+                           FROM slot_teacher_enrollments ste
+                           JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+                           JOIN schools s ON sts.school_id = s.school_id
+                           WHERE ste.teacher_id = ? 
+                           AND ste.enrollment_status = 'booked'
+                           AND sts.slot_status NOT IN ('completed', 'cancelled')
+                           AND sts.slot_date >= CURDATE()
+                           LIMIT 1";
+    $stmt = mysqli_prepare($conn, $active_booking_sql);
+    mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+    mysqli_stmt_execute($stmt);
+    $active_booking = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+    
+    if ($active_booking) {
+        $booking_date = date('M d, Y', strtotime($active_booking['slot_date']));
+        $booking_time = date('h:i A', strtotime($active_booking['start_time']));
+        throw new Exception("You already have an active slot booking at {$active_booking['school_name']} on {$booking_date} at {$booking_time}. You can only book another slot after the current one is completed or cancelled.");
+    }
+    
     // Lock the slot row for update
     $slot_sql = "SELECT sts.*, s.school_name 
                  FROM school_teaching_slots sts

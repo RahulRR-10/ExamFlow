@@ -10,16 +10,12 @@ error_reporting(0);
 
 $teacher_id = $_SESSION['user_id'];
 
-// Get schools the teacher is enrolled in for the dropdown
-$enrolled_schools_sql = "SELECT s.school_id, s.school_name 
-                         FROM schools s 
-                         INNER JOIN teacher_schools ts ON s.school_id = ts.school_id 
-                         WHERE ts.teacher_id = ? AND s.status = 'active'
-                         ORDER BY ts.is_primary DESC, s.school_name ASC";
-$stmt_schools = mysqli_prepare($conn, $enrolled_schools_sql);
-mysqli_stmt_bind_param($stmt_schools, "i", $teacher_id);
-mysqli_stmt_execute($stmt_schools);
-$enrolled_schools = mysqli_stmt_get_result($stmt_schools);
+// Get all active schools for the dropdown
+$enrolled_schools_sql = "SELECT school_id, school_name 
+                         FROM schools 
+                         WHERE status = 'active'
+                         ORDER BY school_name ASC";
+$enrolled_schools = mysqli_query($conn, $enrolled_schools_sql);
 
 // Get selected school filter (default to 'all')
 $filter_school = isset($_GET['school_filter']) ? intval($_GET['school_filter']) : 0;

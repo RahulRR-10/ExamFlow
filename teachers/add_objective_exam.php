@@ -20,16 +20,12 @@ $teacher_id = $_SESSION['user_id'];
 $error_msg = '';
 $success_msg = '';
 
-// Get schools the teacher is enrolled in
-$enrolled_schools_sql = "SELECT s.school_id, s.school_name 
-                         FROM schools s 
-                         INNER JOIN teacher_schools ts ON s.school_id = ts.school_id 
-                         WHERE ts.teacher_id = ? AND s.status = 'active'
-                         ORDER BY ts.is_primary DESC, s.school_name ASC";
-$stmt_schools = mysqli_prepare($conn, $enrolled_schools_sql);
-mysqli_stmt_bind_param($stmt_schools, "i", $teacher_id);
-mysqli_stmt_execute($stmt_schools);
-$enrolled_schools = mysqli_stmt_get_result($stmt_schools);
+// Get all active schools for the dropdown
+$enrolled_schools_sql = "SELECT school_id, school_name 
+                         FROM schools 
+                         WHERE status = 'active'
+                         ORDER BY school_name ASC";
+$enrolled_schools = mysqli_query($conn, $enrolled_schools_sql);
 
 // Handle form submission
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exam'])) {
@@ -60,18 +56,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['create_exam'])) {
     } elseif ($duration_minutes <= 0) {
         $error_msg = 'Duration must be greater than 0 minutes.';
     } else {
-        // Verify teacher is enrolled in this school
-        $verify_sql = "SELECT * FROM teacher_schools 
-                       WHERE teacher_id = ? 
-                       AND school_id = ? 
-                       AND enrollment_status = 'active'";
+        // Verify school exists and is active
+        $verify_sql = "SELECT * FROM schools WHERE school_id = ? AND status = 'active'";
         $verify_stmt = mysqli_prepare($conn, $verify_sql);
-        mysqli_stmt_bind_param($verify_stmt, "ii", $teacher_id, $school_id);
+        mysqli_stmt_bind_param($verify_stmt, "i", $school_id);
         mysqli_stmt_execute($verify_stmt);
         $verify_result = mysqli_stmt_get_result($verify_stmt);
 
         if (mysqli_num_rows($verify_result) == 0) {
-            $error_msg = 'You are not enrolled in this school.';
+            $error_msg = 'Invalid school selected.';
         } else {
             // Insert the exam
             $insert_sql = "INSERT INTO objective_exm_list 

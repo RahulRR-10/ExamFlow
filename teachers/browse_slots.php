@@ -91,6 +91,22 @@ $stmt = mysqli_prepare($conn, $upcoming_sql);
 mysqli_stmt_bind_param($stmt, "i", $teacher_id);
 mysqli_stmt_execute($stmt);
 $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
+
+// Check if teacher has an active (non-completed, non-cancelled) slot booking
+$active_booking_sql = "SELECT ste.enrollment_id, ste.enrollment_status, sts.slot_date, sts.start_time, sts.end_time, s.school_name, sts.slot_id
+                       FROM slot_teacher_enrollments ste
+                       JOIN school_teaching_slots sts ON ste.slot_id = sts.slot_id
+                       JOIN schools s ON sts.school_id = s.school_id
+                       WHERE ste.teacher_id = ? 
+                       AND ste.enrollment_status = 'booked'
+                       AND sts.slot_status NOT IN ('completed', 'cancelled')
+                       AND sts.slot_date >= CURDATE()
+                       LIMIT 1";
+$stmt = mysqli_prepare($conn, $active_booking_sql);
+mysqli_stmt_bind_param($stmt, "i", $teacher_id);
+mysqli_stmt_execute($stmt);
+$active_booking = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt));
+$has_active_booking = ($active_booking !== null);
 ?>
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
@@ -411,6 +427,15 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
             </div>
             <?php endif; ?>
             
+            <?php if ($has_active_booking): ?>
+            <div class="alert alert-warning" style="background: #fff3cd; border: 1px solid #ffc107; color: #856404; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <strong>⚠️ Active Booking:</strong> You already have an active slot booked at <strong><?= htmlspecialchars($active_booking['school_name']) ?></strong> 
+                on <?= date('M d, Y', strtotime($active_booking['slot_date'])) ?> (<?= date('h:i A', strtotime($active_booking['start_time'])) ?> - <?= date('h:i A', strtotime($active_booking['end_time'])) ?>).
+                <br><em>You can only book another slot after your current booking is completed or cancelled.</em>
+                <a href="my_slots.php" style="margin-left: 10px; color: #856404; text-decoration: underline;">View My Bookings</a>
+            </div>
+            <?php endif; ?>
+            
             <div class="page-header">
                 <h1>📅 Available Teaching Slots</h1>
                 <a href="my_slots.php" class="btn btn-primary">
@@ -460,7 +485,8 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
                                 ($slot['teachers_enrolled'] / $slot['teachers_required']) * 100 : 0;
                     $is_booked = $slot['already_booked'] > 0;
                     $is_full = $slot['slot_status'] === 'full';
-                    $can_book = !$is_booked && !$is_full;
+                    // Can only book if: not already booked, not full, AND no active booking
+                    $can_book = !$is_booked && !$is_full && !$has_active_booking;
                 ?>
                 <div class="slot-card <?= $is_booked ? 'booked' : '' ?>">
                     <div class="slot-header">
@@ -501,6 +527,10 @@ $upcoming_count = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
                         </span>
                         <?php if ($is_booked): ?>
                         <a href="my_slots.php" class="btn btn-secondary btn-sm">View Booking</a>
+                        <?php elseif ($has_active_booking && !$is_full): ?>
+                        <button class="btn btn-secondary btn-sm" disabled title="Complete or cancel your current booking first">
+                            Has Active Booking
+                        </button>
                         <?php elseif ($can_book): ?>
                         <button class="btn btn-success btn-sm" onclick="confirmBooking(<?= $slot['slot_id'] ?>, '<?= htmlspecialchars(addslashes($slot['school_name']), ENT_QUOTES) ?>', '<?= date('M j, Y', strtotime($slot['slot_date'])) ?>', '<?= date('h:i A', strtotime($slot['start_time'])) ?> - <?= date('h:i A', strtotime($slot['end_time'])) ?>')">
                             Book This Slot
