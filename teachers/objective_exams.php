@@ -215,7 +215,7 @@ $error_msg = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
 
         .quick-action-btn {
             padding: 12px 25px;
-            background: #17684f;
+            background: #4F457A;
             color: white;
             border: none;
             border-radius: 8px;
@@ -228,7 +228,7 @@ $error_msg = isset($_GET['error']) ? htmlspecialchars($_GET['error']) : '';
         }
 
         .quick-action-btn:hover {
-            background: #11533e;
+            background: #3d3560;
         }
 
         .quick-action-btn.secondary {
