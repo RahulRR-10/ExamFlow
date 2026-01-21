@@ -20,6 +20,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
     <style>
         .material-container {
             padding: 30px;
+            padding-top: 110px;
             max-width: 800px;
             margin: 0 auto;
         }
@@ -47,7 +48,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
 
         .material-icon {
             font-size: 80px;
-            color: #17684f;
+            color: #4f457a;
             margin-bottom: 20px;
         }
 
@@ -55,7 +56,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: linear-gradient(135deg, #17684f 0%, #1a7a5c 100%);
+            background: linear-gradient(135deg, #4f457a 0%, #a395d6 100%);
             color: white;
             padding: 16px 40px;
             border-radius: 12px;

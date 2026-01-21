@@ -41,6 +41,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
 
         .material-container {
             padding: 30px;
+            padding-top: 110px;
             max-width: 800px;
             margin: 0 auto;
         }
@@ -68,7 +69,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
 
         .material-icon {
             font-size: 80px;
-            color: #17684f;
+            color: #4f457a;
             margin-bottom: 20px;
         }
 
@@ -76,7 +77,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
             display: inline-flex;
             align-items: center;
             gap: 10px;
-            background: linear-gradient(135deg, #17684f 0%, #1a7a5c 100%);
+            background: linear-gradient(135deg, #4f457a 0%, #a395d6 100%);
             color: white;
             padding: 16px 40px;
             border-radius: 12px;
@@ -219,9 +220,9 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
             <div class="material-card">
                 <i class='bx bx-book-open material-icon'></i>
                 <h1>📚 Study Material</h1>
-                <p>Access all your study notes, resources, and learning materials in one place. 
-                   Our curated collection of study materials will help you prepare better for your exams.</p>
-                
+                <p>Access all your study notes, resources, and learning materials in one place.
+                    Our curated collection of study materials will help you prepare better for your exams.</p>
+
                 <a href="<?php echo $drive_link; ?>" target="_blank" class="btn-access">
                     <i class='bx bx-folder-open'></i>
                     Access Study Materials
@@ -243,7 +244,7 @@ $drive_link = "https://drive.google.com/drive/folders/1SkyKmJ1s_pjwdKLFZzAr23KV7
     <script>
         let sidebar = document.querySelector(".sidebar");
         let sidebarBtn = document.querySelector(".sidebarBtn");
-        sidebarBtn.onclick = function () {
+        sidebarBtn.onclick = function() {
             sidebar.classList.toggle("active");
             if (sidebar.classList.contains("active")) {
                 sidebarBtn.classList.replace("bx-menu", "bx-menu-alt-right");
