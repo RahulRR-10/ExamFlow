@@ -1,17 +1,17 @@
 
-@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
 * {
 	box-sizing: border-box;
 }
 
 body {
-	background: #f3e0e2;
+	background: #F3F6FC;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 	flex-direction: column;
-	font-family: 'Montserrat', sans-serif;
+	font-family: 'Inter', sans-serif;
 	height: 100vh;
 	margin: -20px 0 50px;
 }
@@ -42,16 +42,21 @@ a {
 
 button {
 	border-radius: 20px;
-	border: 1px solid #002c66;
-	background-color: #002c66;
+	border: 1px solid #2F5DA9;
+	background-color: #2F5DA9;
 	color: #FFFFFF;
 	font-size: 12px;
-	font-weight: bold;
+	font-weight: 600;
 	padding: 12px 45px;
 	letter-spacing: 1px;
 	text-transform: uppercase;
-	transition: transform 80ms ease-in;
+	transition: all 0.3s ease;
 	cursor: pointer;
+}
+
+button:hover {
+	background-color: #3F72C4;
+	border-color: #3F72C4;
 }
 
 form {
@@ -76,7 +81,7 @@ input {
 .container {
 	background-color: #fff;
 	border-radius: 10px;
-  	box-shadow: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+  	box-shadow: 0 14px 28px rgba(30, 58, 111, 0.2), 0 10px 10px rgba(30, 58, 111, 0.15);
 	position: relative;
 	overflow: hidden;
 	width: 768px;
@@ -107,9 +112,9 @@ input {
 
 
 .overlay {
-	background: #013a85;
-	background: -webkit-linear-gradient(to right, #002366, #013a85);
-	background: linear-gradient(to right, #002366, #013a85);
+	background: #1E3A6F;
+	background: -webkit-linear-gradient(to right, #1E3A6F, #2F5DA9);
+	background: linear-gradient(to right, #1E3A6F, #2F5DA9);
 	background-repeat: no-repeat;
 	background-size: cover;
 	background-position: 0 0;
