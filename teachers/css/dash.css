@@ -1,16 +1,16 @@
-/* Googlefont Poppins CDN Link */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap');
+/* Google Font Inter CDN Link - Modern & Professional */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 *{
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: 'Poppins', sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 .sidebar{
   position: fixed;
   height: 100%;
   width: 240px;
-  background: #17684f;
+  background: #4F457A;
   transition: all 0.5s ease;
 }
 .sidebar.active{
@@ -51,10 +51,10 @@
   transition: all 0.4s ease;
 }
 .sidebar .nav-links li a.active{
-  background: #11533e;
+  background: #8B7BBE;
 }
 .sidebar .nav-links li a:hover{
-  background: #11533e;
+  background: #A395D6;
 }
 .sidebar .nav-links li i{
   min-width: 60px;
@@ -75,7 +75,7 @@
 }
 .home-section{
   position: relative;
-  background: #f5f5f5;
+  background: #FAF9FD;
   min-height: 100vh;
   width: calc(100% - 240px);
   left: 240px;
@@ -160,10 +160,11 @@ nav .profile-details i{
   align-items: center;
   justify-content: center;
   width: calc(25% - 20px);
-  background: #fff;
+  background: #FFFFFF;
   padding: 15px 14px;
   border-radius: 12px;
-  box-shadow: 0 5px 10px rgba(0,0,0,0.1);
+  box-shadow: 0 5px 10px rgba(79, 69, 122, 0.1);
+  border: 1px solid #EEEAF8;
 }
 .overview-boxes .box-topic{
   font-size: 20px;
@@ -183,10 +184,10 @@ nav .profile-details i{
   font-size: 32px;
   height: 50px;
   width: 50px;
-  background: #cce5ff;
+  background: #EEEAF8;
   line-height: 50px;
   text-align: center;
-  color: #66b0ff;
+  color: #8B7BBE;
   border-radius: 12px;
   margin: -15px 0 0 6px;
 }
@@ -211,11 +212,12 @@ nav .profile-details i{
 /* left box */
 .home-content .stat-boxes .recent-stat{
   width: 65%;
-  background: #fff;
+  background: #FFFFFF;
   padding: 20px 30px;
   margin: 0 20px;
   border-radius: 12px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 10px rgba(79, 69, 122, 0.1);
+  border: 1px solid #EEEAF8;
 }
 .stat-boxes .box .title{
   font-size: 24px;
@@ -233,27 +235,28 @@ nav .profile-details i{
 }
 .stat-boxes .box .button a{
   color: #fff;
-  background: #17684f;
+  background: #8B7BBE;
   padding: 4px 12px;
   font-size: 15px;
-  font-weight: 400;
-  border-radius: 4px;
+  font-weight: 500;
+  border-radius: 6px;
   text-decoration: none;
   transition: all 0.3s ease;
 }
 .stat-boxes .box .button a:hover{
-  background:  rgb(18, 85, 68);
+  background: #A395D6;
 }
 
 /* Right box */
 
 .home-content .stat-boxes .top-stat{
   width: 35%;
-  background: #fff;
+  background: #FFFFFF;
   padding: 20px 30px;
   margin: 0 20px 0 0;
   border-radius: 12px;
-  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 5px 10px rgba(79, 69, 122, 0.1);
+  border: 1px solid #EEEAF8;
 }
 
 table#res{
@@ -340,7 +343,7 @@ td#res{
     display: none;
   }
 }
-@import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
+/* Additional font weights for Inter */
 
 * {
 	box-sizing: border-box;
@@ -356,44 +359,48 @@ td#res{
 .btn{
   display: block;
   margin: 0 auto;
-  border-radius: 4px;
-	border: 1px solid #0b4231;
-	background-color: #0b4231;
+  border-radius: 6px;
+	border: 1px solid #8B7BBE;
+	background-color: #8B7BBE;
 	color: #fff;
 	font-size: 15px;
-  padding: 4px 12px;
-	letter-spacing: 1px;
+  padding: 6px 16px;
+	letter-spacing: 0.5px;
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
+  font-weight: 500;
 }
 .btn:hover {
-  background-color: #0b4231; 
+  background-color: #A395D6;
+  border-color: #A395D6;
   color: #fff;
 }
 .btnc{
   display: inline-block;
   margin: 20px 17%;
-  border-radius: 4px;
-	border: 1px solid #0b4231;
-	background-color: #0b4231;
+  border-radius: 6px;
+	border: 1px solid #8B7BBE;
+	background-color: #8B7BBE;
 	color: #fff;
 	font-size: 15px;
-  padding: 4px 12px;
-	letter-spacing: 1px;
+  padding: 6px 16px;
+	letter-spacing: 0.5px;
   text-decoration: none;
   transition: all 0.3s ease;
   cursor: pointer;
+  font-weight: 500;
 }
 .btnc:hover {
-  background-color: #0b4231; 
+  background-color: #A395D6;
+  border-color: #A395D6;
   color: #fff;
 }
 table{
   width: 100%; 
   border-collapse: collapse;
   border-spacing: 0;
-  box-shadow: 0 5px 10px rgb(0 0 0 / 10%);
+  box-shadow: 0 5px 10px rgba(79, 69, 122, 0.1);
   border-radius: 12px;
   overflow: hidden;
  
@@ -405,18 +412,18 @@ table{
  
  }
  th{
-  background-color: #11533e;
+  background-color: #4F457A;
   color: #fafafa;
-  font-family: 'Poppins',Sans-serif;
-  font-weight: 200;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
  }
  tr{
   width: 100%;
-  background-color: #fafafa;
-  font-family: 'Poppins', sans-serif;
+  background-color: #FFFFFF;
+  font-family: 'Inter', sans-serif;
  }
  tr:nth-child(even){
-  background-color: #eeeeee;
+  background-color: #FAF9FD;
  }
  .rounded-button-del {
   height: 25px;
@@ -462,12 +469,12 @@ table{
 .msg{
   padding: 12px 15px;
 	margin: 8px 0;
-  background-color: #eee;
+  background-color: #EEEAF8;
 	border: none;
   max-width: 100%;
   width: 100%;
   height: 400px;
-  font-family: 'Poppins';
+  font-family: 'Inter', sans-serif;
 }
 .btnres{
   border-radius: 4px;
