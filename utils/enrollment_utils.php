@@ -4,6 +4,8 @@
  * Phase 7: Functions for controlled unenrollment and enrollment checks
  */
 
+require_once __DIR__ . '/teaching_slots_compat.php';
+
 /**
  * Check if a teacher can unenroll from a school
  * 
@@ -44,11 +46,11 @@ function canTeacherUnenroll($conn, $teacher_id, $school_id) {
     }
     
     // Check for sessions pending photo submission (past slots with no photo)
+    $pending_photo_condition = getTeachingSessionPendingPhotoCondition($conn, 'ts');
     $pending_photo_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions ts
-                          WHERE ts.teacher_id = ? 
+                          WHERE ts.teacher_id = ?
                           AND ts.school_id = ?
-                          AND ts.session_status = 'pending'
-                          AND ts.photo_path IS NULL";
+                          AND $pending_photo_condition";
     $stmt = mysqli_prepare($conn, $pending_photo_sql);
     mysqli_stmt_bind_param($stmt, "ii", $teacher_id, $school_id);
     mysqli_stmt_execute($stmt);
@@ -61,10 +63,11 @@ function canTeacherUnenroll($conn, $teacher_id, $school_id) {
     }
     
     // Check for sessions pending admin review
+    $pending_review_condition = getTeachingSessionPendingReviewCondition($conn, 'ts');
     $pending_review_sql = "SELECT COUNT(*) as cnt FROM teaching_sessions ts
-                           WHERE ts.teacher_id = ? 
+                           WHERE ts.teacher_id = ?
                            AND ts.school_id = ?
-                           AND ts.session_status = 'photo_submitted'";
+                           AND $pending_review_condition";
     $stmt = mysqli_prepare($conn, $pending_review_sql);
     mysqli_stmt_bind_param($stmt, "ii", $teacher_id, $school_id);
     mysqli_stmt_execute($stmt);
@@ -114,13 +117,13 @@ function getTeacherObligations($conn, $teacher_id, $school_id) {
     }
     
     // Get pending photo sessions
+    $pending_photo_condition = getTeachingSessionPendingPhotoCondition($conn, 'ts');
     $pending_photo_sql = "SELECT ts.session_id, ts.session_date, sts.slot_date, sts.start_time
                           FROM teaching_sessions ts
                           JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
-                          WHERE ts.teacher_id = ? 
+                          WHERE ts.teacher_id = ?
                           AND ts.school_id = ?
-                          AND ts.session_status = 'pending'
-                          AND ts.photo_path IS NULL
+                          AND $pending_photo_condition
                           ORDER BY sts.slot_date ASC";
     $stmt = mysqli_prepare($conn, $pending_photo_sql);
     mysqli_stmt_bind_param($stmt, "ii", $teacher_id, $school_id);
@@ -131,12 +134,13 @@ function getTeacherObligations($conn, $teacher_id, $school_id) {
     }
     
     // Get pending review sessions
+    $pending_review_condition = getTeachingSessionPendingReviewCondition($conn, 'ts');
     $pending_review_sql = "SELECT ts.session_id, ts.session_date, sts.slot_date, sts.start_time
                            FROM teaching_sessions ts
                            JOIN school_teaching_slots sts ON ts.slot_id = sts.slot_id
-                           WHERE ts.teacher_id = ? 
+                           WHERE ts.teacher_id = ?
                            AND ts.school_id = ?
-                           AND ts.session_status = 'photo_submitted'
+                           AND $pending_review_condition
                            ORDER BY sts.slot_date ASC";
     $stmt = mysqli_prepare($conn, $pending_review_sql);
     mysqli_stmt_bind_param($stmt, "ii", $teacher_id, $school_id);
@@ -166,6 +170,7 @@ function forceUnenrollTeacher($conn, $teacher_id, $school_id, $admin_id, $reason
     try {
         $today = date('Y-m-d');
         $cancelled_slots = 0;
+        $unresolved_statuses = getTeachingSessionUnresolvedStatusSql($conn);
         
         // Cancel all upcoming slot enrollments
         $cancel_sql = "UPDATE slot_teacher_enrollments ste
@@ -191,7 +196,7 @@ function forceUnenrollTeacher($conn, $teacher_id, $school_id, $admin_id, $reason
                                     verified_at = NOW()
                                 WHERE teacher_id = ?
                                 AND school_id = ?
-                                AND session_status IN ('pending', 'photo_submitted')";
+                                AND session_status IN ($unresolved_statuses)";
         $stmt = mysqli_prepare($conn, $cancel_sessions_sql);
         $session_remark = "Session cancelled due to unenrollment: " . ($reason ?: 'No reason provided');
         mysqli_stmt_bind_param($stmt, "siii", $session_remark, $admin_id, $teacher_id, $school_id);
@@ -265,10 +270,11 @@ function getTeacherSchoolStats($conn, $teacher_id, $school_id) {
     $stats['total_slots_booked'] = mysqli_fetch_assoc(mysqli_stmt_get_result($stmt))['cnt'];
     
     // Session stats
-    $session_sql = "SELECT 
+    $pending_statuses = getTeachingSessionUnresolvedStatusSql($conn);
+    $session_sql = "SELECT
                     SUM(CASE WHEN session_status = 'approved' THEN 1 ELSE 0 END) as approved,
                     SUM(CASE WHEN session_status = 'rejected' THEN 1 ELSE 0 END) as rejected,
-                    SUM(CASE WHEN session_status IN ('pending', 'photo_submitted') THEN 1 ELSE 0 END) as pending
+                    SUM(CASE WHEN session_status IN ($pending_statuses) THEN 1 ELSE 0 END) as pending
                     FROM teaching_sessions
                     WHERE teacher_id = ? AND school_id = ?";
     $stmt = mysqli_prepare($conn, $session_sql);

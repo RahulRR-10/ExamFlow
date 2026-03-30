@@ -35,6 +35,102 @@ function isTeachingSlotsEnabled($conn) {
 }
 
 /**
+ * Check whether teaching_sessions contains a specific column.
+ *
+ * @param mysqli $conn Database connection
+ * @param string $column_name Column to check
+ * @return bool True when the column exists
+ */
+function hasTeachingSessionsColumn($conn, $column_name) {
+    static $column_cache = [];
+
+    if (array_key_exists($column_name, $column_cache)) {
+        return $column_cache[$column_name];
+    }
+
+    if (!isTeachingSlotsEnabled($conn)) {
+        $column_cache[$column_name] = false;
+        return false;
+    }
+
+    $safe_column = mysqli_real_escape_string($conn, $column_name);
+    $result = mysqli_query($conn, "SHOW COLUMNS FROM teaching_sessions LIKE '$safe_column'");
+    $column_cache[$column_name] = $result && mysqli_num_rows($result) > 0;
+
+    return $column_cache[$column_name];
+}
+
+/**
+ * Check whether the dual photo workflow migration has been applied.
+ *
+ * @param mysqli $conn Database connection
+ * @return bool True when start/end photo columns exist
+ */
+function usesDualPhotoVerification($conn) {
+    return hasTeachingSessionsColumn($conn, 'start_photo_path')
+        && hasTeachingSessionsColumn($conn, 'end_photo_path');
+}
+
+/**
+ * Build the SQL condition for sessions where the teacher still owes photo submission.
+ *
+ * @param mysqli $conn Database connection
+ * @param string $alias Table alias used in the query
+ * @return string SQL fragment
+ */
+function getTeachingSessionPendingPhotoCondition($conn, $alias = 'ts') {
+    if (usesDualPhotoVerification($conn)) {
+        return "(($alias.session_status = 'pending' AND $alias.start_photo_path IS NULL)
+            OR ($alias.session_status = 'start_approved' AND $alias.end_photo_path IS NULL))";
+    }
+
+    return "$alias.session_status = 'pending' AND $alias.photo_path IS NULL";
+}
+
+/**
+ * Build the SQL condition for sessions awaiting admin review.
+ *
+ * @param mysqli $conn Database connection
+ * @param string $alias Table alias used in the query
+ * @return string SQL fragment
+ */
+function getTeachingSessionPendingReviewCondition($conn, $alias = 'ts') {
+    if (usesDualPhotoVerification($conn)) {
+        return "$alias.session_status IN ('start_submitted', 'end_submitted', 'photo_submitted')";
+    }
+
+    return "$alias.session_status = 'photo_submitted'";
+}
+
+/**
+ * Get the session statuses that are still unresolved.
+ *
+ * @param mysqli $conn Database connection
+ * @return array<string> Status values
+ */
+function getTeachingSessionUnresolvedStatuses($conn) {
+    if (usesDualPhotoVerification($conn)) {
+        return ['pending', 'start_submitted', 'start_approved', 'end_submitted', 'photo_submitted'];
+    }
+
+    return ['pending', 'photo_submitted'];
+}
+
+/**
+ * Get the unresolved session statuses as a quoted SQL list.
+ *
+ * @param mysqli $conn Database connection
+ * @return string SQL fragment for use inside IN (...)
+ */
+function getTeachingSessionUnresolvedStatusSql($conn) {
+    $statuses = getTeachingSessionUnresolvedStatuses($conn);
+
+    return implode(', ', array_map(function ($status) use ($conn) {
+        return "'" . mysqli_real_escape_string($conn, $status) . "'";
+    }, $statuses));
+}
+
+/**
  * Check if audit log table exists
  * 
  * @param mysqli $conn Database connection
@@ -131,9 +227,10 @@ function getTeacherPendingSessions($conn, $teacher_id) {
     if (!isTeachingSlotsEnabled($conn)) {
         return 0;
     }
-    
-    $sql = "SELECT COUNT(*) as cnt FROM teaching_sessions 
-            WHERE teacher_id = ? AND session_status IN ('pending', 'photo_submitted')";
+
+    $pending_statuses = getTeachingSessionUnresolvedStatusSql($conn);
+    $sql = "SELECT COUNT(*) as cnt FROM teaching_sessions
+            WHERE teacher_id = ? AND session_status IN ($pending_statuses)";
     $stmt = mysqli_prepare($conn, $sql);
     mysqli_stmt_bind_param($stmt, "i", $teacher_id);
     mysqli_stmt_execute($stmt);

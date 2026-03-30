@@ -84,6 +84,9 @@ if ($schools_query) {
 // Check if teaching slots tables exist before querying
 $enrollments = [];
 if (isTeachingSlotsEnabled($conn)) {
+    $pending_photo_condition = getTeachingSessionPendingPhotoCondition($conn, 'tse');
+    $pending_review_condition = getTeachingSessionPendingReviewCondition($conn, 'tse2');
+
     // Get teacher-school enrollments with obligations
     $enrollments_query = mysqli_query($conn, "
         SELECT 
@@ -105,15 +108,14 @@ if (isTeachingSlotsEnabled($conn)) {
              JOIN school_teaching_slots sts2 ON ste3.slot_id = sts2.slot_id
              WHERE ste3.teacher_id = ts.teacher_id
              AND sts2.school_id = ts.school_id
-             AND tse.photo_path IS NULL
+             AND $pending_photo_condition
              AND sts2.slot_date < CURDATE()) as pending_photos,
             (SELECT COUNT(*) FROM teaching_sessions tse2
              JOIN slot_teacher_enrollments ste4 ON tse2.enrollment_id = ste4.enrollment_id
              JOIN school_teaching_slots sts3 ON ste4.slot_id = sts3.slot_id
              WHERE ste4.teacher_id = ts.teacher_id
              AND sts3.school_id = ts.school_id
-             AND tse2.photo_path IS NOT NULL
-             AND tse2.session_status = 'photo_submitted') as pending_reviews
+             AND $pending_review_condition) as pending_reviews
         FROM teacher_schools ts
         JOIN teacher t ON ts.teacher_id = t.id
         JOIN schools s ON ts.school_id = s.school_id
