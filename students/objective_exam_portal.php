@@ -636,6 +636,211 @@ if ($total_marks == 0) {
 
     <script src="../js/script.js"></script>
     <script>
+        // Fullscreen exam security
+        let examInitialized = false;
+        let isFullScreen = false;
+
+        // Create warning container for anti-cheat messages
+        const warningContainer = document.createElement('div');
+        warningContainer.id = 'anti-cheat-warning';
+        warningContainer.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            z-index: 1000;
+            max-width: 300px;
+            display: none;
+            font-weight: bold;
+        `;
+        document.body.appendChild(warningContainer);
+
+        // Create full screen prompt overlay
+        const fullScreenContainer = document.createElement('div');
+        fullScreenContainer.id = 'fullscreen-prompt';
+        fullScreenContainer.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        `;
+
+        const fullScreenMessage = document.createElement('div');
+        fullScreenMessage.style.cssText = `
+            color: white;
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            max-width: 600px;
+        `;
+        fullScreenMessage.innerHTML = '<strong>EXAM SECURITY NOTICE</strong><br><br>This exam requires full screen mode to maintain integrity.<br>Please click the button below to enter full screen mode.';
+
+        const fullScreenButton = document.createElement('button');
+        fullScreenButton.textContent = 'Enter Full Screen Mode';
+        fullScreenButton.style.cssText = `
+            background-color: #17684f;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        `;
+
+        fullScreenContainer.appendChild(fullScreenMessage);
+        fullScreenContainer.appendChild(fullScreenButton);
+        document.body.appendChild(fullScreenContainer);
+
+        // Create test info modal
+        const testInfoModal = document.createElement('div');
+        testInfoModal.id = 'test-info-modal';
+        testInfoModal.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        `;
+
+        const modalContent = document.createElement('div');
+        modalContent.style.cssText = `
+            background-color: white;
+            border-radius: 8px;
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            text-align: center;
+        `;
+
+        modalContent.innerHTML = `
+            <h2 style="color: #17684f; margin-bottom: 20px; font-size: 24px;">Exam Information</h2>
+            <div style="text-align: left; margin-bottom: 25px;">
+                <p style="margin-bottom: 10px; font-size: 16px;"><strong>Exam Name:</strong> <?php echo htmlspecialchars($exam['exam_name']); ?></p>
+                <p style="margin-bottom: 10px; font-size: 16px;"><strong>Number of Questions:</strong> <?php echo count($questions); ?></p>
+                <p style="margin-bottom: 10px; font-size: 16px;"><strong>Total Marks:</strong> <?php echo $total_marks; ?></p>
+                <p style="margin-bottom: 10px; font-size: 16px;"><strong>Duration:</strong> <?php echo $exam['duration_minutes']; ?> minutes</p>
+                <p style="margin-bottom: 10px; font-size: 16px;"><strong>Passing Marks:</strong> <?php echo $exam['passing_marks']; ?></p>
+            </div>
+            <h3 style="color: #dc3545; margin-bottom: 15px; font-size: 18px;">Important: Anti-Cheat System</h3>
+            <div style="text-align: left; margin-bottom: 25px; background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #dc3545;">
+                <p style="margin-bottom: 10px; font-size: 15px;">This exam employs the following integrity monitoring features:</p>
+                <ul style="margin-left: 20px; margin-bottom: 15px;">
+                    <li style="margin-bottom: 8px; font-size: 15px;">Full-screen mode is required throughout the exam</li>
+                    <li style="margin-bottom: 8px; font-size: 15px;">Exiting full-screen mode will trigger a warning</li>
+                </ul>
+                <p style="font-size: 15px; color: #dc3545; font-weight: bold;">Full-screen mode is mandatory during this exam.</p>
+            </div>
+            <button id="start-test-btn" style="
+                background-color: #17684f;
+                color: white;
+                border: none;
+                padding: 12px 24px;
+                font-size: 18px;
+                border-radius: 5px;
+                cursor: pointer;
+                font-weight: bold;
+                margin-top: 10px;
+            ">I Understand & Start Exam</button>
+        `;
+
+        testInfoModal.appendChild(modalContent);
+        document.body.appendChild(testInfoModal);
+
+        // Show test info modal
+        testInfoModal.style.display = 'flex';
+        fullScreenContainer.style.display = 'none';
+
+        // Start test button handler
+        document.getElementById('start-test-btn').addEventListener('click', function() {
+            testInfoModal.style.display = 'none';
+            requestFullScreen();
+        });
+
+        // Fullscreen functions
+        function requestFullScreen() {
+            const element = document.documentElement;
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.mozRequestFullScreen) {
+                element.mozRequestFullScreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+            isFullScreen = true;
+            examInitialized = true;
+            fullScreenContainer.style.display = 'none';
+            showWarning('Full screen mode activated. Do not exit full screen during the exam.');
+        }
+
+        function exitFullScreen() {
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.mozCancelFullScreen) {
+                document.mozCancelFullScreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            } else if (document.msExitFullscreen) {
+                document.msExitFullscreen();
+            }
+            isFullScreen = false;
+        }
+
+        function isInFullScreen() {
+            return (
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement
+            );
+        }
+
+        // Fullscreen change event listeners
+        document.addEventListener('fullscreenchange', handleFullScreenChange);
+        document.addEventListener('webkitfullscreenchange', handleFullScreenChange);
+        document.addEventListener('mozfullscreenchange', handleFullScreenChange);
+        document.addEventListener('MSFullscreenChange', handleFullScreenChange);
+
+        function handleFullScreenChange() {
+            if (examInitialized && !isInFullScreen()) {
+                showWarning('WARNING: You exited full screen mode! This may be flagged as suspicious behavior.');
+                fullScreenContainer.style.display = 'flex';
+            } else if (isInFullScreen()) {
+                fullScreenContainer.style.display = 'none';
+            }
+        }
+
+        // Fullscreen button listener
+        fullScreenButton.addEventListener('click', requestFullScreen);
+
+        // Function to show warning message
+        function showWarning(message) {
+            warningContainer.innerHTML = message;
+            warningContainer.style.display = 'block';
+            setTimeout(() => {
+                warningContainer.style.display = 'none';
+            }, 5000);
+        }
+
         // File upload handling
         const uploadZone = document.getElementById('uploadZone');
         const fileInput = document.getElementById('fileInput');
