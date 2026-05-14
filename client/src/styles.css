@@ -87,6 +87,42 @@ a {
   color: #ffffff;
 }
 
+.session-card {
+  display: grid;
+  gap: 6px;
+  margin-top: auto;
+  padding: 14px;
+  border: 1px solid #2e4153;
+  border-radius: 8px;
+  background: #1c2a38;
+}
+
+.session-card span {
+  color: #aebdca;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.session-card strong {
+  color: #ffffff;
+}
+
+.session-card button,
+.auth-form button {
+  min-height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: #17684f;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.session-card button {
+  margin-top: 6px;
+}
+
 .main-panel {
   padding: 40px;
 }
@@ -165,6 +201,45 @@ p {
 .error-text {
   margin-top: 18px;
   color: #b42318;
+}
+
+.auth-panel {
+  max-width: 520px;
+}
+
+.auth-form {
+  display: grid;
+  gap: 16px;
+  margin-top: 22px;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 7px;
+  color: #344054;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.auth-form input,
+.auth-form select {
+  min-height: 42px;
+  width: 100%;
+  border: 1px solid #cfd8e3;
+  border-radius: 8px;
+  padding: 0 12px;
+  color: #17202a;
+  font: inherit;
+}
+
+.auth-form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.muted {
+  color: #7a8794;
+  font-size: 14px;
 }
 
 @media (max-width: 760px) {

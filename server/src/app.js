@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import { env } from './config/env.js';
 import { notFound } from './middleware/notFound.js';
 import { errorHandler } from './middleware/errorHandler.js';
+import authRoutes from './routes/auth.routes.js';
 import healthRoutes from './routes/health.routes.js';
 
 export function createApp() {
@@ -36,6 +37,7 @@ export function createApp() {
   });
 
   app.use('/api/health', healthRoutes);
+  app.use('/api/auth', authRoutes);
 
   app.use(notFound);
   app.use(errorHandler);

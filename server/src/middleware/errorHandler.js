@@ -10,6 +10,7 @@ export function errorHandler(error, _req, res, _next) {
           ? 'Internal server error'
           : error.message,
       statusCode,
+      details: error.details,
       stack: env.NODE_ENV === 'development' ? error.stack : undefined
     }
   });
