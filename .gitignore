@@ -41,6 +41,8 @@ cert-verifier/node_modules/
 
 # Build outputs
 cert-verifier/build/
+client/dist/
+server/dist/
 artifacts/
 cache/
 typechain/
