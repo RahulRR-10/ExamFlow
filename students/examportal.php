@@ -68,6 +68,25 @@ while ($rowd = mysqli_fetch_array($res)) {
   <link href='https://unpkg.com/boxicons@2.0.7/css/boxicons.min.css' rel='stylesheet'>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    body.exam-mode .sidebar,
+    body.exam-mode .home-section nav .sidebar-button {
+      display: none !important;
+    }
+
+    body.exam-mode .home-section {
+      left: 0 !important;
+      width: 100% !important;
+    }
+
+    body.exam-mode .home-section nav {
+      left: 0 !important;
+      width: 100% !important;
+    }
+
+    body.exam-mode .home-section .home-content {
+      padding-top: 104px;
+    }
+
     /* Styles for question navigation */
     .navigation-buttons {
       display: flex;
@@ -681,8 +700,8 @@ while ($rowd = mysqli_fetch_array($res)) {
 
 </head>
 
-<body>
-  <div class="sidebar active">
+<body class="exam-mode">
+  <div class="sidebar active" aria-hidden="true">
     <div class="logo-details">
       <i class='bx bx-diamond'></i>
       <span class="logo_name">Welcome</span>
@@ -771,7 +790,7 @@ while ($rowd = mysqli_fetch_array($res)) {
 
   <section class="home-section">
     <nav>
-      <div class="sidebar-button">
+      <div class="sidebar-button" aria-hidden="true">
         <i class='bx bx-menu-alt-right sidebarBtn'></i>
         <span class="dashboard">Student Dashboard</span>
       </div>
