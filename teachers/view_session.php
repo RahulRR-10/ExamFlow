@@ -60,7 +60,18 @@ $upload_type = null;
 $upload_title = '';
 $upload_instructions = '';
 
-if ($can_upload) {
+if ($session['session_status'] === 'rejected') {
+    // Allow re-upload of the specific photo that was rejected (always, even if future date)
+    if ($session['end_photo_path']) {
+        $upload_type = 'end';
+        $upload_title = 'Re-upload Completion Photo';
+        $upload_instructions = 'Your completion photo was rejected. Please upload a new completion photo.';
+    } else {
+        $upload_type = 'start';
+        $upload_title = 'Re-upload Arrival Photo';
+        $upload_instructions = 'Your arrival photo was rejected. Please upload a new arrival photo.';
+    }
+} elseif ($can_upload) {
     if (in_array($session['session_status'], ['pending'])) {
         $upload_type = 'start';
         $upload_title = 'Upload Arrival Photo';
@@ -69,11 +80,6 @@ if ($can_upload) {
         $upload_type = 'end';
         $upload_title = 'Upload Completion Photo';
         $upload_instructions = 'Take a photo after you finish teaching to complete verification.';
-    } elseif ($session['session_status'] === 'rejected') {
-        // Allow re-upload of start photo if rejected
-        $upload_type = 'start';
-        $upload_title = 'Re-upload Arrival Photo';
-        $upload_instructions = 'Your previous photo was rejected. Please upload a new arrival photo.';
     }
 }
 
@@ -247,7 +253,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['session_photo']) && 
                     
                     // Re-determine upload type after refresh
                     $upload_type = null;
-                    if ($can_upload) {
+                    if ($session['session_status'] === 'rejected') {
+                        if ($session['end_photo_path']) {
+                            $upload_type = 'end';
+                        } else {
+                            $upload_type = 'start';
+                        }
+                    } elseif ($can_upload) {
                         if (in_array($session['session_status'], ['pending'])) {
                             $upload_type = 'start';
                         } elseif (in_array($session['session_status'], ['start_submitted', 'start_approved'])) {
@@ -722,7 +734,14 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
                 $step3_class = in_array($status, ['start_approved', 'end_submitted', 'approved']) ? 'completed' : ($status === 'start_submitted' ? 'active' : '');
                 $step4_class = in_array($status, ['end_submitted', 'approved']) ? 'completed' : ($status === 'start_approved' ? 'active' : '');
                 $step5_class = $status === 'approved' ? 'completed' : ($status === 'end_submitted' ? 'active' : '');
-                if ($status === 'rejected') { $step2_class = 'rejected'; }
+                if ($status === 'rejected') {
+                    $hasEndPhoto = !empty($session['end_photo_path']);
+                    if ($hasEndPhoto) {
+                        $step4_class = 'rejected';
+                    } else {
+                        $step2_class = 'rejected';
+                    }
+                }
                 ?>
                 <div class="step <?= $step1_class ?>">
                     <div class="step-circle"><i class='bx bx-check'></i></div>
@@ -745,6 +764,16 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
                     <div class="step-label">Approved</div>
                 </div>
             </div>
+            
+            <?php if ($session['session_status'] === 'rejected' && $session['admin_remarks']): ?>
+            <div class="alert alert-error">
+                <i class='bx bx-error-circle'></i>
+                <div>
+                    <strong>Reason for Rejection:</strong>
+                    <p style="margin-top: 5px;"><?= htmlspecialchars($session['admin_remarks']) ?></p>
+                </div>
+            </div>
+            <?php endif; ?>
             
             <!-- Dual Photo Grid -->
             <div class="photo-grid">
@@ -781,6 +810,11 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
                             </div>
                             <?php endif; ?>
                         </div>
+                        <?php if ($session['session_status'] === 'rejected' && $session['start_photo_path'] && empty($session['end_photo_path'])): ?>
+                        <div style="margin-top: 15px; padding: 10px; background: #fee2e2; border-radius: 8px; color: #991b1b; text-align: center; font-weight: 600; font-size: 13px;">
+                            <i class='bx bx-x-circle'></i> This photo was rejected. Please re-upload below.
+                        </div>
+                        <?php endif; ?>
                         <?php else: ?>
                         <div class="empty-photo">
                             <i class='bx bx-camera'></i>
@@ -828,6 +862,11 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
                             </div>
                             <?php endif; ?>
                         </div>
+                        <?php if ($session['session_status'] === 'rejected' && $session['end_photo_path']): ?>
+                        <div style="margin-top: 15px; padding: 10px; background: #fee2e2; border-radius: 8px; color: #991b1b; text-align: center; font-weight: 600; font-size: 13px;">
+                            <i class='bx bx-x-circle'></i> This photo was rejected. Please re-upload below.
+                        </div>
+                        <?php endif; ?>
                         <?php else: ?>
                         <div class="empty-photo">
                             <i class='bx bx-camera'></i>
@@ -939,11 +978,6 @@ if ($session['actual_duration_minutes'] !== null && $session['expected_duration_
                 <div>
                     <strong>Awaiting Final Review</strong>
                     <p style="margin-top: 5px;">Both photos have been submitted. An admin will review and approve your session soon.</p>
-                    <div style="margin-top: 15px;">
-                        <a href="generate_certificate.php?id=<?= $session_id ?>" class="btn btn-success" style="background: linear-gradient(135deg, #166534, #22c55e);">
-                            <i class='bx bx-certification'></i> Generate Blockchain Certificate
-                        </a>
-                    </div>
                 </div>
             </div>
             <?php endif; ?>

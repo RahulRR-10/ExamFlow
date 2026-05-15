@@ -20,34 +20,23 @@ $enrolled_schools = mysqli_query($conn, $enrolled_schools_sql);
 // Get selected school filter (default to 'all')
 $filter_school = isset($_GET['school_filter']) ? intval($_GET['school_filter']) : 0;
 
-// Filter exams by teacher's enrolled schools
+// Filter exams by school
 if ($filter_school > 0) {
-  // Filter by specific school
   $sql = "SELECT e.*, s.school_name 
             FROM exm_list e 
             LEFT JOIN schools s ON e.school_id = s.school_id 
-            WHERE e.school_id = ? 
-            AND e.school_id IN (
-                SELECT school_id FROM teacher_schools WHERE teacher_id = ?
-            )
+            WHERE e.school_id = ?
             ORDER BY e.extime DESC";
   $stmt = mysqli_prepare($conn, $sql);
-  mysqli_stmt_bind_param($stmt, "ii", $filter_school, $teacher_id);
+  mysqli_stmt_bind_param($stmt, "i", $filter_school);
   mysqli_stmt_execute($stmt);
   $result = mysqli_stmt_get_result($stmt);
 } else {
-  // Show all exams from enrolled schools
   $sql = "SELECT e.*, s.school_name 
             FROM exm_list e 
             LEFT JOIN schools s ON e.school_id = s.school_id 
-            WHERE e.school_id IN (
-                SELECT school_id FROM teacher_schools WHERE teacher_id = ?
-            )
             ORDER BY e.extime DESC";
-  $stmt = mysqli_prepare($conn, $sql);
-  mysqli_stmt_bind_param($stmt, "i", $teacher_id);
-  mysqli_stmt_execute($stmt);
-  $result = mysqli_stmt_get_result($stmt);
+  $result = mysqli_query($conn, $sql);
 }
 
 ?>
